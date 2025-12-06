@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { Mic, Square, Loader2, Clock } from "lucide-react";
+import { Mic, Square, Loader2, Clock, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-// Import ReactMic secara dynamic (Wajib untuk Next.js)
 const ReactMic = dynamic(() => import("react-mic").then((mod) => mod.ReactMic), {
   ssr: false,
 });
@@ -14,32 +13,24 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // State untuk Timer
   const [timeLeft, setTimeLeft] = useState(maxDuration);
   const timerRef = useRef(null);
-
-  // --- PERBAIKAN BUG DATA BASI (STALE CLOSURE) ---
-  // Kita simpan cueCard terbaru ke dalam useRef.
-  // Fungsi onStop akan membaca dari ref ini, bukan dari props langsung.
   const cueCardRef = useRef(cueCard);
 
-  // Setiap kali props cueCard berubah (user refresh soal), update isi ref
   useEffect(() => {
     cueCardRef.current = cueCard;
   }, [cueCard]);
 
-  // Update timeLeft jika maxDuration berubah (misal user upgrade jadi Premium)
   useEffect(() => {
     setTimeLeft(maxDuration);
   }, [maxDuration]);
 
-  // LOGIKA TIMER
   useEffect(() => {
     if (isRecording) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            stopRecording(); // Waktu habis, stop otomatis
+            stopRecording(); 
             return 0;
           }
           return prev - 1;
@@ -54,7 +45,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
   }, [isRecording]);
 
   const startRecording = () => {
-    setTimeLeft(maxDuration); // Reset timer ke awal
+    setTimeLeft(maxDuration); 
     setIsRecording(true);
   };
 
@@ -64,13 +55,23 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
   };
 
   const onStop = async (recordedBlob) => {
+    // --- FITUR MINIMUM DURATION (20 DETIK) ---
+    const durationSec = (recordedBlob.stopTime - recordedBlob.startTime) / 1000;
+
+    // Batas 20 Detik (Standar IELTS Short Turn)
+    if (durationSec < 20) {
+      alert(
+        "⚠️ Belum Cukup Data\n\n" + 
+        "Untuk penilaian IELTS yang akurat, mohon bicara minimal 20 detik.\n" +
+        "Jangan menyerah, ayo coba lagi! Kamu pasti bisa cerita lebih panjang."
+      );
+      return; // Stop di sini, hemat kuota
+    }
+
     setIsLoading(true);
     
     const formData = new FormData();
     formData.append("audio", recordedBlob.blob, "recording.webm");
-    
-    // --- PERBAIKAN: GUNAKAN REF UNTUK MENGAMBIL SOAL TERBARU ---
-    // Jangan gunakan 'cueCard' langsung, tapi 'cueCardRef.current'
     console.log("Mengirim Soal ke AI:", cueCardRef.current); 
     formData.append("cue_card", cueCardRef.current);
 
@@ -103,7 +104,6 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
     }
   };
 
-  // Format Waktu
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -195,11 +195,13 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
         )}
       </div>
       
+      {/* Tips Kecil (Updated) */}
       {!isRecording && !isLoading && (
-        <p className="mt-4 text-xs text-slate-500 text-center">
+        <p className="mt-4 text-xs text-slate-500 text-center flex items-center justify-center gap-1">
+          <AlertCircle className="w-3 h-3" />
           {maxDuration > 60 
-             ? "🔥 Premium Mode: You have 2 minutes to speak."
-             : "Free Mode: 60 seconds limit."}
+             ? "Premium Mode: 2 mins limit (Min 20s)."
+             : "Free Mode: 60s limit (Min 20s)."}
         </p>
       )}
     </div>
