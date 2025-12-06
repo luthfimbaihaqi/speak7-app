@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, Check, AlertCircle } from "lucide-react"; // Tambah AlertCircle
+import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, AlertCircle } from "lucide-react";
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
@@ -323,107 +323,108 @@ export default function Home() {
 
       </div>
       
-      {/* MODAL PEMBAYARAN & UPGRADE */}
+      {/* MODAL PEMBAYARAN & UPGRADE (PERBAIKAN RESPONSIVE) */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-800 p-6 rounded-2xl max-w-md w-full border border-slate-700 relative">
-            <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><X className="w-6 h-6"/></button>
-
-            <h3 className="text-2xl font-bold text-white mb-4 text-center">Upgrade to Speak7 <span className="text-yellow-400">PRO</span></h3>
-
-            {/* TABEL PERBANDINGAN */}
-            <div className="bg-slate-900 rounded-xl overflow-hidden mb-6 border border-slate-700">
-              <div className="grid grid-cols-3 bg-slate-800/50 p-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
-                <div className="text-left">Fitur</div>
-                <div>Free</div>
-                <div className="text-yellow-400">Pro</div>
-              </div>
-              <div className="divide-y divide-slate-800 text-sm">
-                <div className="grid grid-cols-3 p-3 items-center text-center">
-                  <div className="text-left text-slate-300">Durasi</div>
-                  <div className="text-slate-500">60 Detik</div>
-                  <div className="font-bold text-white">2 Menit</div>
-                </div>
-                <div className="grid grid-cols-3 p-3 items-center text-center">
-                  <div className="text-left text-slate-300">Bank Soal</div>
-                  <div className="text-slate-500">30 Topik</div>
-                  <div className="font-bold text-white">60+ Topik</div>
-                </div>
-                <div className="grid grid-cols-3 p-3 items-center text-center">
-                  <div className="text-left text-slate-300">Model Answer</div>
-                  <div className="text-slate-500">❌ Terkunci</div>
-                  <div className="font-bold text-white">✅ Band 8.0</div>
-                </div>
-                <div className="grid grid-cols-3 p-3 items-center text-center bg-yellow-500/10">
-                  <div className="text-left text-yellow-200">Masa Aktif</div>
-                  <div className="text-slate-500">Selamanya</div>
-                  <div className="font-bold text-yellow-400">30 Hari</div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Step 1: Transfer */}
-            <div className="bg-slate-900 p-4 rounded-xl mb-4 border border-slate-800">
-              <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 1: Transfer Biaya</p>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-slate-300">Biaya Langganan</span>
-                <span className="text-teal-400 font-bold">{BANK_INFO.price} / bulan</span>
-              </div>
-              <div className="border-t border-slate-800 my-2 pt-2">
-                <p className="text-xs text-slate-500">{BANK_INFO.bankName} (a.n {BANK_INFO.accountName})</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-mono text-white select-all">{BANK_INFO.accountNumber}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 2: Konfirmasi (DENGAN INSTRUKSI BARU) */}
-            <div className="mb-6">
-              <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 2: Konfirmasi & Dapat Token</p>
+        <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
+          {/* Perbaikan: Container fleksibel agar tidak mentok di HP */}
+          <div className="flex min-h-full items-center justify-center p-4 py-10">
+            <div className="bg-slate-800 p-6 rounded-2xl max-w-md w-full border border-slate-700 relative my-auto shadow-2xl">
               
-              {/* --- INSTRUKSI TAMBAHAN --- */}
-              <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg mb-3 flex gap-2 items-start">
+              <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white bg-slate-800 rounded-full p-1"><X className="w-6 h-6"/></button>
+
+              <h3 className="text-2xl font-bold text-white mb-4 text-center mt-2">Upgrade to Speak7 <span className="text-yellow-400">PRO</span></h3>
+
+              {/* TABEL PERBANDINGAN */}
+              <div className="bg-slate-900 rounded-xl overflow-hidden mb-6 border border-slate-700">
+                <div className="grid grid-cols-3 bg-slate-800/50 p-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
+                  <div className="text-left">Fitur</div>
+                  <div>Free</div>
+                  <div className="text-yellow-400">Pro</div>
+                </div>
+                <div className="divide-y divide-slate-800 text-sm">
+                  <div className="grid grid-cols-3 p-3 items-center text-center">
+                    <div className="text-left text-slate-300">Durasi</div>
+                    <div className="text-slate-500">60 Detik</div>
+                    <div className="font-bold text-white">2 Menit</div>
+                  </div>
+                  <div className="grid grid-cols-3 p-3 items-center text-center">
+                    <div className="text-left text-slate-300">Bank Soal</div>
+                    <div className="text-slate-500">30 Topik</div>
+                    <div className="font-bold text-white">60+ Topik</div>
+                  </div>
+                  <div className="grid grid-cols-3 p-3 items-center text-center">
+                    <div className="text-left text-slate-300">Model Answer</div>
+                    <div className="text-slate-500">❌ Terkunci</div>
+                    <div className="font-bold text-white">✅ Band 8.0</div>
+                  </div>
+                  <div className="grid grid-cols-3 p-3 items-center text-center bg-yellow-500/10">
+                    <div className="text-left text-yellow-200">Masa Aktif</div>
+                    <div className="text-slate-500">-</div>
+                    <div className="font-bold text-yellow-400">30 Hari</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Step 1: Transfer */}
+              <div className="bg-slate-900 p-4 rounded-xl mb-4 border border-slate-800">
+                <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 1: Transfer Biaya</p>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-slate-300">Biaya Langganan</span>
+                  <span className="text-teal-400 font-bold">{BANK_INFO.price} / bulan</span>
+                </div>
+                <div className="border-t border-slate-800 my-2 pt-2">
+                  <p className="text-xs text-slate-500">{BANK_INFO.bankName} (a.n {BANK_INFO.accountName})</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-mono text-white select-all">{BANK_INFO.accountNumber}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2: Konfirmasi */}
+              <div className="mb-6">
+                <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 2: Konfirmasi & Dapat Token</p>
+                <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg mb-3 flex gap-2 items-start">
                   <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
                   <p className="text-xs text-yellow-200 leading-relaxed">
-                     <b>Penting:</b> Kirim bukti bayar ke Whatsapp atau email berikut dan pastikan bukti transfer memperlihatkan <b>Tanggal & Jam</b> transaksi agar admin bisa memverifikasi.
+                     <b>Penting:</b> Kirim bukti bayar via Whatsapp atau email dan pastikan bukti transfer memperlihatkan <b>Tanggal & Jam</b> transaksi.
                   </p>
+                </div>
+                <div className="flex gap-2">
+                   <button 
+                    onClick={confirmViaWA}
+                    className="flex-1 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+                   >
+                     <MessageCircle className="w-4 h-4" />
+                     Konfirmasi WA
+                   </button>
+                   <a 
+                     href={`mailto:${BANK_INFO.email}?subject=Bukti Bayar Speak7 Premium`}
+                     className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2"
+                   >
+                     Via Email
+                   </a>
+                </div>
               </div>
 
-              <div className="flex gap-2">
-                 <button 
-                  onClick={confirmViaWA}
-                  className="flex-1 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2"
-                 >
-                   <MessageCircle className="w-4 h-4" />
-                   Konfirmasi WA
-                 </button>
-                 <a 
-                   href={`mailto:${BANK_INFO.email}?subject=Bukti Bayar Speak7 Premium`}
-                   className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2"
-                 >
-                   Via Email
-                 </a>
+              {/* Step 3: Input Token */}
+              <div>
+                <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 3: Masukkan Token</p>
+                <input 
+                  type="text" 
+                  placeholder="Contoh: S7-ABCD"
+                  value={tokenInput}
+                  onChange={(e) => setTokenInput(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl mb-3 focus:outline-none focus:border-teal-500 text-center font-mono tracking-widest uppercase"
+                />
+                <button 
+                  onClick={validateToken}
+                  className="w-full py-3 bg-gradient-to-r from-teal-600 to-purple-600 hover:from-teal-500 hover:to-purple-500 text-white rounded-xl font-bold shadow-lg shadow-teal-500/20"
+                >
+                  Aktifkan Premium
+                </button>
               </div>
-            </div>
 
-            {/* Step 3: Input Token */}
-            <div>
-              <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 3: Masukkan Token</p>
-              <input 
-                type="text" 
-                placeholder="Contoh: S7-ABCD"
-                value={tokenInput}
-                onChange={(e) => setTokenInput(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl mb-3 focus:outline-none focus:border-teal-500 text-center font-mono tracking-widest uppercase"
-              />
-              <button 
-                onClick={validateToken}
-                className="w-full py-3 bg-gradient-to-r from-teal-600 to-purple-600 hover:from-teal-500 hover:to-purple-500 text-white rounded-xl font-bold shadow-lg shadow-teal-500/20"
-              >
-                Aktifkan Premium
-              </button>
             </div>
-
           </div>
         </div>
       )}
