@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, AlertTriangle, Lock, Star, FileText, ChevronDown, ChevronUp, Share2 } from "lucide-react";
+import { CheckCircle, AlertTriangle, Lock, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight } from "lucide-react";
 import Confetti from "react-confetti";
 
 export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgradeModal }) {
@@ -13,7 +13,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
   const isHighSchore = result.overall >= 7.0;
 
   const shareToWA = () => {
-    // REBRANDING: Ganti Nama di Pesan Share
     const text = `🔥 I just scored Band ${result.overall} on Ielts4our!\n\nTopic: "${cue || "IELTS Practice"}"\n\nCan you beat my score? 🎯\nTry it here: https://ielts4our.vercel.app`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
@@ -23,13 +22,13 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
     <div className="w-full max-w-2xl mx-auto mt-8 space-y-6">
       {isHighSchore && <Confetti recycle={false} numberOfPieces={500} />}
 
+      {/* --- SCORE GRID --- */}
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-2xl text-center relative overflow-hidden"
       >
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-500 to-purple-500" />
-        
         <h2 className="text-slate-400 uppercase text-sm tracking-widest font-bold mb-2">Overall Band</h2>
         <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-teal-400 to-purple-400 mb-2">
           {result.overall}
@@ -39,7 +38,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
             <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
           ))}
         </div>
-
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           <ScoreItem label="Fluency" score={result.fluency} delay={0.1} />
           <ScoreItem label="Lexical" score={result.lexical} delay={0.2} />
@@ -48,6 +46,7 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       </motion.div>
 
+      {/* --- TRANSCRIPT --- */}
       {result.transcript && (
         <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
           <button 
@@ -60,7 +59,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
             </div>
             {showTranscript ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
           </button>
-          
           <AnimatePresence>
             {showTranscript && (
               <motion.div 
@@ -78,6 +76,7 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       )}
 
+      {/* --- FEEDBACK --- */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="bg-slate-800/50 p-5 rounded-xl border border-teal-900/50">
           <h3 className="flex items-center gap-2 text-teal-400 font-bold mb-3">
@@ -91,7 +90,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
             ))}
           </ul>
         </div>
-
         <div className="bg-slate-800/50 p-5 rounded-xl border border-purple-900/50">
           <h3 className="flex items-center gap-2 text-purple-400 font-bold mb-3">
             <AlertTriangle className="w-5 h-5" /> To reach Band 8.0
@@ -102,6 +100,58 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       </div>
 
+      {/* --- BARU: GRAMMAR & VOCAB CLINIC (TEASER) --- */}
+      {result.grammarCorrection && result.grammarCorrection.length > 0 && (
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden relative">
+          <div className="p-4 bg-slate-800/50 border-b border-slate-800 flex justify-between items-center">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <span className="text-pink-500">🛠️</span> Grammar Clinic
+            </h3>
+            {!isPremiumExternal && <span className="text-[10px] bg-slate-700 text-slate-300 px-2 py-1 rounded">PREVIEW MODE</span>}
+          </div>
+          
+          <div className="divide-y divide-slate-800">
+            {/* ITEM PERTAMA (GRATIS) */}
+            <div className="p-4">
+              <div className="flex flex-col md:flex-row gap-3 md:items-center text-sm mb-2">
+                <div className="text-red-400 line-through md:w-1/2">"{result.grammarCorrection[0].original}"</div>
+                <div className="hidden md:block text-slate-600"><ArrowRight className="w-4 h-4"/></div>
+                <div className="text-green-400 font-bold md:w-1/2">"{result.grammarCorrection[0].correction}"</div>
+              </div>
+              <p className="text-xs text-slate-500 italic">💡 {result.grammarCorrection[0].reason}</p>
+            </div>
+
+            {/* SISA ITEM (BLURRED JIKA FREE) */}
+            {result.grammarCorrection.slice(1).map((item, i) => (
+              <div key={i} className={`p-4 relative ${!isPremiumExternal ? "blur-sm select-none" : ""}`}>
+                <div className="flex flex-col md:flex-row gap-3 md:items-center text-sm mb-2">
+                  <div className="text-red-400 line-through md:w-1/2">"{item.original}"</div>
+                  <div className="hidden md:block text-slate-600"><ArrowRight className="w-4 h-4"/></div>
+                  <div className="text-green-400 font-bold md:w-1/2">"{item.correction}"</div>
+                </div>
+                <p className="text-xs text-slate-500 italic">💡 {item.reason}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* OVERLAY JIKA BELUM PREMIUM */}
+          {!isPremiumExternal && result.grammarCorrection.length > 1 && (
+            <div className="absolute top-[80px] left-0 w-full h-full bg-slate-900/60 backdrop-blur-[1px] flex flex-col items-center pt-10 z-10">
+              <Lock className="w-8 h-8 text-pink-500 mb-2" />
+              <p className="text-white font-bold mb-1">Unlock {result.grammarCorrection.length - 1} More Corrections</p>
+              <p className="text-slate-300 text-xs mb-4">Lihat semua kesalahan grammar kamu dengan Premium.</p>
+              <button 
+                onClick={onOpenUpgradeModal}
+                className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white rounded-full font-bold shadow-lg text-xs"
+              >
+                Unlock Premium
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- MODEL ANSWER --- */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

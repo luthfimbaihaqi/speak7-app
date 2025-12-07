@@ -8,7 +8,7 @@ import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
 import StreakBadge from "@/components/StreakBadge";
 
-// --- DATABASE TOKEN BARU (I4-XXX) ---
+// --- DATABASE TOKEN (I4-XXX) ---
 const VALID_TOKENS = [
   "I4-ALPHA", "I4-BRAVO", "I4-DELTA", "I4-ECHO9", "I4-G0LD1",
   "I4-LION7", "I4-TIGER", "I4-WK29A", "I4-QW88X", "I4-MN12P",
@@ -31,70 +31,251 @@ const VALID_TOKENS = [
   "I4-LUTH1", "I4-USER2", "I4-PRO99", "I4-MAX00", "I4-ULTRA"
 ];
 
+// --- BANK SOAL IELTS ASLI (PERBAIKAN: FORMAT OBJECT) ---
 const CUE_CARDS = [
-  // --- LEVEL 1: FREE (0 - 29) ---
-  "Describe a book you read that you found useful.",
-  "Describe a time when you helped someone.",
-  "Describe a popular place for sports in your city.",
-  "Describe an invention that changed the world.",
-  "Describe a famous person you would like to meet.",
-  "Describe a movie you watched recently.",
-  "Describe a gift you gave to someone.",
-  "Describe a difficult decision you made.",
-  "Describe a website you visit often.",
-  "Describe a traditional festival in your country.",
-  "Describe a crowded place you have visited.",
-  "Describe a family member you admire.",
-  "Describe a goal you want to achieve.",
-  "Describe a piece of art you like.",
-  "Describe a time you were late for something.",
-  "Describe a technological device you use daily.",
-  "Describe a trip you plan to take.",
-  "Describe a wild animal you have seen.",
-  "Describe a teacher who influenced you.",
-  "Describe a song that means a lot to you.",
-  "Describe a historical building in your town.",
-  "Describe a time you complained about something.",
-  "Describe a job you would not like to do.",
-  "Describe a skill you want to learn.",
-  "Describe a time you saved money for something.",
-  "Describe a business person you admire.",
-  "Describe a quiet place you like to go to.",
-  "Describe a time you received good news.",
-  "Describe a change that would improve your local area.",
-  "Describe a competition you would like to take part in.",
+  // === LEVEL 1: FREE (0 - 29) ===
+  {
+    topic: "Describe a book you read that you found useful.",
+    points: ["What the book is", "When you read it", "Why you found it useful", "And explain how it helped you"]
+  },
+  {
+    topic: "Describe a time when you helped someone.",
+    points: ["Who you helped", "Why they needed help", "How you helped them", "And explain how you felt about it"]
+  },
+  {
+    topic: "Describe a popular place for sports in your city.",
+    points: ["Where it is", "What sports people play there", "How often you go there", "And explain why it is popular"]
+  },
+  {
+    topic: "Describe an invention that changed the world.",
+    points: ["What the invention is", "Who invented it", "How it changed our lives", "And explain why you think it is important"]
+  },
+  {
+    topic: "Describe a famous person you would like to meet.",
+    points: ["Who this person is", "Why they are famous", "What you would talk about", "And explain why you want to meet them"]
+  },
+  {
+    topic: "Describe a movie you watched recently.",
+    points: ["What the movie was", "When and where you watched it", "Who you watched it with", "And explain why you liked or disliked it"]
+  },
+  {
+    topic: "Describe a gift you gave to someone.",
+    points: ["What the gift was", "Who you gave it to", "Why you chose that gift", "And explain how the person reacted"]
+  },
+  {
+    topic: "Describe a difficult decision you made.",
+    points: ["What the decision was", "When you made it", "Why it was difficult", "And explain the result of the decision"]
+  },
+  {
+    topic: "Describe a website you visit often.",
+    points: ["What the website is", "How you found it", "What you use it for", "And explain why you visit it often"]
+  },
+  {
+    topic: "Describe a traditional festival in your country.",
+    points: ["What the festival is", "When and where it happens", "What people do during it", "And explain why it is important"]
+  },
+  {
+    topic: "Describe a crowded place you have visited.",
+    points: ["Where it was", "When you went there", "Who you were with", "And explain how you felt being there"]
+  },
+  {
+    topic: "Describe a family member you admire.",
+    points: ["Who they are", "What they do", "Why you admire them", "And explain your relationship with them"]
+  },
+  {
+    topic: "Describe a goal you want to achieve.",
+    points: ["What the goal is", "Why you want to achieve it", "How you plan to achieve it", "And explain why it is important to you"]
+  },
+  {
+    topic: "Describe a piece of art you like.",
+    points: ["What it is", "Where you saw it", "What it looks like", "And explain why you like it"]
+  },
+  {
+    topic: "Describe a time you were late for something.",
+    points: ["What you were late for", "Why you were late", "What happened as a result", "And explain how you felt about it"]
+  },
+  {
+    topic: "Describe a technological device you use daily.",
+    points: ["What the device is", "How long you have used it", "What you use it for", "And explain why it is important to you"]
+  },
+  {
+    topic: "Describe a trip you plan to take.",
+    points: ["Where you want to go", "Who you would go with", "What you would do there", "And explain why you want to take this trip"]
+  },
+  {
+    topic: "Describe a wild animal you have seen.",
+    points: ["What animal it was", "Where you saw it", "What it was doing", "And explain how you felt when you saw it"]
+  },
+  {
+    topic: "Describe a teacher who influenced you.",
+    points: ["Who the teacher was", "What subject they taught", "How they influenced you", "And explain why you remember them"]
+  },
+  {
+    topic: "Describe a song that means a lot to you.",
+    points: ["What the song is", "When you first heard it", "What the lyrics are about", "And explain why it is special to you"]
+  },
+  {
+    topic: "Describe a historical building in your town.",
+    points: ["Where it is", "What it looks like", "What it is used for now", "And explain why it is important"]
+  },
+  {
+    topic: "Describe a time you complained about something.",
+    points: ["What you complained about", "Who you complained to", "What the result was", "And explain how you felt about the situation"]
+  },
+  {
+    topic: "Describe a job you would not like to do.",
+    points: ["What the job is", "What tasks it involves", "Why you think it is difficult", "And explain why you would not like to do it"]
+  },
+  {
+    topic: "Describe a skill you want to learn.",
+    points: ["What the skill is", "Why you want to learn it", "How you would learn it", "And explain how it would help you"]
+  },
+  {
+    topic: "Describe a time you saved money for something.",
+    points: ["What you saved for", "How long it took you", "How you saved the money", "And explain how you felt when you bought it"]
+  },
+  {
+    topic: "Describe a business person you admire.",
+    points: ["Who they are", "What business they run", "Why they are successful", "And explain why you admire them"]
+  },
+  {
+    topic: "Describe a quiet place you like to go to.",
+    points: ["Where it is", "How often you go there", "What you do there", "And explain why you like it"]
+  },
+  {
+    topic: "Describe a time you received good news.",
+    points: ["What the news was", "How you received it", "Who you shared it with", "And explain why it was good news"]
+  },
+  {
+    topic: "Describe a change that would improve your local area.",
+    points: ["What the change would be", "How it would be done", "Who it would benefit", "And explain why this change is necessary"]
+  },
+  {
+    topic: "Describe a competition you would like to take part in.",
+    points: ["What the competition is", "What you would need to do", "Why you want to participate", "And explain what prize you would like to win"]
+  },
 
-  // --- LEVEL 2: PREMIUM (30 - 59) ---
-  "Describe a piece of advice you received that was helpful.",
-  "Describe a risk you took that you do not regret.",
-  "Describe a family business you know and admire.",
-  "Describe a rule at your school or work that you did not like.",
-  "Describe a time you used a map to find your way.",
-  "Describe a creative person whose work you like.",
-  "Describe a party that you enjoyed.",
-  "Describe an old object which your family has kept for a long time.",
-  "Describe a disagreement you had with a friend.",
-  "Describe a uniform you wear (or wore) at school or work.",
-  "Describe a speech or talk that you found interesting.",
-  "Describe a time you got lost in a place you didn't know.",
-  "Describe a science subject (Biology, Robotics, etc.) that you are interested in.",
-  "Describe a noise that bothers you in your daily life.",
-  "Describe a place near water (like a river, lake, or ocean) you enjoyed visiting.",
-  "Describe a toy you liked in your childhood.",
-  "Describe a photo of yourself that you like.",
-  "Describe a surprise that made you happy.",
-  "Describe a time you had to wait for something for a long time.",
-  "Describe a foreign culture that you are interested in learning about.",
-  "Describe a sport you enjoyed watching (live or on TV).",
-  "Describe a house or apartment you would like to live in.",
-  "Describe a time you were friendly to someone you didn't like.",
-  "Describe an advertisement that persuaded you to buy something.",
-  "Describe a small business you would like to open if you had the chance.",
-  "Describe a time you moved to a new home or school.",
-  "Describe a person who is good at apologizing.",
-  "Describe a day when you woke up very early.",
-  "Describe a character from a film that you felt connected to.",
-  "Describe a traditional product from your country that is popular."
+  // === LEVEL 2: PREMIUM (30 - 59) ===
+  {
+    topic: "Describe a piece of advice you received that was helpful.",
+    points: ["Who gave it to you", "What the advice was", "In what situation you received it", "And explain how it helped you"]
+  },
+  {
+    topic: "Describe a risk you took that you do not regret.",
+    points: ["What the risk was", "Why you took it", "What the result was", "And explain why you do not regret it"]
+  },
+  {
+    topic: "Describe a family business you know and admire.",
+    points: ["What the business is", "Who runs it", "How you know about it", "And explain why you admire it"]
+  },
+  {
+    topic: "Describe a rule at your school or work that you did not like.",
+    points: ["What the rule was", "Why it was implemented", "Why you did not like it", "And explain if you followed it or not"]
+  },
+  {
+    topic: "Describe a time you used a map to find your way.",
+    points: ["Where you were going", "Why you needed a map", "How easy or difficult it was", "And explain if you found the place successfully"]
+  },
+  {
+    topic: "Describe a creative person whose work you like.",
+    points: ["Who the person is", "What kind of creative work they do", "How you know about them", "And explain why you like their work"]
+  },
+  {
+    topic: "Describe a party that you enjoyed.",
+    points: ["Whose party it was", "When and where it was held", "What happened during the party", "And explain why you enjoyed it"]
+  },
+  {
+    topic: "Describe an old object which your family has kept for a long time.",
+    points: ["What the object is", "Where it came from", "How long your family has kept it", "And explain why it is important to your family"]
+  },
+  {
+    topic: "Describe a disagreement you had with a friend.",
+    points: ["Who the friend was", "What the disagreement was about", "How you resolved it", "And explain how it affected your friendship"]
+  },
+  {
+    topic: "Describe a uniform you wear (or wore) at school or work.",
+    points: ["What it looks like", "When you wear it", "Who bought it for you", "And explain how you feel about wearing it"]
+  },
+  {
+    topic: "Describe a speech or talk that you found interesting.",
+    points: ["Who gave the speech", "What it was about", "Where you heard it", "And explain why you found it interesting"]
+  },
+  {
+    topic: "Describe a time you got lost in a place you didn't know.",
+    points: ["Where you were", "Why you were there", "How you got lost", "And explain how you found your way back"]
+  },
+  {
+    topic: "Describe a science subject that you are interested in.",
+    points: ["What subject it is", "How you learned about it", "Why you find it interesting", "And explain how it affects our lives"]
+  },
+  {
+    topic: "Describe a noise that bothers you in your daily life.",
+    points: ["What the noise is", "Where it comes from", "When it happens", "And explain why it bothers you"]
+  },
+  {
+    topic: "Describe a place near water you enjoyed visiting.",
+    points: ["Where this place is", "What you did there", "Who you went with", "And explain why you liked it"]
+  },
+  {
+    topic: "Describe a toy you liked in your childhood.",
+    points: ["What the toy was", "Who gave it to you", "How you played with it", "And explain why it was special to you"]
+  },
+  {
+    topic: "Describe a photo of yourself that you like.",
+    points: ["When it was taken", "Where it was taken", "Who took it", "And explain why you like this photo"]
+  },
+  {
+    topic: "Describe a surprise that made you happy.",
+    points: ["What the surprise was", "Who surprised you", "How you reacted", "And explain why it made you happy"]
+  },
+  {
+    topic: "Describe a time you had to wait for something for a long time.",
+    points: ["What you were waiting for", "How long you waited", "What you did while waiting", "And explain how you felt about waiting"]
+  },
+  {
+    topic: "Describe a foreign culture that you are interested in learning about.",
+    points: ["Which culture it is", "How you know about it", "What specific aspect interests you", "And explain why you want to learn more"]
+  },
+  {
+    topic: "Describe a sport you enjoyed watching.",
+    points: ["What sport it was", "When and where you watched it", "Who you watched it with", "And explain why you enjoyed watching it"]
+  },
+  {
+    topic: "Describe a house or apartment you would like to live in.",
+    points: ["Where it would be", "What it would look like", "Who you would live with", "And explain why you would like to live there"]
+  },
+  {
+    topic: "Describe a time you were friendly to someone you didn't like.",
+    points: ["Who the person was", "When it happened", "Why you didn't like them", "And explain why you were friendly to them"]
+  },
+  {
+    topic: "Describe an advertisement that persuaded you to buy something.",
+    points: ["What the advertisement was for", "Where you saw it", "What it showed", "And explain why it persuaded you"]
+  },
+  {
+    topic: "Describe a small business you would like to open.",
+    points: ["What kind of business it would be", "Where you would open it", "Who your customers would be", "And explain why you want to open this business"]
+  },
+  {
+    topic: "Describe a time you moved to a new home or school.",
+    points: ["When you moved", "Where you moved to", "Why you moved", "And explain how you felt about moving"]
+  },
+  {
+    topic: "Describe a person who is good at apologizing.",
+    points: ["Who this person is", "How you know them", "When they apologized to you", "And explain why you think they are good at it"]
+  },
+  {
+    topic: "Describe a day when you woke up very early.",
+    points: ["When it was", "Why you woke up early", "What you did that day", "And explain how you felt by the end of the day"]
+  },
+  {
+    topic: "Describe a character from a film that you felt connected to.",
+    points: ["Who the character is", "Which film they are in", "What their personality is like", "And explain why you felt connected to them"]
+  },
+  {
+    topic: "Describe a traditional product from your country that is popular.",
+    points: ["What the product is", "How it is made", "Where it is popular", "And explain why it is important to your culture"]
+  }
 ];
 
 // --- INFO BANK & KONTAK ---
@@ -108,13 +289,12 @@ const BANK_INFO = {
 };
 
 export default function Home() {
-  const [dailyCue, setDailyCue] = useState("");
+  const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]); // Default ke object pertama
   const [analysisResult, setAnalysisResult] = useState(null);
   const [streakKey, setStreakKey] = useState(0); 
   const [isRotating, setIsRotating] = useState(false);
   const [isPremium, setIsPremium] = useState(false); 
   
-  // STATE MODAL PEMBAYARAN
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [tokenInput, setTokenInput] = useState("");
 
@@ -127,7 +307,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // REBRANDING: Ganti Key LocalStorage jadi ielts4our_...
     const expiryStr = localStorage.getItem("ielts4our_premium_expiry");
     if (expiryStr) {
       const expiryTime = parseInt(expiryStr);
@@ -163,7 +342,6 @@ export default function Home() {
     setAnalysisResult(data);
     const todayStr = new Date().toDateString();
     
-    // REBRANDING: Ganti Key LocalStorage
     const lastPracticeDate = localStorage.getItem("ielts4our_last_date");
     let currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
 
@@ -190,7 +368,6 @@ export default function Home() {
       const expiryDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); 
 
       setIsPremium(true);
-      // REBRANDING: Ganti Key LocalStorage
       localStorage.setItem("ielts4our_premium_expiry", expiryDate.getTime().toString());
       
       alert(`🎉 Selamat! Akun PRO aktif 30 hari (s/d ${expiryDate.toLocaleDateString()}).`);
@@ -203,7 +380,6 @@ export default function Home() {
   };
 
   const confirmViaWA = () => {
-    // REBRANDING: Ganti Nama di Pesan WA
     const text = `Halo Admin Ielts4our, saya sudah transfer ${BANK_INFO.price} untuk upgrade Premium.\n\nBerikut lampiran bukti transfer saya (Tanggal & Jam terlihat).\nMohon verifikasi dan kirimkan Kode Tokennya. Terima kasih.`;
     const url = `https://wa.me/${BANK_INFO.waNumber}?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
@@ -215,10 +391,8 @@ export default function Home() {
       <header className="flex flex-col md:flex-row justify-between items-center py-6 max-w-4xl mx-auto gap-4">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
-            {/* Logo Singkatan I4 */}
             <span className="font-black text-xl text-white">I4</span>
           </div>
-          {/* Judul Baru */}
           <h1 className="text-2xl font-bold tracking-tight text-white">
             Ielts<span className="text-teal-400">4our</span>
           </h1>
@@ -240,7 +414,6 @@ export default function Home() {
               Upgrade Pro
             </motion.button>
           )}
-          {/* StreakBadge otomatis baca props, tapi perlu dipastikan internalnya nanti */}
           <StreakBadge triggerUpdate={streakKey} />
         </div>
       </header>
@@ -257,7 +430,7 @@ export default function Home() {
         </motion.div>
         
         <h2 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
-          Band 7 dalam <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-purple-500">100 Hari</span>
+          Latihan Speaking Kapan Saja Bersama <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-purple-500">Ielts4our</span>
         </h2>
         <p className="text-slate-400 text-lg">
           {isPremium 
@@ -298,17 +471,26 @@ export default function Home() {
             <h3 className="text-slate-500 text-sm font-bold uppercase tracking-widest mb-2">
                {CUE_CARDS.indexOf(dailyCue) >= 30 ? "Premium Topic" : "Practice Topic"}
             </h3>
-            <p className="text-2xl md:text-3xl font-bold text-white leading-relaxed">
-              "{dailyCue}"
+            
+            <p className="text-2xl md:text-3xl font-bold text-white leading-relaxed mb-6">
+              "{dailyCue.topic}"
             </p>
-            <p className="mt-4 text-slate-400 text-sm">
-              You should say: What it is, When it happened, Why it was important, etc.
-            </p>
+            
+            <div className="inline-block text-left bg-slate-900/50 p-6 rounded-xl border border-slate-700/50">
+              <p className="text-slate-400 text-sm font-bold mb-3 uppercase tracking-wider">You should say:</p>
+              <ul className="list-disc list-inside text-slate-300 space-y-2 text-sm md:text-base">
+                {dailyCue.points?.map((point, index) => (
+                  <li key={index}>{point}</li>
+                ))}
+              </ul>
+            </div>
+
           </div>
         </motion.div>
 
+        {/* Kirim dailyCue.topic (String) ke Recorder agar tidak error */}
         <Recorder 
-          cueCard={dailyCue} 
+          cueCard={dailyCue.topic} 
           onAnalysisComplete={handleAnalysisComplete}
           maxDuration={isPremium ? 120 : 60} 
         />
@@ -317,7 +499,7 @@ export default function Home() {
           <div id="result-section">
             <ScoreCard 
               result={analysisResult} 
-              cue={dailyCue}
+              cue={dailyCue.topic}
               isPremiumExternal={isPremium}
               onOpenUpgradeModal={() => setShowUpgradeModal(true)}
             />
@@ -358,9 +540,14 @@ export default function Home() {
                     <div className="text-slate-500">❌ Terkunci</div>
                     <div className="font-bold text-white">✅ Band 8.0</div>
                   </div>
+                  <div className="grid grid-cols-3 p-3 items-center text-center">
+                    <div className="text-left text-slate-300">Grammar Clinic</div>
+                    <div className="text-slate-500">❌ Terkunci</div>
+                    <div className="font-bold text-white">Full Access</div>
+                  </div>
                   <div className="grid grid-cols-3 p-3 items-center text-center bg-yellow-500/10">
                     <div className="text-left text-yellow-200">Masa Aktif</div>
-                    <div className="text-slate-500">Selamanya</div>
+                    <div className="text-slate-500">Selamanya Free</div>
                     <div className="font-bold text-yellow-400">30 Hari</div>
                   </div>
                 </div>
@@ -385,7 +572,7 @@ export default function Home() {
                 <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg mb-3 flex gap-2 items-start">
                   <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
                   <p className="text-xs text-yellow-200 leading-relaxed">
-                     <b>Penting:</b> Pastikan bukti transfer memperlihatkan <b>Tanggal & Jam</b> transaksi.
+                     <b>Penting:</b> Kirim bukti bayar via email atau Whatsapp dan pastikan bukti transfer memperlihatkan <b>Tanggal & Jam</b> transaksi.
                   </p>
                 </div>
                 <div className="flex gap-2">

@@ -4,7 +4,6 @@ import Groq from "groq-sdk";
 export async function POST(request) {
   console.log("🚀 Menerima request di /api/analyze");
 
-  // 1. Cek API KEY
   if (!process.env.GROQ_API_KEY) {
     return NextResponse.json(
       { error: "Server Error: API Key Groq belum disetting." },
@@ -25,43 +24,38 @@ export async function POST(request) {
       return NextResponse.json({ error: "Audio is required" }, { status: 400 });
     }
 
-    // 2. TRANSKRIPSI (Audio -> Teks)
-    console.log("⏳ Mengirim audio ke Groq Whisper...");
+    // 1. TRANSKRIPSI
     const transcription = await groq.audio.transcriptions.create({
       file: audioFile,
       model: "whisper-large-v3",
-      language: "en", // Memaksa deteksi Bahasa Inggris
+      language: "en",
       response_format: "json",
     });
 
     const transcriptText = transcription.text;
-    console.log("✅ Transkripsi:", transcriptText.substring(0, 30) + "...");
 
-    // 3. SCORING (Teks -> Nilai IELTS)
-    console.log("⏳ Mengirim teks ke LLaMA 3.3...");
-    
-    // PERBAIKAN PROMPT: Meminta AI memperbaiki cerita User, bukan membuat cerita baru
+    // 2. SCORING & KOREKSI
     const systemPrompt = `
       You are an official IELTS Speaking examiner. Analyze the user's response.
       
-      Task 1: Scoring
-      Score each criterion from 0-9 using only 0.5 increments:
-      - Fluency and Coherence
-      - Lexical Resource
-      - Grammatical Range and Accuracy
-      - Pronunciation
+      Task 1: Scoring (0-9, 0.5 increments)
+      - Fluency, Lexical, Grammar, Pronunciation.
       
       Task 2: Feedback
-      - Provide 2 positive feedbacks ("feedback" array).
-      - Provide 1 specific improvement ("improvement" string).
+      - 2 positive feedback points.
+      - 1 specific improvement suggestion.
       
-      Task 3: Band 8.0 Model Answer (CRITICAL)
-      - "modelAnswer": Rewrite the USER'S EXACT RESPONSE to make it sound like a Band 8.0 speaker.
-      - KEEP the user's original ideas, context, and story. DO NOT invent a new story.
-      - Fix their grammar, upgrade their vocabulary, and improve flow.
-      - If the user's answer is too short (under 2 sentences), expand it slightly using logically related ideas based on their keywords.
+      Task 3: Grammar & Vocabulary Correction (CRITICAL)
+      - Identify 3-5 specific sentences with grammatical errors or weak vocabulary.
+      - Provide a "grammarCorrection" array. Each item must have:
+        - "original": The user's exact sentence.
+        - "correction": A better/correct version (Band 8.0 style).
+        - "reason": Brief explanation of the error or improvement.
+      
+      Task 4: Model Answer
+      - Rewrite the user's response to be Band 8.0 level, keeping their original ideas.
 
-      Return ONLY valid JSON with this structure:
+      Return ONLY valid JSON:
       {
         "fluency": number,
         "lexical": number,
@@ -70,6 +64,9 @@ export async function POST(request) {
         "overall": number,
         "feedback": ["string", "string"],
         "improvement": "string",
+        "grammarCorrection": [
+          { "original": "string", "correction": "string", "reason": "string" }
+        ],
         "modelAnswer": "string"
       }
     `;
@@ -89,10 +86,7 @@ export async function POST(request) {
       response_format: { type: "json_object" },
     });
 
-    const content = completion.choices[0].message.content;
-    const analysisResult = JSON.parse(content);
-
-    console.log("✅ Scoring selesai.");
+    const analysisResult = JSON.parse(completion.choices[0].message.content);
 
     return NextResponse.json({
       transcript: transcriptText,
