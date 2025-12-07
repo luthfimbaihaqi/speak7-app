@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, ArrowRight, Check, Lock, AlertTriangle } from "lucide-react";
+import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, ArrowRight, Check, Lock, AlertTriangle, BarChart3 } from "lucide-react";
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
-import StreakBadge from "@/components/StreakBadge";
+// HAPUS IMPORT STREAKBADGE (Sudah dipindah ke halaman Progress)
 
 // --- DATABASE TOKEN (I4-XXX) ---
 const VALID_TOKENS = [
@@ -111,7 +112,8 @@ const BANK_INFO = {
 export default function Home() {
   const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]);
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [streakKey, setStreakKey] = useState(0); 
+  
+  // HAPUS state streakKey karena badge di header sudah hilang
   const [isRotating, setIsRotating] = useState(false);
   const [isPremium, setIsPremium] = useState(false); 
   
@@ -162,6 +164,7 @@ export default function Home() {
     setAnalysisResult(data);
     const todayStr = new Date().toDateString();
     
+    // --- STREAK LOGIC (Tetap dihitung, tapi tidak mentrigger badge) ---
     const lastPracticeDate = localStorage.getItem("ielts4our_last_date");
     let currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
 
@@ -176,8 +179,24 @@ export default function Home() {
       }
       localStorage.setItem("ielts4our_streak", currentStreak);
       localStorage.setItem("ielts4our_last_date", todayStr);
-      setStreakKey((prev) => prev + 1); 
+      // setStreakKey tidak perlu dipanggil lagi
     }
+
+    // --- SAVE HISTORY LOGIC (My Progress) ---
+    const historyItem = {
+       id: Date.now(),
+       date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
+       topic: dailyCue.topic,
+       overall: data.overall,
+       fluency: data.fluency,
+       lexical: data.lexical,
+       grammar: data.grammar,
+       pronunciation: data.pronunciation
+    };
+
+    const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
+    const updatedHistory = [...existingHistory, historyItem].slice(-30); 
+    localStorage.setItem("ielts4our_history", JSON.stringify(updatedHistory));
   };
 
   const validateToken = () => {
@@ -222,6 +241,19 @@ export default function Home() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          {/* TOMBOL MY PROGRESS (DENGAN TEXT) */}
+          <Link href="/progress">
+             <motion.div 
+               whileHover={{ scale: 1.05 }}
+               whileTap={{ scale: 0.95 }}
+               className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-teal-400 transition-colors cursor-pointer flex items-center gap-2"
+               title="My Progress"
+             >
+                <BarChart3 className="w-5 h-5" />
+                <span className="font-bold text-sm">My Progress</span>
+             </motion.div>
+          </Link>
+
           {!isPremium && (
             <motion.button 
               whileHover={{ scale: 1.05 }}
@@ -233,7 +265,7 @@ export default function Home() {
               Upgrade Pro
             </motion.button>
           )}
-          <StreakBadge triggerUpdate={streakKey} />
+          {/* STREAK BADGE DIHAPUS DARI SINI */}
         </div>
       </header>
 
@@ -312,7 +344,7 @@ export default function Home() {
                 
                 <div className="inline-block text-left bg-black/20 p-6 md:p-8 rounded-2xl border border-white/5 backdrop-blur-sm">
                   <p className="text-teal-400 text-xs font-bold mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4" /> You should say:
+                    <ArrowRight className="w-4 h-4" /> You can say:
                   </p>
                   <ul className="space-y-3">
                     {dailyCue.points?.map((point, index) => (
@@ -407,7 +439,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  {/* --- NEW: AMBER ALERT / IMPORTANT NOTE --- */}
+                  {/* AMBER ALERT */}
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 flex gap-3 items-start text-left">
                      <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
                      <div className="text-xs text-yellow-200/90 leading-relaxed">
