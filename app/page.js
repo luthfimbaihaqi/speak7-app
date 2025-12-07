@@ -3,11 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, ArrowRight, Check, Lock, AlertTriangle, BarChart3 } from "lucide-react";
+import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, ArrowRight, Check, Lock, AlertTriangle, BarChart3, ChevronRight } from "lucide-react";
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
-// HAPUS IMPORT STREAKBADGE (Sudah dipindah ke halaman Progress)
 
 // --- DATABASE TOKEN (I4-XXX) ---
 const VALID_TOKENS = [
@@ -113,7 +112,6 @@ export default function Home() {
   const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]);
   const [analysisResult, setAnalysisResult] = useState(null);
   
-  // HAPUS state streakKey karena badge di header sudah hilang
   const [isRotating, setIsRotating] = useState(false);
   const [isPremium, setIsPremium] = useState(false); 
   
@@ -164,7 +162,7 @@ export default function Home() {
     setAnalysisResult(data);
     const todayStr = new Date().toDateString();
     
-    // --- STREAK LOGIC (Tetap dihitung, tapi tidak mentrigger badge) ---
+    // --- STREAK LOGIC ---
     const lastPracticeDate = localStorage.getItem("ielts4our_last_date");
     let currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
 
@@ -179,10 +177,9 @@ export default function Home() {
       }
       localStorage.setItem("ielts4our_streak", currentStreak);
       localStorage.setItem("ielts4our_last_date", todayStr);
-      // setStreakKey tidak perlu dipanggil lagi
     }
 
-    // --- SAVE HISTORY LOGIC (My Progress) ---
+    // --- SAVE HISTORY LOGIC ---
     const historyItem = {
        id: Date.now(),
        date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
@@ -234,14 +231,21 @@ export default function Home() {
           <h1 className="text-xl font-bold tracking-tight text-white/90">
             Ielts<span className="text-teal-400">4our</span>
           </h1>
+          
+          {/* LINK DESKTOP: Our Story (Sebelah Kanan Logo) */}
+          <Link href="/about" className="hidden md:block ml-4 text-sm font-medium text-slate-300 hover:text-white transition-colors tracking-wide">
+            Meet the Creator
+          </Link>
+
           {isPremium && (
             <span className="ml-2 px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg shadow-yellow-500/20">
               Pro Member
             </span>
           )}
         </div>
+
         <div className="flex items-center gap-3">
-          {/* TOMBOL MY PROGRESS (DENGAN TEXT) */}
+          {/* TOMBOL MY PROGRESS */}
           <Link href="/progress">
              <motion.div 
                whileHover={{ scale: 1.05 }}
@@ -265,12 +269,18 @@ export default function Home() {
               Upgrade Pro
             </motion.button>
           )}
-          {/* STREAK BADGE DIHAPUS DARI SINI */}
         </div>
       </header>
 
       {/* HERO SECTION */}
       <div className="text-center max-w-3xl mx-auto mt-6 mb-12">
+        {/* LINK MOBILE: Read Our Story (Di antara Tombol & Badge) */}
+        <div className="md:hidden mb-6">
+           <Link href="/about" className="inline-flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest border-b border-slate-700 pb-0.5 hover:border-white transition-all">
+             ✨ Meet the Creator <ChevronRight className="w-3 h-3" />
+           </Link>
+        </div>
+
         <motion.div
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -439,7 +449,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  {/* AMBER ALERT */}
+                  {/* --- AMBER ALERT / IMPORTANT NOTE --- */}
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 flex gap-3 items-start text-left">
                      <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
                      <div className="text-xs text-yellow-200/90 leading-relaxed">
@@ -480,7 +490,7 @@ export default function Home() {
       )}
 
       <footer className="text-center mt-24 text-slate-600 text-xs md:text-sm">
-        <p>&copy; 2025 Ielts4our. Built for IELTS fighters.</p>
+        <p>&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.</p>
       </footer>
     </main>
   );
