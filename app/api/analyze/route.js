@@ -38,8 +38,8 @@ export async function POST(request) {
     const systemPrompt = `
       You are an official IELTS Speaking examiner. Analyze the user's response.
       
-      Task 1: Scoring (0-9, 0.5 increments)
-      - Fluency, Lexical, Grammar, Pronunciation.
+      Task 1: Scoring (0-9, 0.5 increments ONLY)
+      - Provide scores for: Fluency, Lexical, Grammar, Pronunciation.
       
       Task 2: Feedback
       - 2 positive feedback points.
@@ -61,7 +61,6 @@ export async function POST(request) {
         "lexical": number,
         "grammar": number,
         "pronunciation": number,
-        "overall": number,
         "feedback": ["string", "string"],
         "improvement": "string",
         "grammarCorrection": [
@@ -88,9 +87,37 @@ export async function POST(request) {
 
     const analysisResult = JSON.parse(completion.choices[0].message.content);
 
+    // --- 3. FIX: HITUNG OVERALL SCORE PAKE RUMUS JS (IELTS ROUNDING) ---
+    // Agar tidak ada nilai aneh seperti 5.75
+    
+    const f = analysisResult.fluency || 0;
+    const l = analysisResult.lexical || 0;
+    const g = analysisResult.grammar || 0;
+    const p = analysisResult.pronunciation || 0;
+
+    const average = (f + l + g + p) / 4;
+    const decimalPart = average % 1; // Ambil desimalnya saja (cth: 0.25, 0.75, 0.125)
+    const integerPart = Math.floor(average);
+
+    let finalOverall;
+
+    // Aturan IELTS:
+    // .0 s/d .125 -> turu ke .0
+    // .25 s/d .625 -> jadi .5 (naik/turun)
+    // .75 s/d .99 -> naik ke .0 berikutnya
+
+    if (decimalPart < 0.25) {
+      finalOverall = integerPart;       // Contoh: 6.125 -> 6.0
+    } else if (decimalPart < 0.75) {
+      finalOverall = integerPart + 0.5; // Contoh: 6.25 -> 6.5
+    } else {
+      finalOverall = integerPart + 1.0; // Contoh: 5.75 -> 6.0
+    }
+
     return NextResponse.json({
       transcript: transcriptText,
       ...analysisResult,
+      overall: finalOverall, // Override nilai overall dari AI
     });
 
   } catch (error) {
