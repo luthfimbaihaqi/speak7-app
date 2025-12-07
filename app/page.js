@@ -8,27 +8,27 @@ import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
 import StreakBadge from "@/components/StreakBadge";
 
-// --- DATABASE TOKEN ---
+// --- DATABASE TOKEN BARU (I4-XXX) ---
 const VALID_TOKENS = [
-  "S7-ALPHA", "S7-BRAVO", "S7-DELTA", "S7-ECHO9", "S7-G0LD1",
-  "S7-LION7", "S7-TIGER", "S7-WK29A", "S7-QW88X", "S7-MN12P",
-  "S7-X9L2K", "S7-M4P1Z", "S7-K8J9R", "S7-H3V5C", "S7-B2N6M",
-  "S7-R9T4W", "S7-Y7U8I", "S7-O0P1L", "S7-A2S3D", "S7-F4G5H",
-  "S7-J6K7L", "S7-Z8X9C", "S7-V0B1N", "S7-M2Q3W", "S7-E4R5T",
-  "S7-Y6U7I", "S7-O8P9A", "S7-S1D2F", "S7-G3H4J", "S7-K5L6Z",
-  "S7-X7C8V", "S7-B9N0M", "S7-Q1W2E", "S7-R3T4Y", "S7-U5I6O",
-  "S7-P7A8S", "S7-D9F0G", "S7-H1J2K", "S7-L3Z4X", "S7-C5V6B",
-  "S7-N7M8Q", "S7-W9E0R", "S7-T1Y2U", "S7-I3O4P", "S7-A5S6D",
-  "S7-F7G8H", "S7-J9K0L", "S7-Z1X2C", "S7-V3B4N", "S7-M5Q6W",
-  "S7-2025A", "S7-PRO01", "S7-BEST9", "S7-WIN88", "S7-TOP77",
-  "S7-SKILL", "S7-IELTS", "S7-BAND8", "S7-BAND7", "S7-SPEAK",
-  "S7-FAST1", "S7-COOL2", "S7-GOOD3", "S7-NICE4", "S7-EASY5",
-  "S7-HARD6", "S7-TEST7", "S7-EXAM8", "S7-PASS9", "S7-FAIL0",
-  "S7-ACE11", "S7-KING2", "S7-QUEN3", "S7-JACK4", "S7-TEN10",
-  "S7-ONE01", "S7-TWO02", "S7-SIX06", "S7-NINE9", "S7-ZERO0",
-  "S7-RX782", "S7-EV001", "S7-GUNDM", "S7-ZAKU2", "S7-GOUF3",
-  "S7-DOM09", "S7-GELG4", "S7-GM005", "S7-BALL6", "S7-AGUY7",
-  "S7-LUTH1", "S7-USER2", "S7-PRO99", "S7-MAX00", "S7-ULTRA"
+  "I4-ALPHA", "I4-BRAVO", "I4-DELTA", "I4-ECHO9", "I4-G0LD1",
+  "I4-LION7", "I4-TIGER", "I4-WK29A", "I4-QW88X", "I4-MN12P",
+  "I4-X9L2K", "I4-M4P1Z", "I4-K8J9R", "I4-H3V5C", "I4-B2N6M",
+  "I4-R9T4W", "I4-Y7U8I", "I4-O0P1L", "I4-A2S3D", "I4-F4G5H",
+  "I4-J6K7L", "I4-Z8X9C", "I4-V0B1N", "I4-M2Q3W", "I4-E4R5T",
+  "I4-Y6U7I", "I4-O8P9A", "I4-S1D2F", "I4-G3H4J", "I4-K5L6Z",
+  "I4-X7C8V", "I4-B9N0M", "I4-Q1W2E", "I4-R3T4Y", "I4-U5I6O",
+  "I4-P7A8S", "I4-D9F0G", "I4-H1J2K", "I4-L3Z4X", "I4-C5V6B",
+  "I4-N7M8Q", "I4-W9E0R", "I4-T1Y2U", "I4-I3O4P", "I4-A5S6D",
+  "I4-F7G8H", "I4-J9K0L", "I4-Z1X2C", "I4-V3B4N", "I4-M5Q6W",
+  "I4-2025A", "I4-PRO01", "I4-BEST9", "I4-WIN88", "I4-TOP77",
+  "I4-SKILL", "I4-IELTS", "I4-BAND8", "I4-BAND7", "I4-SPEAK",
+  "I4-FAST1", "I4-COOL2", "I4-GOOD3", "I4-NICE4", "I4-EASY5",
+  "I4-HARD6", "I4-TEST7", "I4-EXAM8", "I4-PASS9", "I4-FAIL0",
+  "I4-ACE11", "I4-KING2", "I4-QUEN3", "I4-JACK4", "I4-TEN10",
+  "I4-ONE01", "I4-TWO02", "I4-SIX06", "I4-NINE9", "I4-ZERO0",
+  "I4-RX782", "I4-EV001", "I4-GUNDM", "I4-ZAKU2", "I4-GOUF3",
+  "I4-DOM09", "I4-GELG4", "I4-GM005", "I4-BALL6", "I4-AGUY7",
+  "I4-LUTH1", "I4-USER2", "I4-PRO99", "I4-MAX00", "I4-ULTRA"
 ];
 
 const CUE_CARDS = [
@@ -127,7 +127,8 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const expiryStr = localStorage.getItem("speak7_premium_expiry");
+    // REBRANDING: Ganti Key LocalStorage jadi ielts4our_...
+    const expiryStr = localStorage.getItem("ielts4our_premium_expiry");
     if (expiryStr) {
       const expiryTime = parseInt(expiryStr);
       const now = Date.now();
@@ -135,7 +136,7 @@ export default function Home() {
         setIsPremium(true); 
       } else {
         setIsPremium(false);
-        localStorage.removeItem("speak7_premium_expiry"); 
+        localStorage.removeItem("ielts4our_premium_expiry"); 
       }
     } else {
       setIsPremium(false);
@@ -161,8 +162,10 @@ export default function Home() {
   const handleAnalysisComplete = (data) => {
     setAnalysisResult(data);
     const todayStr = new Date().toDateString();
-    const lastPracticeDate = localStorage.getItem("speak7_last_date");
-    let currentStreak = parseInt(localStorage.getItem("speak7_streak") || "0");
+    
+    // REBRANDING: Ganti Key LocalStorage
+    const lastPracticeDate = localStorage.getItem("ielts4our_last_date");
+    let currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
 
     if (lastPracticeDate !== todayStr) {
       const yesterday = new Date();
@@ -173,8 +176,8 @@ export default function Home() {
       } else {
         currentStreak = 1; 
       }
-      localStorage.setItem("speak7_streak", currentStreak);
-      localStorage.setItem("speak7_last_date", todayStr);
+      localStorage.setItem("ielts4our_streak", currentStreak);
+      localStorage.setItem("ielts4our_last_date", todayStr);
       setStreakKey((prev) => prev + 1); 
     }
   };
@@ -187,7 +190,8 @@ export default function Home() {
       const expiryDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); 
 
       setIsPremium(true);
-      localStorage.setItem("speak7_premium_expiry", expiryDate.getTime().toString());
+      // REBRANDING: Ganti Key LocalStorage
+      localStorage.setItem("ielts4our_premium_expiry", expiryDate.getTime().toString());
       
       alert(`🎉 Selamat! Akun PRO aktif 30 hari (s/d ${expiryDate.toLocaleDateString()}).`);
       setShowUpgradeModal(false);
@@ -199,7 +203,8 @@ export default function Home() {
   };
 
   const confirmViaWA = () => {
-    const text = `Halo Admin Speak7, saya sudah transfer ${BANK_INFO.price} untuk upgrade Premium.\n\nBerikut lampiran bukti transfer saya (Tanggal & Jam terlihat).\nMohon verifikasi dan kirimkan Kode Tokennya. Terima kasih.`;
+    // REBRANDING: Ganti Nama di Pesan WA
+    const text = `Halo Admin Ielts4our, saya sudah transfer ${BANK_INFO.price} untuk upgrade Premium.\n\nBerikut lampiran bukti transfer saya (Tanggal & Jam terlihat).\nMohon verifikasi dan kirimkan Kode Tokennya. Terima kasih.`;
     const url = `https://wa.me/${BANK_INFO.waNumber}?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
@@ -210,10 +215,12 @@ export default function Home() {
       <header className="flex flex-col md:flex-row justify-between items-center py-6 max-w-4xl mx-auto gap-4">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
-            <span className="font-black text-xl text-white">S7</span>
+            {/* Logo Singkatan I4 */}
+            <span className="font-black text-xl text-white">I4</span>
           </div>
+          {/* Judul Baru */}
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            Speak<span className="text-teal-400">7</span>
+            Ielts<span className="text-teal-400">4our</span>
           </h1>
           {isPremium && (
             <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[10px] font-bold uppercase tracking-widest rounded border border-yellow-500/50">
@@ -222,7 +229,6 @@ export default function Home() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          {/* Tombol Upgrade Langsung */}
           {!isPremium && (
             <motion.button 
               whileHover={{ scale: 1.05 }}
@@ -234,6 +240,7 @@ export default function Home() {
               Upgrade Pro
             </motion.button>
           )}
+          {/* StreakBadge otomatis baca props, tapi perlu dipastikan internalnya nanti */}
           <StreakBadge triggerUpdate={streakKey} />
         </div>
       </header>
@@ -262,7 +269,6 @@ export default function Home() {
       {/* CONTENT AREA */}
       <div className="max-w-3xl mx-auto space-y-8">
         
-        {/* CARD SOAL */}
         <motion.div 
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -301,21 +307,18 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* RECORDER */}
         <Recorder 
           cueCard={dailyCue} 
           onAnalysisComplete={handleAnalysisComplete}
           maxDuration={isPremium ? 120 : 60} 
         />
 
-        {/* RESULT */}
         {analysisResult && (
           <div id="result-section">
             <ScoreCard 
               result={analysisResult} 
               cue={dailyCue}
               isPremiumExternal={isPremium}
-              // Pass fungsi buka modal ke ScoreCard
               onOpenUpgradeModal={() => setShowUpgradeModal(true)}
             />
           </div>
@@ -323,18 +326,16 @@ export default function Home() {
 
       </div>
       
-      {/* MODAL PEMBAYARAN & UPGRADE (PERBAIKAN RESPONSIVE) */}
+      {/* MODAL PEMBAYARAN & UPGRADE */}
       {showUpgradeModal && (
         <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
-          {/* Perbaikan: Container fleksibel agar tidak mentok di HP */}
           <div className="flex min-h-full items-center justify-center p-4 py-10">
             <div className="bg-slate-800 p-6 rounded-2xl max-w-md w-full border border-slate-700 relative my-auto shadow-2xl">
               
               <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white bg-slate-800 rounded-full p-1"><X className="w-6 h-6"/></button>
 
-              <h3 className="text-2xl font-bold text-white mb-4 text-center mt-2">Upgrade to Speak7 <span className="text-yellow-400">PRO</span></h3>
+              <h3 className="text-2xl font-bold text-white mb-4 text-center mt-2">Upgrade to Ielts<span className="text-yellow-400">4our</span> PRO</h3>
 
-              {/* TABEL PERBANDINGAN */}
               <div className="bg-slate-900 rounded-xl overflow-hidden mb-6 border border-slate-700">
                 <div className="grid grid-cols-3 bg-slate-800/50 p-3 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
                   <div className="text-left">Fitur</div>
@@ -359,13 +360,12 @@ export default function Home() {
                   </div>
                   <div className="grid grid-cols-3 p-3 items-center text-center bg-yellow-500/10">
                     <div className="text-left text-yellow-200">Masa Aktif</div>
-                    <div className="text-slate-500">-</div>
+                    <div className="text-slate-500">Selamanya</div>
                     <div className="font-bold text-yellow-400">30 Hari</div>
                   </div>
                 </div>
               </div>
               
-              {/* Step 1: Transfer */}
               <div className="bg-slate-900 p-4 rounded-xl mb-4 border border-slate-800">
                 <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 1: Transfer Biaya</p>
                 <div className="flex justify-between items-center mb-1">
@@ -380,13 +380,12 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Step 2: Konfirmasi */}
               <div className="mb-6">
                 <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 2: Konfirmasi & Dapat Token</p>
                 <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg mb-3 flex gap-2 items-start">
                   <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
                   <p className="text-xs text-yellow-200 leading-relaxed">
-                     <b>Penting:</b> Kirim bukti bayar via Whatsapp atau email dan pastikan bukti transfer memperlihatkan <b>Tanggal & Jam</b> transaksi.
+                     <b>Penting:</b> Pastikan bukti transfer memperlihatkan <b>Tanggal & Jam</b> transaksi.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -398,7 +397,7 @@ export default function Home() {
                      Konfirmasi WA
                    </button>
                    <a 
-                     href={`mailto:${BANK_INFO.email}?subject=Bukti Bayar Speak7 Premium`}
+                     href={`mailto:${BANK_INFO.email}?subject=Bukti Bayar Ielts4our Premium`}
                      className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2"
                    >
                      Via Email
@@ -406,12 +405,11 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Step 3: Input Token */}
               <div>
                 <p className="text-xs text-slate-500 font-bold uppercase mb-2">Langkah 3: Masukkan Token</p>
                 <input 
                   type="text" 
-                  placeholder="Contoh: S7-ABCD"
+                  placeholder="Contoh: I4-ABCD"
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl mb-3 focus:outline-none focus:border-teal-500 text-center font-mono tracking-widest uppercase"
@@ -430,7 +428,7 @@ export default function Home() {
       )}
 
       <footer className="text-center mt-20 text-slate-600 text-sm">
-        <p>&copy; 2025 Speak7. Built for IELTS Fighters.</p>
+        <p>&copy; 2025 Ielts4our. Built for IELTS Fighters.</p>
       </footer>
     </main>
   );

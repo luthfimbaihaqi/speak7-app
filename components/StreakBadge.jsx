@@ -7,12 +7,12 @@ export default function StreakBadge({ triggerUpdate }) {
   const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    // Ambil data streak dari LocalStorage saat website dibuka
-    const storedStreak = localStorage.getItem("speak7_streak");
+    // REBRANDING: Ambil data dari key baru 'ielts4our_streak'
+    const storedStreak = localStorage.getItem("ielts4our_streak");
     if (storedStreak) {
       setStreak(parseInt(storedStreak));
     }
-  }, [triggerUpdate]); // Update tampilan jika user baru saja selesai latihan
+  }, [triggerUpdate]); 
 
   return (
     <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/50 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(249,115,22,0.3)]">

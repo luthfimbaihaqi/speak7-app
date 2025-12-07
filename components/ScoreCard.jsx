@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, AlertTriangle, Lock, Star, FileText, ChevronDown, ChevronUp, Share2 } from "lucide-react";
 import Confetti from "react-confetti";
 
-// Kita terima props baru: onOpenUpgradeModal
 export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgradeModal }) {
   const [showTranscript, setShowTranscript] = useState(false); 
 
@@ -14,7 +13,8 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
   const isHighSchore = result.overall >= 7.0;
 
   const shareToWA = () => {
-    const text = `🔥 I just scored Band ${result.overall} on Speak7!\n\nTopic: "${cue || "IELTS Practice"}"\n\nCan you beat my score? 🎯\nTry it here: https://speak7.vercel.app`;
+    // REBRANDING: Ganti Nama di Pesan Share
+    const text = `🔥 I just scored Band ${result.overall} on Ielts4our!\n\nTopic: "${cue || "IELTS Practice"}"\n\nCan you beat my score? 🎯\nTry it here: https://ielts4our.vercel.app`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
@@ -23,7 +23,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
     <div className="w-full max-w-2xl mx-auto mt-8 space-y-6">
       {isHighSchore && <Confetti recycle={false} numberOfPieces={500} />}
 
-      {/* --- BAGIAN 1: SKOR UTAMA --- */}
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -49,7 +48,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       </motion.div>
 
-      {/* --- BAGIAN 2: TRANSKRIPSI --- */}
       {result.transcript && (
         <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
           <button 
@@ -80,7 +78,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       )}
 
-      {/* --- BAGIAN 3: FEEDBACK --- */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="bg-slate-800/50 p-5 rounded-xl border border-teal-900/50">
           <h3 className="flex items-center gap-2 text-teal-400 font-bold mb-3">
@@ -105,7 +102,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       </div>
 
-      {/* --- BAGIAN 4: MODEL ANSWER (PREMIUM GATE) --- */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -127,7 +123,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
             <Lock className="w-8 h-8 text-purple-400 mb-2" />
             <h4 className="text-white font-bold">Premium Content</h4>
             <button 
-              // PERUBAHAN: Panggil fungsi dari Parent (Page.js)
               onClick={onOpenUpgradeModal}
               className="mt-3 px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-full font-bold shadow-lg text-sm transition-all"
             >
@@ -137,7 +132,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         )}
       </motion.div>
 
-      {/* --- TOMBOL CHALLENGE WHATSAPP --- */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -147,8 +141,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         <Share2 className="w-5 h-5" />
         Challenge Friend via WhatsApp
       </motion.button>
-
-      {/* Modal Pembayaran SUDAH DIHAPUS DARI SINI */}
     </div>
   );
 }
