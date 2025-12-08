@@ -106,7 +106,7 @@ const BANK_INFO = {
   bankName: "BCA",             
   accountNumber: "3010166291", 
   accountName: "LUTHFI MUHAMMAD BAIHAQI", 
-  price: "Rp 25.000",
+  price: "Rp 30.000",
   email: "luthfibaihaqi851@gmail.com",
   waNumber: "6281311364731" 
 };
@@ -406,7 +406,7 @@ export default function Home() {
                src="/logo-white.png"
                alt="IELTS4our Logo"
                fill
-               className="object-contain object-left"
+               className="object-contain object-center md:object-left"
                priority
              />
           </div>
@@ -752,18 +752,6 @@ export default function Home() {
 
       <footer className="text-center mt-24 pb-10 text-slate-600 text-xs md:text-sm">
         <p className="mb-4">&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.</p>
-        
-        <button 
-          onClick={() => {
-            if(confirm("⚠️ RESET MODE: Apakah Anda yakin ingin menghapus status Premium, History, dan Streak?")) {
-              localStorage.clear();
-              window.location.reload();
-            }
-          }}
-          className="text-[10px] text-red-500/50 hover:text-red-500 border border-red-900/30 px-2 py-1 rounded bg-red-900/10 transition-all"
-        >
-          [DEV] Reset All Data
-        </button>
       </footer>
     </main>
   );
