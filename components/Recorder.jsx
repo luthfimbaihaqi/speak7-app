@@ -9,17 +9,19 @@ const ReactMic = dynamic(() => import("react-mic").then((mod) => mod.ReactMic), 
   ssr: false,
 });
 
-export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60 }) {
+export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60, mode = "cue-card" }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const [timeLeft, setTimeLeft] = useState(maxDuration);
   const timerRef = useRef(null);
   const cueCardRef = useRef(cueCard);
+  const modeRef = useRef(mode);
 
   useEffect(() => {
     cueCardRef.current = cueCard;
-  }, [cueCard]);
+    modeRef.current = mode; 
+  }, [cueCard, mode]);
 
   useEffect(() => {
     setTimeLeft(maxDuration);
@@ -57,19 +59,43 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
   const onStop = async (recordedBlob) => {
     const durationSec = (recordedBlob.stopTime - recordedBlob.startTime) / 1000;
 
-    if (durationSec < 20) {
+    // Batas minimum durasi
+    const minDuration = mode === "mock-interview" ? 5 : 10; 
+
+    // VALIDASI 1: WAKTU
+    if (durationSec < minDuration) {
       alert(
-        "⚠️ Terlalu Singkat (Min 20 Detik)\n\n" + 
-        "Coba bicara lebih panjang agar AI bisa menilai grammar dan fluency dengan akurat."
+        `⚠️ Terlalu Singkat\n\n` + 
+        `Mohon bicara minimal ${minDuration} detik agar AI bisa menganalisis.`
       );
       return; 
     }
 
+    // VALIDASI 2: UKURAN FILE (Mencegah Error 400 "Empty File")
+    // Batas aman: 5KB
+    if (!recordedBlob.blob || recordedBlob.blob.size < 5000) {
+        alert(
+            "⚠️ Audio Gagal Tersimpan (File Kosong)\n\n" +
+            "Kemungkinan browser nge-lag atau mikrofon belum siap.\n" + 
+            "Solusi: Refresh halaman dan coba lagi."
+        );
+        return;
+    }
+
     setIsLoading(true);
     
+    // --- PERBAIKAN FORMAT DINAMIS ---
+    // Cek tipe file asli dari browser (apakah mp4 atau webm)
+    const mimeType = recordedBlob.blob.type || "audio/webm";
+    // Tentukan ekstensi: kalau mengandung "mp4" pakai .mp4, sisanya .webm
+    const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+    
     const formData = new FormData();
-    formData.append("audio", recordedBlob.blob, "recording.webm");
+    // Beri nama file sesuai ekstensi aslinya
+    formData.append("audio", recordedBlob.blob, `recording.${extension}`);
+    
     formData.append("cue_card", cueCardRef.current);
+    formData.append("mode", modeRef.current); 
 
     try {
       const response = await fetch("/api/analyze", {
@@ -109,14 +135,14 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto mt-8">
       
-      {/* Visualizer Container (Glass Effect) */}
+      {/* Visualizer Container */}
       <div className="relative w-full h-36 bg-black/30 backdrop-blur-md rounded-2xl overflow-hidden border border-white/10 shadow-inner mb-8 group">
         <ReactMic
           record={isRecording}
           className="w-full h-full opacity-80"
           onStop={onStop}
-          strokeColor="#2dd4bf" // Teal 400 (Lebih cerah)
-          backgroundColor="transparent" // Transparan agar blend dengan glass
+          strokeColor="#2dd4bf" 
+          backgroundColor="transparent" 
           mimeType="audio/webm"
         />
         
@@ -135,7 +161,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
             {isRecording ? (
               <span className="flex items-center text-rose-500 animate-pulse">● REC</span>
             ) : isLoading ? (
-              <span className="text-yellow-400 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin"/> ANALYZING</span>
+              <span className="text-yellow-400 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin"/> AI THINKING...</span>
             ) : (
               <span className="text-slate-400">READY</span>
             )}
@@ -162,7 +188,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
             ) : (
               <>
                 <Mic className="w-5 h-5" />
-                {maxDuration > 60 ? "Start (2 min)" : "Start Recording"}
+                {mode === "mock-interview" ? "Answer (45s)" : "Start Recording"}
               </>
             )}
           </motion.button>
@@ -173,7 +199,6 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
             onClick={stopRecording}
             className="relative flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white rounded-full font-bold text-lg shadow-xl shadow-rose-500/20 overflow-hidden w-full md:w-auto border border-white/10"
           >
-            {/* Progress Bar Background */}
             <div 
                className="absolute left-0 top-0 bottom-0 bg-black/20 transition-all duration-1000 ease-linear"
                style={{ width: `${progressPercent}%` }}
@@ -181,7 +206,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
             
             <div className="relative z-10 flex items-center gap-2">
                <Square className="w-5 h-5 fill-current" />
-               Stop & Analyze
+               Stop & Send
             </div>
           </motion.button>
         )}
@@ -191,9 +216,9 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
       {!isRecording && !isLoading && (
         <p className="mt-6 text-xs text-slate-500 text-center flex items-center justify-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
           <Info className="w-3.5 h-3.5" />
-          {maxDuration > 60 
-             ? "Premium Mode: Max 2 mins."
-             : "Free Mode: Max 60 secs."}
+          {mode === "mock-interview" 
+             ? "Mock Interview: Speak naturally like a conversation."
+             : maxDuration > 60 ? "Pro Mode: Max 2 mins." : "Free Mode: Max 60 secs."}
         </p>
       )}
     </div>

@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, ArrowRight, Check, Lock, AlertTriangle, BarChart3, ChevronRight } from "lucide-react";
+import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, ArrowRight, Check, Lock, AlertTriangle, BarChart3, ChevronRight, Mic2, Users, Volume2 } from "lucide-react";
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
 
-// --- DATABASE TOKEN (I4-XXX) ---
+// --- DATABASE TOKEN ---
 const VALID_TOKENS = [
   "I4-ALPHA", "I4-BRAVO", "I4-DELTA", "I4-ECHO9", "I4-G0LD1",
   "I4-LION7", "I4-TIGER", "I4-WK29A", "I4-QW88X", "I4-MN12P",
@@ -31,9 +31,8 @@ const VALID_TOKENS = [
   "I4-LUTH1", "I4-USER2", "I4-PRO99", "I4-MAX00", "I4-ULTRA"
 ];
 
-// --- BANK SOAL ---
+// --- BANK SOAL PART 2 ---
 const CUE_CARDS = [
-  // === LEVEL 1: FREE (0 - 29) ===
   { topic: "Describe a book you read that you found useful.", points: ["What the book is", "When you read it", "Why you found it useful", "And explain how it helped you"] },
   { topic: "Describe a time when you helped someone.", points: ["Who you helped", "Why they needed help", "How you helped them", "And explain how you felt about it"] },
   { topic: "Describe a popular place for sports in your city.", points: ["Where it is", "What sports people play there", "How often you go there", "And explain why it is popular"] },
@@ -64,7 +63,6 @@ const CUE_CARDS = [
   { topic: "Describe a time you received good news.", points: ["What the news was", "How you received it", "Who you shared it with", "And explain why it was good news"] },
   { topic: "Describe a change that would improve your local area.", points: ["What the change would be", "How it would be done", "Who it would benefit", "And explain why this change is necessary"] },
   { topic: "Describe a competition you would like to take part in.", points: ["What the competition is", "What you would need to do", "Why you want to participate", "And explain what prize you would like to win"] },
-
   // === LEVEL 2: PREMIUM (30 - 59) ===
   { topic: "Describe a piece of advice you received that was helpful.", points: ["Who gave it to you", "What the advice was", "In what situation you received it", "And explain how it helped you"] },
   { topic: "Describe a risk you took that you do not regret.", points: ["What the risk was", "Why you took it", "What the result was", "And explain why you do not regret it"] },
@@ -98,14 +96,26 @@ const CUE_CARDS = [
   { topic: "Describe a traditional product from your country that is popular.", points: ["What the product is", "How it is made", "Where it is popular", "And explain why it is important to your culture"] }
 ];
 
-// --- INFO BANK ---
+// --- BANK SOAL PART 3 (MOCK INTERVIEW) ---
+const PART3_TOPICS = [
+  { topic: "Technology & Education", startQ: "Do you think computers will eventually replace teachers in the classroom?" },
+  { topic: "Environment", startQ: "What are the biggest environmental problems facing your country right now?" },
+  { topic: "Tourism", startQ: "Do you think tourism always benefits a local community?" },
+  { topic: "Health & Lifestyle", startQ: "How can people be encouraged to live a healthier lifestyle?" },
+  { topic: "Work & Life Balance", startQ: "Is it difficult for people in your country to find a good work-life balance?" },
+  { topic: "Social Media", startQ: "Has social media improved the way we communicate or made it worse?" },
+  { topic: "Traditional Culture", startQ: "Is it important to preserve traditional festivals and customs?" },
+  { topic: "Transport", startQ: "What is the best way to reduce traffic congestion in big cities?" }
+];
+
+// --- INFO BANK (UPDATED) ---
 const BANK_INFO = {
   bankName: "BCA",             
-  accountNumber: "123-456-7890", 
-  accountName: "LUTHFI BAIHAQI", 
+  accountNumber: "3010166291", 
+  accountName: "LUTHFI MUHAMMAD BAIHAQI", 
   price: "Rp 25.000",
   email: "luthfibaihaqi851@gmail.com",
-  waNumber: "6281234567890" 
+  waNumber: "6281311364731" 
 };
 
 export default function Home() {
@@ -113,16 +123,39 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState(null);
   
   const [isRotating, setIsRotating] = useState(false);
-  const [isPremium, setIsPremium] = useState(false); 
+  const [isPremium, setIsPremium] = useState(false);
+  
+  const [practiceMode, setPracticeMode] = useState("cue-card"); 
+  const [part3Topic, setPart3Topic] = useState(PART3_TOPICS[0]);
+  
+  const [interviewQuestion, setInterviewQuestion] = useState(""); 
+  const accumulatedScoresRef = useRef([]); // Memori Kebal
+  const [accumulatedScoresState, setAccumulatedScoresState] = useState([]); // UI State
+  
+  const [isSpeakingAI, setIsSpeakingAI] = useState(false);
   
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [tokenInput, setTokenInput] = useState("");
 
   const randomizeCue = () => {
     setIsRotating(true);
-    const maxIndex = isPremium ? CUE_CARDS.length : 30;
-    const randomIndex = Math.floor(Math.random() * maxIndex);
-    setDailyCue(CUE_CARDS[randomIndex]);
+    
+    if (practiceMode === 'cue-card') {
+        const maxIndex = isPremium ? CUE_CARDS.length : 30;
+        const randomIndex = Math.floor(Math.random() * maxIndex);
+        setDailyCue(CUE_CARDS[randomIndex]);
+    } else {
+        const randomIndex = Math.floor(Math.random() * PART3_TOPICS.length);
+        const newTopic = PART3_TOPICS[randomIndex];
+        setPart3Topic(newTopic);
+        setInterviewQuestion(newTopic.startQ);
+        
+        accumulatedScoresRef.current = []; // Reset memori
+        setAccumulatedScoresState([]);     // Reset UI
+        
+        setAnalysisResult(null); 
+    }
+
     setTimeout(() => setIsRotating(false), 500);
   };
 
@@ -143,7 +176,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-      randomizeCue();
+      if (practiceMode === 'mock-interview') {
+          setInterviewQuestion(part3Topic.startQ);
+          accumulatedScoresRef.current = [];
+          setAccumulatedScoresState([]);
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]); 
 
@@ -158,8 +195,19 @@ export default function Home() {
     }
   }, [analysisResult]);
 
+  const speakText = (text) => {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); 
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US'; 
+        utterance.rate = 1.0; 
+        utterance.onstart = () => setIsSpeakingAI(true);
+        utterance.onend = () => setIsSpeakingAI(false);
+        window.speechSynthesis.speak(utterance);
+    }
+  };
+
   const handleAnalysisComplete = (data) => {
-    setAnalysisResult(data);
     const todayStr = new Date().toDateString();
     
     // --- STREAK LOGIC ---
@@ -169,31 +217,87 @@ export default function Home() {
     if (lastPracticeDate !== todayStr) {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      
-      if (lastPracticeDate === yesterday.toDateString()) {
-        currentStreak += 1;
-      } else {
-        currentStreak = 1; 
-      }
+      if (lastPracticeDate === yesterday.toDateString()) currentStreak += 1;
+      else currentStreak = 1; 
       localStorage.setItem("ielts4our_streak", currentStreak);
       localStorage.setItem("ielts4our_last_date", todayStr);
     }
 
-    // --- SAVE HISTORY LOGIC ---
-    const historyItem = {
-       id: Date.now(),
-       date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
-       topic: dailyCue.topic,
-       overall: data.overall,
-       fluency: data.fluency,
-       lexical: data.lexical,
-       grammar: data.grammar,
-       pronunciation: data.pronunciation
-    };
+    // --- LOGIC MOCK INTERVIEW ---
+    if (practiceMode === 'mock-interview') {
+        
+        accumulatedScoresRef.current.push(data);
+        setAccumulatedScoresState([...accumulatedScoresRef.current]);
 
-    const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
-    const updatedHistory = [...existingHistory, historyItem].slice(-30); 
-    localStorage.setItem("ielts4our_history", JSON.stringify(updatedHistory));
+        const currentCount = accumulatedScoresRef.current.length;
+
+        if (currentCount < 3) {
+            if (data.nextQuestion) {
+                setInterviewQuestion(data.nextQuestion);
+            }
+        } else {
+            const allScores = accumulatedScoresRef.current; 
+
+            const avgOverall = allScores.reduce((acc, curr) => acc + (curr.overall || 0), 0) / 3;
+            const avgFluency = allScores.reduce((acc, curr) => acc + (curr.fluency || 0), 0) / 3;
+            const avgLexical = allScores.reduce((acc, curr) => acc + (curr.lexical || 0), 0) / 3;
+            const avgGrammar = allScores.reduce((acc, curr) => acc + (curr.grammar || 0), 0) / 3;
+            const avgPronunc = allScores.reduce((acc, curr) => acc + (curr.pronunciation || 0), 0) / 3;
+
+            const finalScore = Math.round(avgOverall * 2) / 2;
+
+            let stitchedTranscript = "";
+            let stitchedModelAnswer = "";
+
+            allScores.forEach((round, index) => {
+                stitchedTranscript += `❓ Q${index + 1}: ${round.transcript}\n\n`;
+                if(round.modelAnswer) {
+                    stitchedModelAnswer += `💡 Q${index + 1} Suggestion:\n${round.modelAnswer}\n\n`;
+                }
+            });
+
+            const allGrammar = allScores.flatMap(s => s.grammarCorrection || []).slice(0, 5);
+
+            const finalResult = {
+                overall: finalScore,
+                fluency: Math.round(avgFluency * 2) / 2,
+                lexical: Math.round(avgLexical * 2) / 2,
+                grammar: Math.round(avgGrammar * 2) / 2,
+                pronunciation: Math.round(avgPronunc * 2) / 2,
+                feedback: allScores[2].feedback, 
+                improvement: allScores[2].improvement, 
+                grammarCorrection: allGrammar,
+                
+                transcript: stitchedTranscript, 
+                modelAnswer: stitchedModelAnswer 
+            };
+
+            setAnalysisResult(finalResult);
+            
+            const historyItem = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
+                topic: `Mock Interview: ${part3Topic.topic}`,
+                ...finalResult 
+            };
+            const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
+            const updatedHistory = [...existingHistory, historyItem].slice(-30); 
+            localStorage.setItem("ielts4our_history", JSON.stringify(updatedHistory));
+        }
+
+    } else {
+        setAnalysisResult(data);
+        
+        const historyItem = {
+            id: Date.now(),
+            date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
+            topic: data.topic || dailyCue.topic, 
+            ...data 
+         };
+         const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
+         const updatedHistory = [...existingHistory, historyItem].slice(-30); 
+         localStorage.setItem("ielts4our_history", JSON.stringify(updatedHistory));
+    }
   };
 
   const validateToken = () => {
@@ -220,6 +324,22 @@ export default function Home() {
     window.open(url, "_blank");
   };
 
+  const handleModeSwitch = (mode) => {
+    if (mode === "mock-interview" && !isPremium) {
+        setShowUpgradeModal(true);
+        return;
+    }
+    setPracticeMode(mode);
+    setAnalysisResult(null); 
+    
+    accumulatedScoresRef.current = [];
+    setAccumulatedScoresState([]);
+    
+    if (mode === "mock-interview") {
+        setInterviewQuestion(part3Topic.startQ);
+    }
+  };
+
   return (
     <main className="min-h-screen pb-20 px-4 selection:bg-teal-500/30 selection:text-teal-200">
       {/* HEADER */}
@@ -232,7 +352,6 @@ export default function Home() {
             Ielts<span className="text-teal-400">4our</span>
           </h1>
           
-          {/* LINK DESKTOP: Our Story (Sebelah Kanan Logo) */}
           <Link href="/about" className="hidden md:block ml-4 text-sm font-medium text-slate-300 hover:text-white transition-colors tracking-wide">
             Meet the Creator
           </Link>
@@ -245,7 +364,6 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* TOMBOL MY PROGRESS */}
           <Link href="/progress">
              <motion.div 
                whileHover={{ scale: 1.05 }}
@@ -274,7 +392,6 @@ export default function Home() {
 
       {/* HERO SECTION */}
       <div className="text-center max-w-3xl mx-auto mt-6 mb-12">
-        {/* LINK MOBILE: Read Our Story (Di antara Tombol & Badge) */}
         <div className="md:hidden mb-6">
            <Link href="/about" className="inline-flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest border-b border-slate-700 pb-0.5 hover:border-white transition-all">
              ✨ Meet the Creator <ChevronRight className="w-3 h-3" />
@@ -303,101 +420,137 @@ export default function Home() {
         </p>
       </div>
 
+      {/* UI TAB SWITCHER */}
+      <div className="max-w-xs mx-auto mb-8 bg-slate-900/50 backdrop-blur-md p-1 rounded-full border border-white/10 flex relative shadow-inner">
+         <button 
+            onClick={() => handleModeSwitch("cue-card")}
+            className={`flex-1 py-2 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "cue-card" ? "bg-white/10 text-white shadow-lg border border-white/10" : "text-slate-500 hover:text-slate-300"}`}
+         >
+            <Mic2 className="w-3.5 h-3.5" />
+            Cue Card Practice
+         </button>
+         <button 
+            onClick={() => handleModeSwitch("mock-interview")}
+            className={`flex-1 py-2 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "mock-interview" ? "bg-teal-500/20 text-teal-300 shadow-lg border border-teal-500/30" : "text-slate-500 hover:text-slate-300"}`}
+         >
+            <Users className="w-3.5 h-3.5" />
+            Mock Interview
+            {!isPremium && <Lock className="w-3 h-3 text-yellow-500 ml-1" />}
+         </button>
+      </div>
+
       {/* CONTENT AREA */}
       <div className="max-w-4xl mx-auto space-y-12">
-        
-        {/* CUE CARD GLASS PANEL */}
         <motion.div 
           initial={{ scale: 0.98, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
           className="relative group"
         >
-          {/* Glow Effect */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 to-purple-600 rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+          <div className={`absolute -inset-1 bg-gradient-to-r ${practiceMode === 'cue-card' ? 'from-teal-500 to-purple-600' : 'from-blue-500 to-teal-400'} rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200`}></div>
           
-          <div className="relative glass-panel rounded-[2rem] p-8 md:p-12 overflow-hidden">
-             {/* Header Card */}
-             <div className="flex justify-between items-start mb-8 border-b border-white/5 pb-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
-                    {CUE_CARDS.indexOf(dailyCue) >= 30 ? (
-                       <Crown className="w-6 h-6 text-yellow-400" /> 
-                    ) : (
-                       <BookOpen className="w-6 h-6 text-teal-400" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">
-                      {CUE_CARDS.indexOf(dailyCue) >= 30 ? "Premium Topic" : "Todays Topic"}
-                    </h3>
-                    <div className="text-white font-bold flex items-center gap-2">
-                       IELTS Cue Card
-                    </div>
-                  </div>
-                </div>
-                
-                <button 
-                  onClick={randomizeCue}
-                  className="p-3 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all group"
-                  title="Ganti Soal"
-                >
-                  <RefreshCw className={`w-5 h-5 ${isRotating ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`} />
-                </button>
-             </div>
-
-             {/* Content Card */}
-             <div className="text-center mb-10">
-                <p className="text-2xl md:text-4xl font-bold text-white leading-tight mb-8">
-                  "{dailyCue.topic}"
-                </p>
-                
-                <div className="inline-block text-left bg-black/20 p-6 md:p-8 rounded-2xl border border-white/5 backdrop-blur-sm">
-                  <p className="text-teal-400 text-xs font-bold mb-4 uppercase tracking-widest flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4" /> You can say:
-                  </p>
-                  <ul className="space-y-3">
-                    {dailyCue.points?.map((point, index) => (
-                      <li key={index} className="flex items-start gap-3 text-slate-300 text-sm md:text-base">
-                        <span className="w-1.5 h-1.5 bg-slate-500 rounded-full mt-2 shrink-0"></span>
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-             </div>
+          <div className="relative glass-panel rounded-[2rem] p-8 md:p-12 overflow-hidden min-h-[500px] flex flex-col justify-center">
              
-             {/* Recorder Component */}
-             <Recorder 
-               cueCard={dailyCue.topic} 
-               onAnalysisComplete={handleAnalysisComplete}
-               maxDuration={isPremium ? 120 : 60} 
-             />
+             {/* MODE 1: CUE CARD */}
+             {practiceMode === "cue-card" && !analysisResult && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <div className="flex justify-between items-start mb-8 border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                            {CUE_CARDS.indexOf(dailyCue) >= 30 ? <Crown className="w-6 h-6 text-yellow-400" /> : <BookOpen className="w-6 h-6 text-teal-400" />}
+                        </div>
+                        <div>
+                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">
+                            {CUE_CARDS.indexOf(dailyCue) >= 30 ? "Premium Topic" : "Todays Topic"}
+                            </h3>
+                            <div className="text-white font-bold flex items-center gap-2">
+                            IELTS Cue Card
+                            </div>
+                        </div>
+                        </div>
+                        <button onClick={randomizeCue} className="p-3 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all group" title="Ganti Soal"><RefreshCw className={`w-5 h-5 ${isRotating ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`} /></button>
+                    </div>
+                    <div className="text-center mb-10">
+                        <p className="text-2xl md:text-4xl font-bold text-white leading-tight mb-8">"{dailyCue.topic}"</p>
+                        <div className="inline-block text-left bg-black/20 p-6 md:p-8 rounded-2xl border border-white/5 backdrop-blur-sm">
+                           <p className="text-teal-400 text-xs font-bold mb-4 uppercase tracking-widest flex items-center gap-2"><ArrowRight className="w-4 h-4" /> You can say:</p>
+                           <ul className="space-y-3">{dailyCue.points?.map((point, index) => (<li key={index} className="flex items-start gap-3 text-slate-300 text-sm md:text-base"><span className="w-1.5 h-1.5 bg-slate-500 rounded-full mt-2 shrink-0"></span>{point}</li>))}</ul>
+                        </div>
+                    </div>
+                    <Recorder cueCard={dailyCue.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={isPremium ? 120 : 60} mode={practiceMode} />
+                </motion.div>
+             )}
+
+             {/* MODE 2: MOCK INTERVIEW */}
+             {practiceMode === "mock-interview" && !analysisResult && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+                    <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-4">
+                        <div>
+                           <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest text-left">Discussion Topic</h3>
+                           <h2 className="text-xl md:text-2xl font-bold text-white text-left">{part3Topic.topic}</h2>
+                        </div>
+                        <button onClick={randomizeCue} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all group" title="Ganti Topik"><RefreshCw className={`w-5 h-5 ${isRotating ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`} /></button>
+                    </div>
+                    
+                    <div className="flex justify-center gap-2 mb-6 items-center">
+                        <span className="text-xs text-slate-400 mr-2 uppercase font-bold tracking-wider">Question {accumulatedScoresState.length + 1} of 3</span>
+                        {[0, 1, 2].map(step => (
+                            <div key={step} className={`h-2 w-8 rounded-full transition-all ${accumulatedScoresState.length >= step ? 'bg-teal-400' : 'bg-white/10'}`}></div>
+                        ))}
+                    </div>
+
+                    <div className="bg-slate-800/50 p-6 rounded-2xl border border-white/10 max-w-lg mx-auto mb-10 text-left relative transition-all min-h-[120px] flex flex-col justify-center">
+                        <div className="absolute -top-3 left-6 px-2 bg-slate-900 text-teal-400 text-[10px] font-bold uppercase tracking-wider border border-white/10 rounded flex items-center gap-1">AI Examiner</div>
+                        <div className="flex gap-4 items-start">
+                            <p className="text-lg text-slate-200 italic leading-relaxed flex-1">"{interviewQuestion}"</p>
+                            <button 
+                                onClick={() => speakText(interviewQuestion)}
+                                className="p-2 rounded-full bg-white/5 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 transition-all shrink-0 border border-white/10"
+                                title="Play Audio"
+                            >
+                                {isSpeakingAI ? <Volume2 className="w-5 h-5 animate-pulse text-teal-400"/> : <Volume2 className="w-5 h-5"/>}
+                            </button>
+                        </div>
+                    </div>
+
+                    <Recorder cueCard={part3Topic.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={45} mode={practiceMode} />
+                </motion.div>
+             )}
+
+             {/* RESULT / SCORECARD */}
+             {analysisResult && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-white">Analysis Result</h2>
+                        <button 
+                            onClick={() => { 
+                                setAnalysisResult(null); 
+                                accumulatedScoresRef.current = []; // RESET REF
+                                setAccumulatedScoresState([]);     // RESET STATE
+                                handleModeSwitch(practiceMode); 
+                            }} 
+                            className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm text-white font-bold transition-all"
+                        >
+                            Try Another Topic
+                        </button>
+                    </div>
+                    <ScoreCard 
+                        result={analysisResult} 
+                        cue={analysisResult.topic || dailyCue.topic} // Fix judul topik
+                        isPremiumExternal={isPremium}
+                        onOpenUpgradeModal={() => setShowUpgradeModal(true)}
+                    />
+                </motion.div>
+             )}
+
           </div>
         </motion.div>
-
-        {/* RESULT SECTION */}
-        {analysisResult && (
-          <div id="result-section">
-            <ScoreCard 
-              result={analysisResult} 
-              cue={dailyCue.topic}
-              isPremiumExternal={isPremium}
-              onOpenUpgradeModal={() => setShowUpgradeModal(true)}
-            />
-          </div>
-        )}
-
       </div>
       
-      {/* --- MODAL PEMBAYARAN RESPONSIVE + NOTE --- */}
+      {/* MODAL PEMBAYARAN (UPDATED UI) */}
       {showUpgradeModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="glass-panel w-full max-w-lg rounded-3xl overflow-hidden relative max-h-[85vh] overflow-y-auto"
-          >
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-panel w-full max-w-lg rounded-3xl overflow-hidden relative max-h-[85vh] overflow-y-auto">
              <button onClick={() => setShowUpgradeModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white z-10 p-2 bg-black/20 rounded-full"><X className="w-5 h-5"/></button>
              
              <div className="bg-gradient-to-br from-amber-500/10 to-purple-600/10 p-6 md:p-8 text-center border-b border-white/5 relative overflow-hidden">
@@ -408,7 +561,7 @@ export default function Home() {
              </div>
 
              <div className="p-5 md:p-8 space-y-6 md:space-y-8">
-                {/* Comparison Table */}
+                {/* --- UPDATED COMPARISON TABLE --- */}
                 <div className="bg-white/5 rounded-2xl overflow-hidden border border-white/5">
                    <div className="grid grid-cols-3 p-3 md:p-4 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest text-center bg-black/20">
                       <div className="text-left">Feature</div>
@@ -417,26 +570,24 @@ export default function Home() {
                    </div>
                    <div className="divide-y divide-white/5 text-sm">
                       <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
+                        <div className="text-left text-slate-300 text-xs md:text-sm">Mock Interview</div>
+                        <div className="text-slate-500 flex justify-center"><X className="w-3 h-3 md:w-4 md:h-4"/></div>
+                        <div className="font-bold text-white text-xs md:text-sm flex justify-center"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400"/></div>
+                      </div>
+                      <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
                         <div className="text-left text-slate-300 text-xs md:text-sm">Duration</div>
                         <div className="text-slate-500 text-xs md:text-sm">60s</div>
                         <div className="font-bold text-white text-xs md:text-sm">2 Mins</div>
                       </div>
                       <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
-                        <div className="text-left text-slate-300 text-xs md:text-sm">Answer</div>
+                        <div className="text-left text-slate-300 text-xs md:text-sm">Model Answer</div>
                         <div className="text-slate-500 flex justify-center"><Lock className="w-3 h-3 md:w-4 md:h-4"/></div>
-                        <div className="font-bold text-emerald-400 flex justify-center"><Check className="w-3 h-3 md:w-4 md:h-4"/></div>
-                      </div>
-                      <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
-                        <div className="text-left text-slate-300 text-xs md:text-sm">Grammar</div>
-                        <div className="text-slate-500 text-xs md:text-sm">Partial</div>
-                        <div className="font-bold text-emerald-400 text-xs md:text-sm">Full</div>
+                        <div className="font-bold text-white text-xs md:text-sm">Band 8.0</div>
                       </div>
                    </div>
                 </div>
 
-                {/* Steps Section */}
                 <div className="space-y-5">
-                  {/* Step 1: Transfer */}
                   <div className="p-4 bg-white/5 rounded-xl border border-white/10">
                     <p className="text-[10px] text-slate-400 font-bold uppercase mb-2 tracking-widest">1. Transfer via Bank</p>
                     <div className="flex flex-col md:flex-row justify-between md:items-center text-white font-mono gap-1">
@@ -449,7 +600,6 @@ export default function Home() {
                     </p>
                   </div>
 
-                  {/* --- AMBER ALERT / IMPORTANT NOTE --- */}
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 flex gap-3 items-start text-left">
                      <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
                      <div className="text-xs text-yellow-200/90 leading-relaxed">
@@ -457,7 +607,6 @@ export default function Home() {
                      </div>
                   </div>
 
-                  {/* Step 2: Confirm */}
                   <div className="flex flex-col md:flex-row gap-3">
                     <button onClick={confirmViaWA} className="flex-1 py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2 group">
                        <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform"/> Konfirmasi WA
@@ -467,7 +616,6 @@ export default function Home() {
                     </a>
                   </div>
 
-                  {/* Step 3: Input */}
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase mb-2 tracking-widest">3. Activate Token</p>
                     <div className="flex flex-col md:flex-row gap-2">

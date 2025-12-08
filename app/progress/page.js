@@ -3,25 +3,32 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, TrendingUp, Trophy, Activity, Flame } from "lucide-react"; // Tambah FLAME
+import { ArrowLeft, TrendingUp, Trophy, Activity, Flame, X, Eye } from "lucide-react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import ScoreCard from "@/components/ScoreCard"; 
 
 export default function ProgressPage() {
   const [history, setHistory] = useState([]);
   const [stats, setStats] = useState({ total: 0, average: 0, best: 0, streak: 0 });
+  
+  // State untuk Modal Detail
+  const [selectedResult, setSelectedResult] = useState(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
-    // 1. Ambil data History
+    // Cek status premium agar tampilan ScoreCard di history sesuai hak akses
+    const expiryStr = localStorage.getItem("ielts4our_premium_expiry");
+    if (expiryStr && Date.now() < parseInt(expiryStr)) {
+        setIsPremium(true);
+    }
+
     const storedData = localStorage.getItem("ielts4our_history");
-    
-    // 2. Ambil data Streak
     const currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
 
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       setHistory(parsedData);
       
-      // 3. Hitung Statistik
       if (parsedData.length > 0) {
         const total = parsedData.length;
         const sum = parsedData.reduce((acc, curr) => acc + (curr.overall || 0), 0);
@@ -33,7 +40,6 @@ export default function ProgressPage() {
         setStats(prev => ({ ...prev, streak: currentStreak }));
       }
     } else {
-        // Jika belum ada history, tetap tampilkan streak
         setStats(prev => ({ ...prev, streak: currentStreak }));
     }
   }, []);
@@ -75,7 +81,7 @@ export default function ProgressPage() {
           </div>
         </div>
 
-        {/* Stats Grid (Updated with Streak) */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
            <StatCard icon={<Activity className="w-4 h-4 text-blue-400"/>} label="Total Practice" value={stats.total} />
            <StatCard icon={<Flame className="w-4 h-4 text-orange-500"/>} label="Day Streak" value={stats.streak} />
@@ -130,7 +136,8 @@ export default function ProgressPage() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-xl flex justify-between items-center transition-all group"
+              onClick={() => setSelectedResult(item)} 
+              className="bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-xl flex justify-between items-center transition-all group cursor-pointer"
             >
                <div className="flex items-center gap-4 overflow-hidden">
                  <div className="p-3 bg-slate-900 rounded-lg text-slate-400 font-mono text-xs text-center min-w-[50px]">
@@ -148,17 +155,54 @@ export default function ProgressPage() {
                  </div>
                </div>
 
-               <div className="text-right">
-                 <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-teal-400 to-blue-500">
-                    {item.overall}
+               <div className="text-right flex items-center gap-4">
+                 <div>
+                    <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-teal-400 to-blue-500">
+                        {item.overall}
+                    </div>
+                    <div className="text-[10px] text-slate-500 uppercase">Overall</div>
                  </div>
-                 <div className="text-[10px] text-slate-500 uppercase">Overall</div>
+                 <div className="hidden md:block text-slate-600 group-hover:text-white transition-colors">
+                    <Eye className="w-5 h-5" />
+                 </div>
                </div>
             </motion.div>
           ))}
         </div>
 
       </div>
+
+      {/* --- FIX MODAL DETAIL POPUP RESPONSIVE --- */}
+      {selectedResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm">
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl flex flex-col max-h-[85vh]" // Fixed height container
+            >
+                {/* Fixed Header with Close Button */}
+                <div className="flex justify-end p-4 border-b border-white/5 shrink-0">
+                    <button 
+                        onClick={() => setSelectedResult(null)} 
+                        className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                
+                {/* Scrollable Content Area */}
+                <div className="overflow-y-auto p-2 md:p-6">
+                    <ScoreCard 
+                        result={selectedResult} 
+                        cue={selectedResult.topic} 
+                        isPremiumExternal={isPremium} 
+                        onOpenUpgradeModal={() => alert("Go to Home to Upgrade!")} 
+                    />
+                </div>
+            </motion.div>
+        </div>
+      )}
+
     </main>
   );
 }

@@ -19,6 +19,7 @@ export async function POST(request) {
     const formData = await request.formData();
     const audioFile = formData.get("audio");
     const cueCard = formData.get("cue_card");
+    const mode = formData.get("mode") || "cue-card"; 
 
     if (!audioFile) {
       return NextResponse.json({ error: "Audio is required" }, { status: 400 });
@@ -34,51 +35,87 @@ export async function POST(request) {
 
     const transcriptText = transcription.text;
 
-    // 2. SCORING & KOREKSI
-    const systemPrompt = `
-      You are an official IELTS Speaking examiner. Analyze the user's response.
-      
-      Task 1: Scoring (0-9, 0.5 increments ONLY)
-      - Provide scores for: Fluency, Lexical, Grammar, Pronunciation.
-      
-      Task 2: Feedback
-      - 2 positive feedback points.
-      - 1 specific improvement suggestion.
-      
-      Task 3: Grammar & Vocabulary Correction (CRITICAL)
-      - Identify 3-5 specific sentences with grammatical errors or weak vocabulary.
-      - Provide a "grammarCorrection" array. Each item must have:
-        - "original": The user's exact sentence.
-        - "correction": A better/correct version (Band 8.0 style).
-        - "reason": Brief explanation of the error or improvement.
-      
-      Task 4: Model Answer
-      - Rewrite the user's response to be Band 8.0 level, keeping their original ideas.
+    // 2. TENTUKAN SYSTEM PROMPT
+    let systemPrompt;
 
-      Return ONLY valid JSON:
-      {
-        "fluency": number,
-        "lexical": number,
-        "grammar": number,
-        "pronunciation": number,
-        "feedback": ["string", "string"],
-        "improvement": "string",
-        "grammarCorrection": [
-          { "original": "string", "correction": "string", "reason": "string" }
-        ],
-        "modelAnswer": "string"
-      }
-    `;
+    if (mode === "mock-interview") {
+      // --- PROMPT PART 3 (HUMANIZED / NATURAL STYLE) ---
+      systemPrompt = `
+        You are an IELTS Examiner conducting Part 3 (Discussion). 
+        The user just answered a question about: "${cueCard}".
+        User's Answer: "${transcriptText}"
 
-    const userMessage = `
-      Cue card Topic: ${cueCard}
-      User's Transcript: "${transcriptText}"
-    `;
+        Your Task:
+        1. SCORING LOGIC (STRICT BUT FAIR):
+           - Check RELEVANCE & DEPTH. If off-topic or too short, penalize score.
+
+        2. INTERACTION:
+           - Create ONE follow-up question.
+           - LANGUAGE: Clear, simple, B2 vocabulary. No complex jargon.
+
+        3. FEEDBACK (THE MOST IMPORTANT PART):
+           - REWRITE the user's answer to be Band 8.0 level.
+           - STYLE GUIDE: **Must be CASUAL & NATURAL (Spoken English).**
+           - FORBIDDEN: Do NOT use academic linking words like "Furthermore", "Moreover", "Consequently", "Thus".
+           - REQUIRED: Use Phrasal Verbs (e.g., "end up", "figure out"), Idioms, and natural fillers (e.g., "Well,", "Actually,", "To be honest,").
+           - TONE: Like a native speaker chatting with a friend, not a professor writing an essay.
+
+           - Also provide ONE specific "improvement" suggestion explaining the score.
+
+        Return ONLY valid JSON:
+        {
+          "fluency": number,
+          "lexical": number,
+          "grammar": number,
+          "pronunciation": number,
+          "nextQuestion": "string",
+          "feedback": ["string", "string"], 
+          "improvement": "string", 
+          "modelAnswer": "string", 
+          "grammarCorrection": [
+             { "original": "string", "correction": "string", "reason": "string" }
+          ]
+        }
+      `;
+    } else {
+      // --- PROMPT PART 2 (CUE CARD - HUMANIZED) ---
+      systemPrompt = `
+        You are an official IELTS Speaking examiner. Analyze the user's response.
+        
+        Task 1: Scoring (0-9, 0.5 increments ONLY)
+        - Provide scores for: Fluency, Lexical, Grammar, Pronunciation.
+        
+        Task 2: Feedback & Improvement.
+        
+        Task 3: Grammar Correction.
+        
+        Task 4: Model Answer (HUMANIZED)
+        - Rewrite the user's response to be Band 8.0 level.
+        - STYLE GUIDE: **Conversational & Natural.**
+        - FORBIDDEN: Avoid robotic/academic connectors.
+        - REQUIRED: Use storytelling markers (e.g. "So basically...", "The funny thing is...", "I guess...").
+        - Make it sound like a real person talking.
+
+        Return ONLY valid JSON:
+        {
+          "fluency": number,
+          "lexical": number,
+          "grammar": number,
+          "pronunciation": number,
+          "feedback": ["string", "string"],
+          "improvement": "string",
+          "grammarCorrection": [
+            { "original": "string", "correction": "string", "reason": "string" }
+          ],
+          "modelAnswer": "string"
+        }
+      `;
+    }
 
     const completion = await groq.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
+        { role: "user", content: `Topic: ${cueCard}. Transcript: "${transcriptText}"` },
       ],
       model: "llama-3.3-70b-versatile",
       temperature: 0.3,
@@ -87,37 +124,26 @@ export async function POST(request) {
 
     const analysisResult = JSON.parse(completion.choices[0].message.content);
 
-    // --- 3. FIX: HITUNG OVERALL SCORE PAKE RUMUS JS (IELTS ROUNDING) ---
-    // Agar tidak ada nilai aneh seperti 5.75
-    
+    // 3. LOGIKA PEMBULATAN SKOR
     const f = analysisResult.fluency || 0;
     const l = analysisResult.lexical || 0;
     const g = analysisResult.grammar || 0;
     const p = analysisResult.pronunciation || 0;
 
     const average = (f + l + g + p) / 4;
-    const decimalPart = average % 1; // Ambil desimalnya saja (cth: 0.25, 0.75, 0.125)
+    const decimalPart = average % 1;
     const integerPart = Math.floor(average);
 
     let finalOverall;
-
-    // Aturan IELTS:
-    // .0 s/d .125 -> turu ke .0
-    // .25 s/d .625 -> jadi .5 (naik/turun)
-    // .75 s/d .99 -> naik ke .0 berikutnya
-
-    if (decimalPart < 0.25) {
-      finalOverall = integerPart;       // Contoh: 6.125 -> 6.0
-    } else if (decimalPart < 0.75) {
-      finalOverall = integerPart + 0.5; // Contoh: 6.25 -> 6.5
-    } else {
-      finalOverall = integerPart + 1.0; // Contoh: 5.75 -> 6.0
-    }
+    if (decimalPart < 0.25) finalOverall = integerPart;
+    else if (decimalPart < 0.75) finalOverall = integerPart + 0.5;
+    else finalOverall = integerPart + 1.0;
 
     return NextResponse.json({
+      topic: cueCard, // Mengirim balik judul topik agar frontend tidak salah
       transcript: transcriptText,
       ...analysisResult,
-      overall: finalOverall, // Override nilai overall dari AI
+      overall: finalOverall,
     });
 
   } catch (error) {
