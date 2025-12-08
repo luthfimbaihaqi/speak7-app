@@ -18,8 +18,11 @@ const caveat = Caveat({
 });
 
 export const metadata = {
-  title: "Ielts4our - Master Your Speaking",
-  description: "Latihan IELTS Speaking harian dengan AI Feedback instan.",
+  title: "IELTS4our | Your Speaking Partner to Band 8.0",
+  description: "Master IELTS Speaking with real-time AI feedback, mock interviews, and band 8.0 model answers.",
+  icons: {
+    icon: '/icon.png', // Pastikan file favicon.ico sudah ada di folder public
+  },
 };
 
 export default function RootLayout({ children }) {

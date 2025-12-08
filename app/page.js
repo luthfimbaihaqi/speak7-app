@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, ArrowRight, Check, Lock, AlertTriangle, BarChart3, ChevronRight, Mic2, Users, Volume2 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
+import Image from "next/image";
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
@@ -395,22 +396,28 @@ export default function Home() {
   return (
     <main className="min-h-screen pb-20 px-4 selection:bg-teal-500/30 selection:text-teal-200">
       {/* HEADER */}
-      <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4">
+    <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4">
+        
+        {/* BAGIAN LOGO BARU */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-tr from-teal-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
-            <span className="font-black text-white text-lg tracking-tighter">I4</span>
+          {/* Logo Image */}
+          <div className="relative w-32 h-10 md:w-40 md:h-12">
+             <Image 
+               src="/logo-white.png"
+               alt="IELTS4our Logo"
+               fill
+               className="object-contain object-left"
+               priority
+             />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-white/90">
-            Ielts<span className="text-teal-400">4our</span>
-          </h1>
           
-          <Link href="/about" className="hidden md:block ml-4 text-sm font-medium text-slate-300 hover:text-white transition-colors tracking-wide">
+          <Link href="/about" className="hidden md:block ml-2 text-sm font-medium text-slate-400 hover:text-white transition-colors tracking-wide">
             Meet the Creator
           </Link>
 
           {isPremium && (
             <span className="ml-2 px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg shadow-yellow-500/20">
-              Pro Member
+              Pro
             </span>
           )}
         </div>
