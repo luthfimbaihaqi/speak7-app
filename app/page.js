@@ -4,32 +4,24 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { BookOpen, Sparkles, RefreshCw, Crown, MessageCircle, X, ArrowRight, Check, Lock, AlertTriangle, BarChart3, ChevronRight, Mic2, Users, Volume2 } from "lucide-react";
+import { supabase } from "@/utils/supabaseClient"; 
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
 
-// --- DATABASE TOKEN ---
-const VALID_TOKENS = [
-  "I4-ALPHA", "I4-BRAVO", "I4-DELTA", "I4-ECHO9", "I4-G0LD1",
-  "I4-LION7", "I4-TIGER", "I4-WK29A", "I4-QW88X", "I4-MN12P",
-  "I4-X9L2K", "I4-M4P1Z", "I4-K8J9R", "I4-H3V5C", "I4-B2N6M",
-  "I4-R9T4W", "I4-Y7U8I", "I4-O0P1L", "I4-A2S3D", "I4-F4G5H",
-  "I4-J6K7L", "I4-Z8X9C", "I4-V0B1N", "I4-M2Q3W", "I4-E4R5T",
-  "I4-Y6U7I", "I4-O8P9A", "I4-S1D2F", "I4-G3H4J", "I4-K5L6Z",
-  "I4-X7C8V", "I4-B9N0M", "I4-Q1W2E", "I4-R3T4Y", "I4-U5I6O",
-  "I4-P7A8S", "I4-D9F0G", "I4-H1J2K", "I4-L3Z4X", "I4-C5V6B",
-  "I4-N7M8Q", "I4-W9E0R", "I4-T1Y2U", "I4-I3O4P", "I4-A5S6D",
-  "I4-F7G8H", "I4-J9K0L", "I4-Z1X2C", "I4-V3B4N", "I4-M5Q6W",
-  "I4-2025A", "I4-PRO01", "I4-BEST9", "I4-WIN88", "I4-TOP77",
-  "I4-SKILL", "I4-IELTS", "I4-BAND8", "I4-BAND7", "I4-SPEAK",
-  "I4-FAST1", "I4-COOL2", "I4-GOOD3", "I4-NICE4", "I4-EASY5",
-  "I4-HARD6", "I4-TEST7", "I4-EXAM8", "I4-PASS9", "I4-FAIL0",
-  "I4-ACE11", "I4-KING2", "I4-QUEN3", "I4-JACK4", "I4-TEN10",
-  "I4-ONE01", "I4-TWO02", "I4-SIX06", "I4-NINE9", "I4-ZERO0",
-  "I4-RX782", "I4-EV001", "I4-GUNDM", "I4-ZAKU2", "I4-GOUF3",
-  "I4-DOM09", "I4-GELG4", "I4-GM005", "I4-BALL6", "I4-AGUY7",
-  "I4-LUTH1", "I4-USER2", "I4-PRO99", "I4-MAX00", "I4-ULTRA"
+// --- GUILT TRIP MESSAGES (DARK HUMOR) ---
+const GUILT_MESSAGES = [
+  { icon: "🧐", title: "Examiner is Judging...", text: "\"Hmm, leaving already? That looks like a Band 5.0 attitude to me.\"" },
+  { icon: "💸", title: "Think about the Money", text: "The real IELTS test costs $200+. Wasting practice time is expensive. Sure you want to quit?" },
+  { icon: "📉", title: "Competitors are Winning", text: "While you sleep, your competitors are memorizing 50 new idioms right now." },
+  { icon: "🦉", title: "The Owl is Watching", text: "You haven't practiced your 40 hours today. Don't make me come over to your house." },
+  { icon: "💀", title: "RIP Your Score", text: "Here lies your Band 8.0 dream. Cause of death: Clicking Logout too early." },
+  { icon: "🇬🇧", title: "The King Disapproves", text: "Do you think the King would quit? No. So get back in there and speak proper English!" },
+  { icon: "🤡", title: "Are you joking?", text: "Quitting just when you were about to have a breakthrough? Classic clown move." }
 ];
+
+// --- DATABASE TOKEN ---
+const VALID_TOKENS = []; // Token sekarang via Database Supabase
 
 // --- BANK SOAL PART 2 ---
 const CUE_CARDS = [
@@ -108,7 +100,7 @@ const PART3_TOPICS = [
   { topic: "Transport", startQ: "What is the best way to reduce traffic congestion in big cities?" }
 ];
 
-// --- INFO BANK (UPDATED) ---
+// --- INFO BANK ---
 const BANK_INFO = {
   bankName: "BCA",             
   accountNumber: "3010166291", 
@@ -129,13 +121,18 @@ export default function Home() {
   const [part3Topic, setPart3Topic] = useState(PART3_TOPICS[0]);
   
   const [interviewQuestion, setInterviewQuestion] = useState(""); 
-  const accumulatedScoresRef = useRef([]); // Memori Kebal
-  const [accumulatedScoresState, setAccumulatedScoresState] = useState([]); // UI State
+  const accumulatedScoresRef = useRef([]); 
+  const [accumulatedScoresState, setAccumulatedScoresState] = useState([]); 
   
   const [isSpeakingAI, setIsSpeakingAI] = useState(false);
   
+  // MODALS STATE
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [guiltMessage, setGuiltMessage] = useState(GUILT_MESSAGES[0]);
+  
   const [tokenInput, setTokenInput] = useState("");
+  const [userProfile, setUserProfile] = useState(null); 
 
   const randomizeCue = () => {
     setIsRotating(true);
@@ -150,8 +147,8 @@ export default function Home() {
         setPart3Topic(newTopic);
         setInterviewQuestion(newTopic.startQ);
         
-        accumulatedScoresRef.current = []; // Reset memori
-        setAccumulatedScoresState([]);     // Reset UI
+        accumulatedScoresRef.current = []; 
+        setAccumulatedScoresState([]);     
         
         setAnalysisResult(null); 
     }
@@ -160,19 +157,32 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const expiryStr = localStorage.getItem("ielts4our_premium_expiry");
-    if (expiryStr) {
-      const expiryTime = parseInt(expiryStr);
-      const now = Date.now();
-      if (now < expiryTime) {
-        setIsPremium(true); 
-      } else {
-        setIsPremium(false);
-        localStorage.removeItem("ielts4our_premium_expiry"); 
-      }
-    } else {
-      setIsPremium(false);
+    async function checkPremiumStatus() {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+            setUserProfile(user);
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('is_premium, premium_expiry')
+                .eq('id', user.id)
+                .single();
+            
+            if (profile) {
+                const isStillValid = profile.is_premium && (profile.premium_expiry > Date.now());
+                setIsPremium(isStillValid);
+            }
+        } else {
+            const expiryStr = localStorage.getItem("ielts4our_premium_expiry");
+            if (expiryStr && Date.now() < parseInt(expiryStr)) {
+                setIsPremium(true);
+            } else {
+                setIsPremium(false);
+            }
+        }
     }
+
+    checkPremiumStatus();
   }, []);
 
   useEffect(() => {
@@ -207,7 +217,7 @@ export default function Home() {
     }
   };
 
-  const handleAnalysisComplete = (data) => {
+  const handleAnalysisComplete = async (data) => {
     const todayStr = new Date().toDateString();
     
     // --- STREAK LOGIC ---
@@ -223,9 +233,35 @@ export default function Home() {
       localStorage.setItem("ielts4our_last_date", todayStr);
     }
 
-    // --- LOGIC MOCK INTERVIEW ---
+    const saveData = async (finalResult) => {
+        try {
+            if (userProfile) {
+                const { error } = await supabase.from('practice_history').insert({
+                    user_id: userProfile.id,
+                    topic: finalResult.topic,
+                    overall_score: finalResult.overall,
+                    fluency: finalResult.fluency,
+                    lexical: finalResult.lexical,
+                    grammar: finalResult.grammar,
+                    pronunciation: finalResult.pronunciation,
+                    full_feedback: finalResult
+                });
+            } else {
+                const historyItem = {
+                    id: Date.now(),
+                    date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
+                    ...finalResult 
+                };
+                const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
+                const updatedHistory = [...existingHistory, historyItem].slice(-30); 
+                localStorage.setItem("ielts4our_history", JSON.stringify(updatedHistory));
+            }
+        } catch (err) {
+            console.error("Save Error:", err);
+        }
+    };
+
     if (practiceMode === 'mock-interview') {
-        
         accumulatedScoresRef.current.push(data);
         setAccumulatedScoresState([...accumulatedScoresRef.current]);
 
@@ -237,7 +273,6 @@ export default function Home() {
             }
         } else {
             const allScores = accumulatedScoresRef.current; 
-
             const avgOverall = allScores.reduce((acc, curr) => acc + (curr.overall || 0), 0) / 3;
             const avgFluency = allScores.reduce((acc, curr) => acc + (curr.fluency || 0), 0) / 3;
             const avgLexical = allScores.reduce((acc, curr) => acc + (curr.lexical || 0), 0) / 3;
@@ -259,6 +294,7 @@ export default function Home() {
             const allGrammar = allScores.flatMap(s => s.grammarCorrection || []).slice(0, 5);
 
             const finalResult = {
+                topic: `Mock Interview: ${part3Topic.topic}`,
                 overall: finalScore,
                 fluency: Math.round(avgFluency * 2) / 2,
                 lexical: Math.round(avgLexical * 2) / 2,
@@ -267,55 +303,71 @@ export default function Home() {
                 feedback: allScores[2].feedback, 
                 improvement: allScores[2].improvement, 
                 grammarCorrection: allGrammar,
-                
                 transcript: stitchedTranscript, 
                 modelAnswer: stitchedModelAnswer 
             };
 
             setAnalysisResult(finalResult);
-            
-            const historyItem = {
-                id: Date.now(),
-                date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
-                topic: `Mock Interview: ${part3Topic.topic}`,
-                ...finalResult 
-            };
-            const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
-            const updatedHistory = [...existingHistory, historyItem].slice(-30); 
-            localStorage.setItem("ielts4our_history", JSON.stringify(updatedHistory));
+            saveData(finalResult); 
         }
 
     } else {
         setAnalysisResult(data);
-        
-        const historyItem = {
-            id: Date.now(),
-            date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
-            topic: data.topic || dailyCue.topic, 
-            ...data 
-         };
-         const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
-         const updatedHistory = [...existingHistory, historyItem].slice(-30); 
-         localStorage.setItem("ielts4our_history", JSON.stringify(updatedHistory));
+        const resultToSave = {
+            ...data,
+            topic: data.topic || dailyCue.topic 
+        };
+        saveData(resultToSave);
     }
   };
 
-  const validateToken = () => {
+  const validateToken = async () => {
     const cleanToken = tokenInput.trim().toUpperCase();
-    if (VALID_TOKENS.includes(cleanToken)) {
-      const now = new Date();
-      const expiryDate = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)); 
-
-      setIsPremium(true);
-      localStorage.setItem("ielts4our_premium_expiry", expiryDate.getTime().toString());
-      
-      alert(`🎉 Selamat! Akun PRO aktif 30 hari.`);
-      setShowUpgradeModal(false);
-      setTokenInput("");
-      randomizeCue(); 
-    } else {
-      alert("❌ Kode Token Salah.");
+    
+    if (!userProfile) {
+        alert("⚠️ Mohon LOGIN atau REGISTER terlebih dahulu untuk mengaktifkan Premium.");
+        return;
     }
+
+    try {
+        const { data, error } = await supabase.rpc('redeem_token', { 
+            code_input: cleanToken 
+        });
+
+        if (error) throw error;
+
+        if (data === 'SUCCESS') {
+            setIsPremium(true);
+            alert(`🎉 Aktivasi Berhasil! Akun Anda sekarang PREMIUM selama 30 Hari.`);
+            setShowUpgradeModal(false);
+            setTokenInput("");
+            randomizeCue(); 
+        } else if (data === 'INVALID_TOKEN') {
+            alert("❌ Kode Token Salah/Tidak Ditemukan.");
+        } else if (data === 'ALREADY_USED') {
+            alert("❌ Kode Token SUDAH PERNAH DIGUNAKAN.");
+        } else {
+            alert(`Gagal: ${data}`);
+        }
+
+    } catch (err) {
+        console.error("Token Error:", err);
+        alert("Terjadi kesalahan koneksi.");
+    }
+  };
+
+  // --- LOGOUT LOGIC (GUILT TRIP) ---
+  const handleLogoutClick = () => {
+    // 1. Pick Random Message
+    const randomMsg = GUILT_MESSAGES[Math.floor(Math.random() * GUILT_MESSAGES.length)];
+    setGuiltMessage(randomMsg);
+    // 2. Show Modal
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload(); 
   };
 
   const confirmViaWA = () => {
@@ -368,13 +420,35 @@ export default function Home() {
              <motion.div 
                whileHover={{ scale: 1.05 }}
                whileTap={{ scale: 0.95 }}
-               className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-teal-400 transition-colors cursor-pointer flex items-center gap-2"
+               className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors cursor-pointer"
                title="My Progress"
              >
                 <BarChart3 className="w-5 h-5" />
-                <span className="font-bold text-sm">My Progress</span>
              </motion.div>
           </Link>
+
+          {/* LOGIN / USERNAME BUTTON */}
+          {userProfile ? (
+            <motion.button 
+               whileHover={{ scale: 1.05 }}
+               whileTap={{ scale: 0.95 }}
+               onClick={handleLogoutClick} // TRIGGER MODAL GUILT
+               className="px-4 py-2.5 bg-teal-500/10 hover:bg-red-500/10 border border-teal-500/20 hover:border-red-500/20 rounded-full text-teal-300 hover:text-red-400 transition-all text-xs font-bold flex items-center gap-2"
+               title="Click to Logout"
+            >
+                {userProfile.email?.split('@')[0]}
+            </motion.button>
+          ) : (
+            <Link href="/auth">
+                <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors text-xs font-bold"
+                >
+                Login
+                </motion.button>
+            </Link>
+          )}
 
           {!isPremium && (
             <motion.button 
@@ -525,8 +599,8 @@ export default function Home() {
                         <button 
                             onClick={() => { 
                                 setAnalysisResult(null); 
-                                accumulatedScoresRef.current = []; // RESET REF
-                                setAccumulatedScoresState([]);     // RESET STATE
+                                accumulatedScoresRef.current = []; 
+                                setAccumulatedScoresState([]);     
                                 handleModeSwitch(practiceMode); 
                             }} 
                             className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm text-white font-bold transition-all"
@@ -536,7 +610,7 @@ export default function Home() {
                     </div>
                     <ScoreCard 
                         result={analysisResult} 
-                        cue={analysisResult.topic || dailyCue.topic} // Fix judul topik
+                        cue={analysisResult.topic || dailyCue.topic} 
                         isPremiumExternal={isPremium}
                         onOpenUpgradeModal={() => setShowUpgradeModal(true)}
                     />
@@ -547,7 +621,7 @@ export default function Home() {
         </motion.div>
       </div>
       
-      {/* MODAL PEMBAYARAN (UPDATED UI) */}
+      {/* MODAL PEMBAYARAN */}
       {showUpgradeModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-panel w-full max-w-lg rounded-3xl overflow-hidden relative max-h-[85vh] overflow-y-auto">
@@ -561,7 +635,7 @@ export default function Home() {
              </div>
 
              <div className="p-5 md:p-8 space-y-6 md:space-y-8">
-                {/* --- UPDATED COMPARISON TABLE --- */}
+                {/* --- COMPARISON TABLE --- */}
                 <div className="bg-white/5 rounded-2xl overflow-hidden border border-white/5">
                    <div className="grid grid-cols-3 p-3 md:p-4 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest text-center bg-black/20">
                       <div className="text-left">Feature</div>
@@ -577,7 +651,7 @@ export default function Home() {
                       <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
                         <div className="text-left text-slate-300 text-xs md:text-sm">Duration</div>
                         <div className="text-slate-500 text-xs md:text-sm">60s</div>
-                        <div className="font-bold text-white text-xs md:text-sm">2 Mins</div>
+                        <div className="font-bold text-white text-xs md:text-sm">60s</div>
                       </div>
                       <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
                         <div className="text-left text-slate-300 text-xs md:text-sm">Model Answer</div>
@@ -637,8 +711,52 @@ export default function Home() {
         </div>
       )}
 
-      <footer className="text-center mt-24 text-slate-600 text-xs md:text-sm">
-        <p>&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.</p>
+      {/* --- NEW GUILT TRIP MODAL --- */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-sm text-center shadow-2xl relative"
+            >
+                <div className="text-6xl mb-4 animate-bounce">{guiltMessage.icon}</div>
+                <h3 className="text-2xl font-bold text-white mb-2">{guiltMessage.title}</h3>
+                <p className="text-slate-400 mb-8 leading-relaxed">
+                    {guiltMessage.text}
+                </p>
+
+                <div className="flex flex-col gap-3">
+                    <button 
+                        onClick={() => setShowLogoutModal(false)}
+                        className="w-full py-3 bg-teal-500 hover:bg-teal-400 text-slate-900 font-black uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-teal-500/20"
+                    >
+                        NO, I WANT BAND 8.0!
+                    </button>
+                    <button 
+                        onClick={confirmLogout}
+                        className="text-xs text-slate-500 hover:text-red-400 mt-2 transition-colors"
+                    >
+                        I give up, let me sleep...
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+      )}
+
+      <footer className="text-center mt-24 pb-10 text-slate-600 text-xs md:text-sm">
+        <p className="mb-4">&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.</p>
+        
+        <button 
+          onClick={() => {
+            if(confirm("⚠️ RESET MODE: Apakah Anda yakin ingin menghapus status Premium, History, dan Streak?")) {
+              localStorage.clear();
+              window.location.reload();
+            }
+          }}
+          className="text-[10px] text-red-500/50 hover:text-red-500 border border-red-900/30 px-2 py-1 rounded bg-red-900/10 transition-all"
+        >
+          [DEV] Reset All Data
+        </button>
       </footer>
     </main>
   );

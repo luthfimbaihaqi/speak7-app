@@ -5,42 +5,72 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, TrendingUp, Trophy, Activity, Flame, X, Eye } from "lucide-react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { supabase } from "@/utils/supabaseClient"; // --- IMPORT SUPABASE ---
 import ScoreCard from "@/components/ScoreCard"; 
 
 export default function ProgressPage() {
   const [history, setHistory] = useState([]);
   const [stats, setStats] = useState({ total: 0, average: 0, best: 0, streak: 0 });
-  
-  // State untuk Modal Detail
   const [selectedResult, setSelectedResult] = useState(null);
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
-    // Cek status premium agar tampilan ScoreCard di history sesuai hak akses
+    // --- LOAD DATA HYBRID (DB or LOCAL) ---
+    async function loadData() {
+        const currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
+        let parsedData = [];
+
+        // 1. Cek User Login
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+            // A. JIKA LOGIN: Ambil dari Supabase
+            console.log("Loading history from Supabase...");
+            const { data, error } = await supabase
+                .from('practice_history')
+                .select('*')
+                .order('created_at', { ascending: false }); // Urutkan terbaru
+
+            if (data) {
+                // Format data DB agar sama strukturnya dengan data LocalStorage
+                parsedData = data.map(item => ({
+                    id: item.id,
+                    date: new Date(item.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }),
+                    topic: item.topic,
+                    overall: item.overall_score,
+                    fluency: item.fluency,
+                    grammar: item.grammar,
+                    // Spread full_feedback (detail skor) ke object utama
+                    ...item.full_feedback 
+                }));
+            }
+        } else {
+            // B. JIKA GUEST: Ambil dari LocalStorage
+            console.log("Loading history from LocalStorage...");
+            const storedData = localStorage.getItem("ielts4our_history");
+            if (storedData) parsedData = JSON.parse(storedData);
+        }
+
+        // --- HITUNG STATISTIK ---
+        setHistory(parsedData);
+        
+        if (parsedData.length > 0) {
+            const total = parsedData.length;
+            const sum = parsedData.reduce((acc, curr) => acc + (curr.overall || 0), 0);
+            const avg = (sum / total).toFixed(1);
+            const max = Math.max(...parsedData.map(item => item.overall || 0));
+            setStats({ total, average: avg, best: max, streak: currentStreak });
+        } else {
+            setStats(prev => ({ ...prev, streak: currentStreak }));
+        }
+    }
+
+    loadData();
+
+    // Cek Premium (Tetap via LocalStorage sementara, sampai Fase 3)
     const expiryStr = localStorage.getItem("ielts4our_premium_expiry");
     if (expiryStr && Date.now() < parseInt(expiryStr)) {
         setIsPremium(true);
-    }
-
-    const storedData = localStorage.getItem("ielts4our_history");
-    const currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
-
-    if (storedData) {
-      const parsedData = JSON.parse(storedData);
-      setHistory(parsedData);
-      
-      if (parsedData.length > 0) {
-        const total = parsedData.length;
-        const sum = parsedData.reduce((acc, curr) => acc + (curr.overall || 0), 0);
-        const avg = (sum / total).toFixed(1);
-        const max = Math.max(...parsedData.map(item => item.overall || 0));
-        
-        setStats({ total, average: avg, best: max, streak: currentStreak });
-      } else {
-        setStats(prev => ({ ...prev, streak: currentStreak }));
-      }
-    } else {
-        setStats(prev => ({ ...prev, streak: currentStreak }));
     }
   }, []);
 
@@ -172,15 +202,15 @@ export default function ProgressPage() {
 
       </div>
 
-      {/* --- FIX MODAL DETAIL POPUP RESPONSIVE --- */}
+      {/* --- MODAL DETAIL POPUP --- */}
       {selectedResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm">
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }} 
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl flex flex-col max-h-[85vh]" // Fixed height container
+                className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl flex flex-col max-h-[85vh]"
             >
-                {/* Fixed Header with Close Button */}
+                {/* Header */}
                 <div className="flex justify-end p-4 border-b border-white/5 shrink-0">
                     <button 
                         onClick={() => setSelectedResult(null)} 
@@ -190,7 +220,7 @@ export default function ProgressPage() {
                     </button>
                 </div>
                 
-                {/* Scrollable Content Area */}
+                {/* Content */}
                 <div className="overflow-y-auto p-2 md:p-6">
                     <ScoreCard 
                         result={selectedResult} 
