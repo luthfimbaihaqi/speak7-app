@@ -188,7 +188,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
             ) : (
               <>
                 <Mic className="w-5 h-5" />
-                {mode === "mock-interview" ? "Answer (45s)" : "Start Recording"}
+                {mode === "mock-interview" ? "Answer (60 seconds max)" : "Start Recording"}
               </>
             )}
           </motion.button>

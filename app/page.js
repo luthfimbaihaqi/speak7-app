@@ -513,7 +513,7 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <Recorder cueCard={part3Topic.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={45} mode={practiceMode} />
+                    <Recorder cueCard={part3Topic.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={60} mode={practiceMode} />
                 </motion.div>
              )}
 
