@@ -1,20 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/utils/supabaseClient";
+import { useState } from "react";
+import { createBrowserClient } from '@supabase/ssr'; // Revisi: Import dari library langsung
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, Eye, EyeOff, Check, X, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
+
+  // --- REVISI: Inisialisasi Supabase Client di sini agar session terbaca ---
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // --- PASSWORD VALIDATION (Sama kayak Register) ---
+  // --- PASSWORD VALIDATION ---
   const [validations, setValidations] = useState({
     minLength: false,
     hasNumber: false,
@@ -41,7 +48,7 @@ export default function UpdatePasswordPage() {
     setErrorMsg("");
 
     try {
-      // Fungsi Sakti Supabase untuk update password user yang sedang "login" (via link email)
+      // Update password user (session diambil otomatis dari browser cookie)
       const { error } = await supabase.auth.updateUser({ 
         password: password 
       });
