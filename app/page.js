@@ -355,10 +355,11 @@ export default function Home() {
              <motion.div 
                whileHover={{ scale: 1.05 }}
                whileTap={{ scale: 0.95 }}
-               className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors cursor-pointer"
-               title="My Progress"
+               className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
+               title="View Learning Progress"
              >
-                <BarChart3 className="w-5 h-5" />
+                <BarChart3 className="w-4 h-4 text-teal-400" />
+                <span className="text-xs font-bold">My Progress</span>
              </motion.div>
           </Link>
 
