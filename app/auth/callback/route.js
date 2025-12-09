@@ -28,3 +28,5 @@ export async function GET(request) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 }
+
+// Update dependencies fix 
