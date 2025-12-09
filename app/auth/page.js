@@ -4,19 +4,27 @@ import { useState } from "react";
 import { supabase } from "@/utils/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Mail, Lock, Eye, EyeOff, Check, X, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, Lock, Eye, EyeOff, Check, X, AlertCircle, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AuthPage() {
+  // STATE MODE: 'login' | 'register' | 'forgot'
+  // (Menggantikan boolean isSignUp agar bisa 3 mode)
+  const [mode, setMode] = useState("login"); 
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false); // Royal Modal State
+  
+  // STATE UI KHUSUS
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // Royal Modal (Login/Reg)
+  const [resetEmailSent, setResetEmailSent] = useState(false); // State khusus Reset Password
+  const [errorMsg, setErrorMsg] = useState(""); // Untuk nampilin error biar rapi
+
   const router = useRouter();
 
-  // --- PASSWORD VALIDATION STATE ---
+  // --- PASSWORD VALIDATION STATE (TETAP ADA) ---
   const [validations, setValidations] = useState({
     minLength: false,
     hasNumber: false,
@@ -37,17 +45,19 @@ export default function AuthPage() {
 
   const isPasswordValid = validations.minLength && validations.hasNumber && validations.hasSymbol;
 
+  // --- 1. HANDLE LOGIN & REGISTER ---
   const handleAuth = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
     
     // Double Check saat Register
-    if (isSignUp && !isPasswordValid) return;
+    if (mode === "register" && !isPasswordValid) return;
 
     setLoading(true);
 
     try {
       let result;
-      if (isSignUp) {
+      if (mode === "register") {
         result = await supabase.auth.signUp({ email, password });
       } else {
         result = await supabase.auth.signInWithPassword({ email, password });
@@ -59,7 +69,32 @@ export default function AuthPage() {
       setShowSuccessModal(true);
       
     } catch (error) {
-      alert(error.message);
+      setErrorMsg(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- 2. HANDLE FORGOT PASSWORD (BARU) ---
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      // URL redirect setelah user klik link di email
+      // Pastikan nanti kita buat page /update-password
+      const redirectUrl = `${window.location.origin}/update-password`;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) throw error;
+
+      setResetEmailSent(true); // Tampilkan pesan sukses khusus reset
+    } catch (error) {
+      setErrorMsg(error.message);
     } finally {
       setLoading(false);
     }
@@ -67,6 +102,14 @@ export default function AuthPage() {
 
   const handleProceed = () => {
     router.push("/");
+  };
+
+  // Helper untuk ganti mode dan reset state
+  const switchMode = (newMode) => {
+    setMode(newMode);
+    setErrorMsg("");
+    setResetEmailSent(false);
+    setPassword("");
   };
 
   return (
@@ -82,10 +125,10 @@ export default function AuthPage() {
         <div className="relative z-10 w-full max-w-md">
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={isSignUp ? "register" : "login"}
-                    initial={{ opacity: 0, x: isSignUp ? 50 : -50 }}
+                    key={mode} // Animasi berubah saat mode berubah
+                    initial={{ opacity: 0, x: mode === "register" ? 50 : -50 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: isSignUp ? -50 : 50 }}
+                    exit={{ opacity: 0, x: mode === "register" ? -50 : 50 }}
                     transition={{ duration: 0.3 }}
                     className="bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-xl shadow-2xl"
                 >
@@ -93,93 +136,142 @@ export default function AuthPage() {
                         <ArrowLeft className="w-4 h-4"/> Back to Home
                     </Link>
 
+                    {/* DYNAMIC TITLE */}
                     <h1 className="text-3xl font-bold text-white mb-2">
-                        {isSignUp ? "Create Account" : "Welcome Back"}
+                        {mode === "register" && "Create Account"}
+                        {mode === "login" && "Welcome Back"}
+                        {mode === "forgot" && "Reset Password"}
                     </h1>
-                    <p className="text-slate-400 mb-8 text-sm">
-                        {isSignUp ? "Join the elite Band 8.0 club." : "Login to resume your training."}
+                    <p className="text-slate-400 mb-6 text-sm">
+                        {mode === "register" && "Join the elite Band 8.0 club."}
+                        {mode === "login" && "Login to resume your training."}
+                        {mode === "forgot" && "Don't panic. We'll send you a recovery link."}
                     </p>
 
-                    <form onSubmit={handleAuth} className="space-y-4">
-                        {/* EMAIL INPUT */}
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email</label>
-                            <div className="relative group">
-                                <Mail className="absolute left-3 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors"/>
-                                <input 
-                                    type="email" 
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-teal-500 transition-all"
-                                    placeholder="name@example.com"
-                                    required
-                                />
-                            </div>
+                    {/* ERROR MESSAGE ALERT */}
+                    {errorMsg && (
+                        <div className="mb-4 bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-xl text-xs flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /> {errorMsg}
                         </div>
+                    )}
 
-                        {/* PASSWORD INPUT */}
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password</label>
-                            <div className="relative group">
-                                <Lock className="absolute left-3 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors"/>
-                                <input 
-                                    type={showPassword ? "text" : "password"} 
-                                    value={password}
-                                    onChange={handlePasswordChange}
-                                    className={`w-full bg-black/20 border rounded-xl py-3 pl-10 pr-12 text-white focus:outline-none transition-all ${isSignUp && !isPasswordValid && password.length > 0 ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-teal-500'}`}
-                                    placeholder="••••••••"
-                                    required
-                                />
-                                {/* Eye Toggle Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-3 text-slate-500 hover:text-white transition-colors"
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
-                                </button>
+                    {/* KHUSUS MODE FORGOT PASSWORD: JIKA SUKSES KIRIM EMAIL */}
+                    {mode === "forgot" && resetEmailSent ? (
+                        <div className="text-center py-8">
+                            <div className="w-16 h-16 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Mail className="w-8 h-8" />
                             </div>
+                            <h3 className="text-white font-bold text-xl mb-2">Check Your Email</h3>
+                            <p className="text-slate-400 text-sm mb-6">
+                                We have sent a password recovery link to <strong>{email}</strong>.
+                            </p>
+                            <button onClick={() => switchMode("login")} className="text-teal-400 font-bold hover:underline text-sm">
+                                Back to Login
+                            </button>
                         </div>
-
-                        {/* LIVE CHECKLIST (Hanya muncul saat Register) */}
-                        {isSignUp && (
-                            <div className="bg-black/20 p-3 rounded-lg border border-white/5 space-y-2 mt-2">
-                                <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Password Requirements:</p>
-                                <RequirementItem isValid={validations.minLength} text="Min. 8 characters" />
-                                <RequirementItem isValid={validations.hasNumber} text="Contains a number (0-9)" />
-                                <RequirementItem isValid={validations.hasSymbol} text="Contains a symbol (!@#$%)" />
+                    ) : (
+                        /* --- FORM AREA --- */
+                        <form onSubmit={mode === "forgot" ? handleResetPassword : handleAuth} className="space-y-4">
+                            
+                            {/* EMAIL INPUT (SELALU MUNCUL) */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email</label>
+                                <div className="relative group">
+                                    <Mail className="absolute left-3 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors"/>
+                                    <input 
+                                        type="email" 
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-teal-500 transition-all"
+                                        placeholder="name@example.com"
+                                        required
+                                    />
+                                </div>
                             </div>
-                        )}
 
-                        <button 
-                            disabled={loading || (isSignUp && !isPasswordValid)}
-                            className={`w-full py-3.5 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-6 
-                                ${loading || (isSignUp && !isPasswordValid) 
-                                    ? "bg-white/5 text-slate-500 cursor-not-allowed border border-white/5" 
-                                    : isSignUp 
-                                        ? "bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white shadow-purple-500/20" // Warna Beda Buat Register
-                                        : "bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white shadow-teal-500/20" // Warna Login
-                                }
-                            `}
-                        >
-                            {loading && <Loader2 className="w-5 h-5 animate-spin"/>}
-                            {isSignUp ? "Create Account" : "Sign In"}
-                        </button>
-                    </form>
+                            {/* PASSWORD INPUT (HANYA MUNCUL DI LOGIN & REGISTER) */}
+                            {mode !== "forgot" && (
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password</label>
+                                    <div className="relative group">
+                                        <Lock className="absolute left-3 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors"/>
+                                        <input 
+                                            type={showPassword ? "text" : "password"} 
+                                            value={password}
+                                            onChange={handlePasswordChange}
+                                            className={`w-full bg-black/20 border rounded-xl py-3 pl-10 pr-12 text-white focus:outline-none transition-all ${mode === "register" && !isPasswordValid && password.length > 0 ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-teal-500'}`}
+                                            placeholder="••••••••"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-3 text-slate-500 hover:text-white transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
+                            {/* FORGOT PASSWORD LINK (HANYA DI LOGIN) */}
+                            {mode === "login" && (
+                                <div className="flex justify-end">
+                                    <button 
+                                        type="button"
+                                        onClick={() => switchMode("forgot")}
+                                        className="text-xs text-slate-400 hover:text-white transition-colors"
+                                    >
+                                        Forgot Password?
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* LIVE CHECKLIST (HANYA DI REGISTER - TETAP ADA) */}
+                            {mode === "register" && (
+                                <div className="bg-black/20 p-3 rounded-lg border border-white/5 space-y-2 mt-2">
+                                    <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Password Requirements:</p>
+                                    <RequirementItem isValid={validations.minLength} text="Min. 8 characters" />
+                                    <RequirementItem isValid={validations.hasNumber} text="Contains a number (0-9)" />
+                                    <RequirementItem isValid={validations.hasSymbol} text="Contains a symbol (!@#$%)" />
+                                </div>
+                            )}
+
+                            {/* SUBMIT BUTTON */}
+                            <button 
+                                disabled={loading || (mode === "register" && !isPasswordValid)}
+                                className={`w-full py-3.5 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-6 
+                                    ${loading || (mode === "register" && !isPasswordValid) 
+                                        ? "bg-white/5 text-slate-500 cursor-not-allowed border border-white/5" 
+                                        : mode === "register" 
+                                            ? "bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white shadow-purple-500/20" 
+                                            : "bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white shadow-teal-500/20"
+                                    }
+                                `}
+                            >
+                                {loading && <Loader2 className="w-5 h-5 animate-spin"/>}
+                                {mode === "register" ? "Create Account" : mode === "login" ? "Sign In" : "Send Recovery Link"}
+                            </button>
+                        </form>
+                    )}
+
+                    {/* FOOTER SWITCHER */}
                     <div className="mt-6 pt-6 border-t border-white/5 text-center">
                         <p className="text-slate-400 text-sm">
-                            {isSignUp ? "Already have an account?" : "Don't have an account?"}
+                            {mode === "login" && "Don't have an account?"}
+                            {mode === "register" && "Already have an account?"}
+                            {mode === "forgot" && "Remembered your password?"}
                         </p>
                         <button 
                             onClick={() => {
-                                setIsSignUp(!isSignUp);
-                                setPassword(""); // Reset password field
-                                setValidations({ minLength: false, hasNumber: false, hasSymbol: false }); // Reset validasi
+                                if (mode === "login") switchMode("register");
+                                else switchMode("login");
                             }}
                             className="text-white font-bold mt-2 hover:text-teal-400 transition-colors uppercase text-xs tracking-widest border-b border-transparent hover:border-teal-400 pb-0.5"
                         >
-                            {isSignUp ? "Login Instead" : "Register New Account"}
+                            {mode === "login" && "Register New Account"}
+                            {mode === "register" && "Login Instead"}
+                            {mode === "forgot" && "Login Instead"}
                         </button>
                     </div>
                 </motion.div>
@@ -187,7 +279,7 @@ export default function AuthPage() {
         </div>
       )}
 
-      {/* --- THE ROYAL STANDARD MODAL (SUCCESS) --- */}
+      {/* --- THE ROYAL STANDARD MODAL (SUCCESS - TETAP ADA) --- */}
       {showSuccessModal && (
         <motion.div 
             initial={{ scale: 0.9, opacity: 0 }} 
@@ -213,7 +305,7 @@ export default function AuthPage() {
   );
 }
 
-// Component Kecil untuk Item Checklist Checklist
+// Component Kecil untuk Item Checklist (TETAP ADA)
 function RequirementItem({ isValid, text }) {
     return (
         <div className="flex items-center gap-2 transition-all">
