@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createBrowserClient } from '@supabase/ssr'; // Revisi: Import dari library langsung
+import { createBrowserClient } from '@supabase/ssr'; 
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, Eye, EyeOff, Check, X, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 export default function UpdatePasswordPage() {
   const router = useRouter();
 
-  // --- REVISI: Inisialisasi Supabase Client di sini agar session terbaca ---
+  // Inisialisasi client yang sadar-session
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -21,7 +21,6 @@ export default function UpdatePasswordPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // --- PASSWORD VALIDATION ---
   const [validations, setValidations] = useState({
     minLength: false,
     hasNumber: false,
@@ -48,7 +47,6 @@ export default function UpdatePasswordPage() {
     setErrorMsg("");
 
     try {
-      // Update password user (session diambil otomatis dari browser cookie)
       const { error } = await supabase.auth.updateUser({ 
         password: password 
       });
@@ -56,8 +54,6 @@ export default function UpdatePasswordPage() {
       if (error) throw error;
 
       setSuccess(true);
-      
-      // Redirect otomatis setelah 3 detik
       setTimeout(() => {
         router.push("/");
       }, 3000);
@@ -163,6 +159,7 @@ export default function UpdatePasswordPage() {
   );
 }
 
+// INI BAGIAN YANG TADI HILANG:
 function RequirementItem({ isValid, text }) {
     return (
         <div className="flex items-center gap-2 transition-all">
