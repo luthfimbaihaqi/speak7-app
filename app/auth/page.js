@@ -83,8 +83,8 @@ export default function AuthPage() {
 
     try {
       // URL redirect setelah user klik link di email
-      // Pastikan nanti kita buat page /update-password
-      const redirectUrl = `${window.location.origin}/update-password`;
+      // Arahkan ke callback dulu, baru ke update-password
+const redirectUrl = `${window.location.origin}/auth/callback?next=/update-password`;
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
