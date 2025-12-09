@@ -97,7 +97,7 @@ export default function AuthPage() {
                         {isSignUp ? "Create Account" : "Welcome Back"}
                     </h1>
                     <p className="text-slate-400 mb-8 text-sm">
-                        {isSignUp ? "Join the elite Band 9.0 club." : "Login to resume your training."}
+                        {isSignUp ? "Join the elite Band 8.0 club." : "Login to resume your training."}
                     </p>
 
                     <form onSubmit={handleAuth} className="space-y-4">
