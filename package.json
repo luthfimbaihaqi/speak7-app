@@ -9,26 +9,24 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/supabase-js": "^2.39.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.47.10",
     "clsx": "^2.1.1",
-    "form-data": "^4.0.0",
-    "framer-motion": "^11.0.0",
-    "groq-sdk": "^0.3.3",
-    "lucide-react": "^0.344.0",
-    "next": "14.2.3",
-    "react": "^18.2.0",
+    "framer-motion": "^11.13.1",
+    "groq-sdk": "^0.9.1",
+    "lucide-react": "^0.468.0",
+    "next": "15.0.3",
+    "react": "19.0.0-rc-66855b96-20241106",
     "react-confetti": "^6.1.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "19.0.0-rc-66855b96-20241106",
     "react-mic": "^12.4.6",
-    "recharts": "^2.12.0",
-    "tailwind-merge": "^2.2.0"
+    "recharts": "^2.13.3",
+    "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.17",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
     "eslint": "^8",
-    "eslint-config-next": "14.2.3",
-    "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1"
+    "eslint-config-next": "15.0.3"
   }
 }
