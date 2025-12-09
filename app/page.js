@@ -2,24 +2,31 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Import Router untuk Redirect
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, BarChart3, ChevronRight, Mic2, Users, Volume2 } from "lucide-react";
+import { BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
 import { CUE_CARDS, PART3_TOPICS, GUILT_MESSAGES } from "@/utils/constants";
 import MarketingSection from "@/components/MarketingSection";
 import UpgradeModal from "@/components/UpgradeModal";
+import AlertModal from "@/components/AlertModal"; // Import Modal Baru
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
 
 export default function Home() {
+  const router = useRouter(); // Inisialisasi Router
+
   const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]);
   const [analysisResult, setAnalysisResult] = useState(null);
   
   const [isRotating, setIsRotating] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   
+  // --- STATE BARU: JATAH GRATIS ---
+  const [freeQuota, setFreeQuota] = useState(0); 
+
   const [practiceMode, setPracticeMode] = useState("cue-card"); 
   const [part3Topic, setPart3Topic] = useState(PART3_TOPICS[0]);
   
@@ -33,6 +40,16 @@ export default function Home() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [guiltMessage, setGuiltMessage] = useState(GUILT_MESSAGES[0]);
+  
+  // STATE ALERT KEREN
+  const [alertConfig, setAlertConfig] = useState({
+    isOpen: false,
+    type: "success", 
+    title: "",
+    message: "",
+    actionLabel: "",
+    onAction: null
+  });
   
   const [userProfile, setUserProfile] = useState(null); 
 
@@ -59,22 +76,25 @@ export default function Home() {
   };
 
   useEffect(() => {
-    async function checkPremiumStatus() {
+    async function checkUserStatus() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
             setUserProfile(user);
+            // Ambil Status Premium DAN Kuota Gratis
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('is_premium, premium_expiry')
+                .select('is_premium, premium_expiry, free_mock_quota')
                 .eq('id', user.id)
                 .single();
             
             if (profile) {
                 const isStillValid = profile.is_premium && (profile.premium_expiry > Date.now());
                 setIsPremium(isStillValid);
+                setFreeQuota(profile.free_mock_quota || 0); // Simpan info kuota
             }
         } else {
+            // Logic Fallback kalau belum login (Cek LocalStorage)
             const expiryStr = localStorage.getItem("ielts4our_premium_expiry");
             if (expiryStr && Date.now() < parseInt(expiryStr)) {
                 setIsPremium(true);
@@ -84,7 +104,7 @@ export default function Home() {
         }
     }
 
-    checkPremiumStatus();
+    checkUserStatus();
   }, []);
 
   useEffect(() => {
@@ -116,6 +136,20 @@ export default function Home() {
         utterance.onstart = () => setIsSpeakingAI(true);
         utterance.onend = () => setIsSpeakingAI(false);
         window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // --- FUNGSI UNTUK MENGHANGUSKAN KUOTA ---
+  const burnFreeQuota = async () => {
+    if (userProfile && !isPremium && freeQuota > 0) {
+        // Update database: set quota jadi 0
+        await supabase
+            .from('profiles')
+            .update({ free_mock_quota: 0 })
+            .eq('id', userProfile.id);
+        
+        // Update tampilan lokal biar langsung terkunci nanti
+        setFreeQuota(0);
     }
   };
 
@@ -174,6 +208,13 @@ export default function Home() {
                 setInterviewQuestion(data.nextQuestion);
             }
         } else {
+            // --- FINAL RESULT PART 3 ---
+            
+            // 🔥 HANGUSKAN KUOTA DISINI (Kalau user gratisan)
+            if (!isPremium) {
+                await burnFreeQuota();
+            }
+
             const allScores = accumulatedScoresRef.current; 
             const avgOverall = allScores.reduce((acc, curr) => acc + (curr.overall || 0), 0) / 3;
             const avgFluency = allScores.reduce((acc, curr) => acc + (curr.fluency || 0), 0) / 3;
@@ -225,10 +266,8 @@ export default function Home() {
 
   // --- LOGOUT LOGIC (GUILT TRIP) ---
   const handleLogoutClick = () => {
-    // 1. Pick Random Message
     const randomMsg = GUILT_MESSAGES[Math.floor(Math.random() * GUILT_MESSAGES.length)];
     setGuiltMessage(randomMsg);
-    // 2. Show Modal
     setShowLogoutModal(true);
   };
 
@@ -238,10 +277,41 @@ export default function Home() {
   };
 
   const handleModeSwitch = (mode) => {
-    if (mode === "mock-interview" && !isPremium) {
-        setShowUpgradeModal(true);
-        return;
+    // 1. Cek jika user mau masuk Mock Interview
+    if (mode === "mock-interview") {
+        
+        // Skenario A: Belum Login (Guest) -> ALERT KEREN (LOCK)
+        if (!userProfile) {
+            setAlertConfig({
+                isOpen: true,
+                type: "lock",
+                title: "Login Required",
+                message: "Fitur ini khusus member. Login sekarang untuk mendapatkan akses 1x Free Trial Mock Interview.",
+                actionLabel: "Login Sekarang",
+                onAction: () => router.push("/auth") // Redirect ke Login
+            });
+            return;
+        }
+
+        // Skenario B: Sudah Login, Tapi Bukan Premium, Dan Kuota Habis
+        if (!isPremium && freeQuota <= 0) {
+            setShowUpgradeModal(true); // Tampilkan modal bayar
+            return;
+        }
+
+        // Skenario C: Sudah Login, Gratisan, Punya Kuota 1 -> ALERT KEREN (ROCKET)
+        if (!isPremium && freeQuota > 0) {
+            setAlertConfig({
+                isOpen: true,
+                type: "success",
+                title: "Free Trial Activated!",
+                message: "Mode Mock Interview aktif! Kamu punya 1x kesempatan gratis. Manfaatkan sebaik mungkin ya!",
+                actionLabel: "Let's Start!",
+                onAction: null // Tidak perlu aksi, cuma tutup modal
+            });
+        }
     }
+
     setPracticeMode(mode);
     setAnalysisResult(null); 
     
@@ -258,9 +328,7 @@ export default function Home() {
       {/* HEADER */}
       <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4">
         
-        {/* BAGIAN LOGO BARU */}
         <div className="flex items-center gap-3">
-          {/* Logo Image */}
           <div className="relative w-32 h-10 md:w-40 md:h-12">
              <Image 
                src="/logo-white.png"
@@ -294,12 +362,11 @@ export default function Home() {
              </motion.div>
           </Link>
 
-          {/* LOGIN / USERNAME BUTTON */}
           {userProfile ? (
             <motion.button 
                whileHover={{ scale: 1.05 }}
                whileTap={{ scale: 0.95 }}
-               onClick={handleLogoutClick} // TRIGGER MODAL GUILT
+               onClick={handleLogoutClick}
                className="px-4 py-2.5 bg-teal-500/10 hover:bg-red-500/10 border border-teal-500/20 hover:border-red-500/20 rounded-full text-teal-300 hover:text-red-400 transition-all text-xs font-bold flex items-center gap-2"
                title="Click to Logout"
             >
@@ -376,7 +443,16 @@ export default function Home() {
          >
             <Users className="w-3.5 h-3.5" />
             Mock Interview
-            {!isPremium && <Lock className="w-3 h-3 text-yellow-500 ml-1" />}
+            {/* Logic Ikon Gembok / Buka Gembok */}
+            {!isPremium && (
+                <>
+                  {userProfile && freeQuota > 0 ? (
+                    <span className="ml-1 text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">1x Free</span>
+                  ) : (
+                    <Lock className="w-3 h-3 text-yellow-500 ml-1" />
+                  )}
+                </>
+            )}
          </button>
       </div>
 
@@ -500,7 +576,14 @@ export default function Home() {
         }}
       />
 
-      {/* --- NEW GUILT TRIP MODAL --- */}
+      {/* --- ALERT MODAL (NEW) --- */}
+      <AlertModal 
+        isOpen={alertConfig.isOpen}
+        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        {...alertConfig}
+      />
+
+      {/* --- GUILT TRIP MODAL --- */}
       {showLogoutModal && (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div 
@@ -532,7 +615,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MARKETING SECTION: HOW IT WORKS --- */}
+      {/* --- MARKETING SECTION --- */}
       <MarketingSection />
 
       <footer className="text-center mt-24 pb-10 text-slate-600 text-xs md:text-sm">
