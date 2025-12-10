@@ -3,15 +3,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation"; 
-import { motion } from "framer-motion";
-import { BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock, Filter, AlertTriangle, LogIn } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, 
+  BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock, 
+  Filter, AlertTriangle, LogIn, ChevronDown, LogOut, User, Info 
+} from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
 import { CUE_CARDS, PART3_TOPICS, GUILT_MESSAGES } from "@/utils/constants";
 import MarketingSection from "@/components/MarketingSection";
 import UpgradeModal from "@/components/UpgradeModal";
 import AlertModal from "@/components/AlertModal"; 
-import FAQSection from "@/components/FAQSection"; // Import FAQ Teaser
+import FAQSection from "@/components/FAQSection"; 
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
@@ -19,14 +23,15 @@ import ScoreCard from "@/components/ScoreCard";
 export default function Home() {
   const router = useRouter(); 
   const heroRef = useRef(null); 
+  
+  // --- REF UNTUK DROPDOWN MENU USER ---
+  const userMenuRef = useRef(null);
 
   const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]);
   const [part3Topic, setPart3Topic] = useState(PART3_TOPICS[0]);
 
-  // --- FILTER DIFFICULTY ---
   const [difficultyFilter, setDifficultyFilter] = useState("any");
 
-  // --- REFS (STALE STATE FIX) ---
   const dailyCueRef = useRef(dailyCue);
   const part3TopicRef = useRef(part3Topic);
 
@@ -36,13 +41,14 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isRotating, setIsRotating] = useState(false);
   
-  // --- USER & QUOTA STATES ---
   const [userProfile, setUserProfile] = useState(null); 
   const [isPremium, setIsPremium] = useState(false);
-  const [freeMockQuota, setFreeMockQuota] = useState(0); // Kuota Mock Interview (1x Trial)
+  const [freeMockQuota, setFreeMockQuota] = useState(0); 
   
-  // State Baru: Status Kuota Daily Cue Card ('allowed' | 'guest_limit' | 'daily_limit')
   const [dailyCueQuotaStatus, setDailyCueQuotaStatus] = useState('allowed'); 
+
+  // --- STATE MENU DROPDOWN ---
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const [practiceMode, setPracticeMode] = useState("cue-card"); 
   const [interviewQuestion, setInterviewQuestion] = useState(""); 
@@ -51,24 +57,21 @@ export default function Home() {
   const [accumulatedScoresState, setAccumulatedScoresState] = useState([]); 
   const [isSpeakingAI, setIsSpeakingAI] = useState(false);
   
-  // MODALS
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [guiltMessage, setGuiltMessage] = useState(GUILT_MESSAGES[0]);
   
   const [alertConfig, setAlertConfig] = useState({
-    isOpen: false,
-    type: "success", title: "", message: "", actionLabel: "", onAction: null
+    isOpen: false, type: "success", title: "", message: "", actionLabel: "", onAction: null
   });
 
-  // --- 1. CEK STATUS USER & QUOTA SAAT LOAD ---
+  // --- 1. CEK STATUS USER & CLICK OUTSIDE LISTENER ---
   useEffect(() => {
     async function checkUserStatus() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
             setUserProfile(user);
-            // Ambil Profil Lengkap (Termasuk kuota harian)
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('is_premium, premium_expiry, free_mock_quota, daily_usage_count, last_usage_date')
@@ -80,14 +83,11 @@ export default function Home() {
                 setIsPremium(isStillValid);
                 setFreeMockQuota(profile.free_mock_quota || 0);
 
-                // --- LOGIKA CEK QUOTA HARIAN (USER LOGIN) ---
-                if (!isStillValid) { // Kalau Premium, Unlimited. Kalau Free, Cek.
-                    const todayStr = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
+                if (!isStillValid) { 
+                    const todayStr = new Date().toISOString().split('T')[0]; 
                     const lastDate = profile.last_usage_date;
                     const count = profile.daily_usage_count || 0;
 
-                    // Jika tanggal beda (hari baru), reset dianggap 0 (allowed).
-                    // Jika tanggal sama DAN count >= 2, block.
                     if (lastDate === todayStr && count >= 2) {
                         setDailyCueQuotaStatus('daily_limit');
                     } else {
@@ -96,23 +96,27 @@ export default function Home() {
                 }
             }
         } else {
-            // --- LOGIKA CEK QUOTA GUEST (LOCALSTORAGE) ---
             const guestUsed = localStorage.getItem("ielts4our_guest_usage");
-            if (guestUsed) {
-                setDailyCueQuotaStatus('guest_limit');
-            } else {
-                setDailyCueQuotaStatus('allowed');
-            }
+            if (guestUsed) setDailyCueQuotaStatus('guest_limit');
+            else setDailyCueQuotaStatus('allowed');
         }
     }
 
     checkUserStatus();
+
+    // Event Listener untuk menutup dropdown saat klik di luar
+    function handleClickOutside(event) {
+        if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+            setIsUserMenuOpen(false);
+        }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+
   }, []);
 
-  // --- 2. RANDOMIZE LOGIC ---
   const randomizeCue = () => {
     setIsRotating(true);
-    
     if (practiceMode === 'cue-card') {
         const maxIndex = isPremium ? CUE_CARDS.length : 30;
         const randomIndex = Math.floor(Math.random() * maxIndex);
@@ -129,16 +133,13 @@ export default function Home() {
         
         setPart3Topic(newTopic);
         setInterviewQuestion(newTopic.startQ);
-        
         accumulatedScoresRef.current = []; 
         setAccumulatedScoresState([]);     
         setAnalysisResult(null); 
     }
-
     setTimeout(() => setIsRotating(false), 500);
   };
 
-  // Reset soal/filter logic
   useEffect(() => {
       if (practiceMode === 'mock-interview') {
           if (difficultyFilter !== 'any') randomizeCue(); 
@@ -149,7 +150,6 @@ export default function Home() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficultyFilter]);
 
-  // Auto Scroll Result
   useEffect(() => {
     if (analysisResult) {
       const resultSection = document.getElementById("result-section");
@@ -173,21 +173,12 @@ export default function Home() {
     }
   };
 
-  // --- 3. HANDLE QUOTA CONSUMPTION (UPDATE DB/LOCAL) ---
   const handleQuotaConsumption = async (mode) => {
-    if (isPremium) return; // Premium bebas
+    if (isPremium) return; 
 
     if (mode === 'cue-card') {
         if (userProfile) {
-            // USER LOGIN: Update DB (+1 count)
-            // Kita pakai RPC atau update biasa. Disini update logic manual:
-            // Cek tanggal dulu (reset if needed) lalu increment.
-            // Supaya simpel dan atomik, kita asumsikan backend handle reset logic,
-            // TAPI karena kita pakai client-side logic tadi:
-            
             const todayStr = new Date().toISOString().split('T')[0];
-            
-            // Ambil data terbaru dulu untuk safety
             const { data: currentProfile } = await supabase
                 .from('profiles')
                 .select('daily_usage_count, last_usage_date')
@@ -199,29 +190,16 @@ export default function Home() {
                 newCount = (currentProfile.daily_usage_count || 0) + 1;
             }
 
-            await supabase
-                .from('profiles')
-                .update({ 
-                    daily_usage_count: newCount, 
-                    last_usage_date: todayStr 
-                })
-                .eq('id', userProfile.id);
-            
-            // Update State Lokal biar UI langsung berubah kalau limit habis
+            await supabase.from('profiles').update({ daily_usage_count: newCount, last_usage_date: todayStr }).eq('id', userProfile.id);
             if (newCount >= 2) setDailyCueQuotaStatus('daily_limit');
 
         } else {
-            // GUEST: Update LocalStorage
             localStorage.setItem("ielts4our_guest_usage", "true");
             setDailyCueQuotaStatus('guest_limit');
         }
     } else if (mode === 'mock-interview') {
-        // FREE MOCK TRIAL (Existing Logic)
         if (userProfile && freeMockQuota > 0) {
-            await supabase
-                .from('profiles')
-                .update({ free_mock_quota: 0 })
-                .eq('id', userProfile.id);
+            await supabase.from('profiles').update({ free_mock_quota: 0 }).eq('id', userProfile.id);
             setFreeMockQuota(0);
         }
     }
@@ -229,8 +207,6 @@ export default function Home() {
 
   const handleAnalysisComplete = async (data) => {
     const todayStr = new Date().toDateString();
-    
-    // STREAK LOGIC
     const lastPracticeDate = localStorage.getItem("ielts4our_last_date");
     let currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
 
@@ -254,7 +230,7 @@ export default function Home() {
                     lexical: finalResult.lexical,
                     grammar: finalResult.grammar,
                     pronunciation: finalResult.pronunciation,
-                    full_feedback: finalResult // Difficulty tersimpan disini
+                    full_feedback: finalResult 
                 });
             } else {
                 const historyItem = {
@@ -278,19 +254,12 @@ export default function Home() {
         const currentCount = accumulatedScoresRef.current.length;
 
         if (currentCount < 3) {
-            if (data.nextQuestion) {
-                setInterviewQuestion(data.nextQuestion);
-            }
+            if (data.nextQuestion) setInterviewQuestion(data.nextQuestion);
         } else {
-            // FINAL RESULT MOCK INTERVIEW
-            // Update Quota Mock Interview
-            if (!isPremium) {
-                await handleQuotaConsumption('mock-interview');
-            }
+            if (!isPremium) await handleQuotaConsumption('mock-interview');
 
             const allScores = accumulatedScoresRef.current; 
             const avgOverall = allScores.reduce((acc, curr) => acc + (curr.overall || 0), 0) / 3;
-            // ... (Calculation logic same as before)
             const avgFluency = allScores.reduce((acc, curr) => acc + (curr.fluency || 0), 0) / 3;
             const avgLexical = allScores.reduce((acc, curr) => acc + (curr.lexical || 0), 0) / 3;
             const avgGrammar = allScores.reduce((acc, curr) => acc + (curr.grammar || 0), 0) / 3;
@@ -326,11 +295,7 @@ export default function Home() {
         }
 
     } else {
-        // CUE CARD RESULT
-        // Update Quota Daily Cue Card
-        if (!isPremium) {
-            await handleQuotaConsumption('cue-card');
-        }
+        if (!isPremium) await handleQuotaConsumption('cue-card');
 
         setAnalysisResult(data);
         const currentCueTitle = dailyCueRef.current.topic;
@@ -343,6 +308,8 @@ export default function Home() {
   };
 
   const handleLogoutClick = () => {
+    // Tutup menu dulu biar rapi
+    setIsUserMenuOpen(false);
     const randomMsg = GUILT_MESSAGES[Math.floor(Math.random() * GUILT_MESSAGES.length)];
     setGuiltMessage(randomMsg);
     setShowLogoutModal(true);
@@ -357,51 +324,35 @@ export default function Home() {
     if (mode === "mock-interview") {
         if (!userProfile) {
             setAlertConfig({
-                isOpen: true,
-                type: "lock",
-                title: "Login Required",
+                isOpen: true, type: "lock", title: "Login Required",
                 message: "Fitur ini khusus member. Login sekarang untuk mendapatkan akses 1x Free Trial Mock Interview.",
-                actionLabel: "Login Sekarang",
-                onAction: () => router.push("/auth") 
+                actionLabel: "Login Sekarang", onAction: () => router.push("/auth") 
             });
             return;
         }
-
         if (!isPremium && freeMockQuota <= 0) {
-            setShowUpgradeModal(true); 
-            return;
+            setShowUpgradeModal(true); return;
         }
-
         if (!isPremium && freeMockQuota > 0) {
             setAlertConfig({
-                isOpen: true,
-                type: "success",
-                title: "Free Trial Activated!",
+                isOpen: true, type: "success", title: "Free Trial Activated!",
                 message: "Mode Mock Interview aktif! Kamu punya 1x kesempatan gratis. Manfaatkan sebaik mungkin ya!",
-                actionLabel: "Let's Start!",
-                onAction: null 
+                actionLabel: "Let's Start!", onAction: null 
             });
         }
     }
-
     setPracticeMode(mode);
     setAnalysisResult(null); 
     accumulatedScoresRef.current = [];
     setAccumulatedScoresState([]);
-    
-    if (mode === "mock-interview") {
-        setInterviewQuestion(part3TopicRef.current.startQ);
-    }
+    if (mode === "mock-interview") setInterviewQuestion(part3TopicRef.current.startQ);
   };
 
   const handleMarketingCardClick = (mode) => {
     handleModeSwitch(mode);
-    if (heroRef.current) {
-        heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (heroRef.current) heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Helper UI
   const getDifficultyColor = (diff) => {
     switch(diff) {
         case 'easy': return 'bg-green-500/20 text-green-400 border-green-500/30';
@@ -420,7 +371,6 @@ export default function Home() {
     }
   };
 
-  // --- KOMPONEN "LIMIT REACHED" OVERLAY ---
   const LimitReachedView = ({ type }) => (
     <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[200px]">
         <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20">
@@ -455,14 +405,18 @@ export default function Home() {
   return (
     <main className="min-h-screen pb-20 px-4 selection:bg-teal-500/30 selection:text-teal-200">
       {/* HEADER */}
-      <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4">
+      <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4 relative z-50">
+        
         <div className="flex items-center gap-3">
           <div className="relative w-32 h-10 md:w-40 md:h-12">
              <Image src="/logo-white.png" alt="IELTS4our Logo" fill className="object-contain object-center md:object-left" priority />
           </div>
+          
+          {/* LINK INI TETAP DIPERTAHANKAN SESUAI REQUEST */}
           <Link href="/about" className="hidden md:block ml-2 text-sm font-medium text-slate-400 hover:text-white transition-colors tracking-wide">
             Meet the Creator
           </Link>
+
           {isPremium && (
             <span className="ml-2 px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg shadow-yellow-500/20">
               Pro
@@ -471,17 +425,68 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/progress">
-             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-2" title="View Learning Progress">
-                <BarChart3 className="w-4 h-4 text-teal-400" />
-                <span className="text-xs font-bold">My Progress</span>
-             </motion.div>
-          </Link>
+          {/* Tombol My Progress sudah dihapus dari sini */}
 
           {userProfile ? (
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleLogoutClick} className="px-4 py-2.5 bg-teal-500/10 hover:bg-red-500/10 border border-teal-500/20 hover:border-red-500/20 rounded-full text-teal-300 hover:text-red-400 transition-all text-xs font-bold flex items-center gap-2" title="Click to Logout">
-                {userProfile.email?.split('@')[0]}
-            </motion.button>
+            // --- NEW: USER DROPDOWN MENU ---
+            <div className="relative" ref={userMenuRef}>
+                <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-slate-200 transition-all text-sm font-bold flex items-center gap-2"
+                >
+                    <User className="w-4 h-4 text-teal-400" />
+                    <span className="max-w-[100px] truncate">{userProfile.email?.split('@')[0]}</span>
+                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`} />
+                </motion.button>
+
+                {/* Dropdown Content */}
+                <AnimatePresence>
+                    {isUserMenuOpen && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            // 🔥 FIX: w-48 (HP) dan md:w-56 (Laptop)
+                            className="absolute right-0 mt-2 w-48 md:w-56 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden py-1 z-50"
+                        >
+                            {/* Status Header */}
+                            <div className="px-4 py-3 border-b border-white/5 bg-white/5">
+                                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Status</p>
+                                {isPremium ? (
+                                    <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
+                                        <Crown className="w-3 h-3" /> Pro Member
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1.5 text-slate-300 font-bold text-xs">
+                                        <User className="w-3 h-3" /> Free Plan
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Menu Items */}
+                            <Link href="/progress" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-slate-300 hover:text-white transition-colors">
+                                <BarChart3 className="w-4 h-4 text-teal-400" /> My Progress
+                            </Link>
+                            
+                            <Link href="/mission" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-slate-300 hover:text-white transition-colors">
+                                <span className="text-yellow-400">💡</span> Why Speaking?
+                            </Link>
+
+                            <div className="h-px bg-white/5 my-1"></div>
+
+                            <button 
+                                onClick={handleLogoutClick}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-sm text-slate-400 hover:text-red-400 transition-colors text-left"
+                            >
+                                <LogOut className="w-4 h-4" /> Logout
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
           ) : (
             <Link href="/auth">
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors text-xs font-bold">
@@ -501,16 +506,28 @@ export default function Home() {
 
       {/* HERO SECTION */}
       <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
+        
+        {/* Link Mobile "Meet Creator" (Tetap Ada) */}
         <div className="md:hidden mb-6">
            <Link href="/about" className="inline-flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest border-b border-slate-700 pb-0.5 hover:border-white transition-all">
              ✨ Meet the Creator <ChevronRight className="w-3 h-3" />
            </Link>
         </div>
 
-        <motion.div initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-bold uppercase tracking-widest mb-6">
-          <Sparkles className="w-3 h-3" />
-          {isPremium ? "Premium Mode Unlocked" : "Daily Speaking Practice"}
-        </motion.div>
+        {/* 🔥 NEW PILL BADGE: Link ke Mission 🔥 */}
+        <Link href="/mission">
+          <motion.div
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-teal-500/30 hover:border-teal-400 text-teal-300 text-xs font-bold uppercase tracking-widest mb-6 cursor-pointer transition-all shadow-[0_0_15px_rgba(45,212,191,0.1)] hover:shadow-[0_0_25px_rgba(45,212,191,0.3)] group"
+          >
+            <span className="group-hover:animate-pulse">💡</span> 
+            <span className="text-slate-200 group-hover:text-white transition-colors">Why is Speaking the hardest skill?</span>
+            <ArrowRight className="w-3 h-3 text-teal-500 group-hover:translate-x-1 transition-transform" />
+          </motion.div>
+        </Link>
         
         <h2 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tight">
           Master Your Speaking <br/>
@@ -580,7 +597,6 @@ export default function Home() {
                         </div>
                     </div>
                     
-                    {/* 🔥 QUOTA CHECKER DI SINI 🔥 */}
                     {dailyCueQuotaStatus === 'allowed' ? (
                         <Recorder cueCard={dailyCue.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={isPremium ? 120 : 60} mode={practiceMode} />
                     ) : (
@@ -729,7 +745,6 @@ export default function Home() {
         <p className="mb-4">
           &copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.
         </p>
-        {/* Link Terms Baru Disini */}
         <p>
             <Link href="/terms" className="underline decoration-slate-700 hover:decoration-teal-400 hover:text-teal-400 transition-all">
                 Terms & Conditions
