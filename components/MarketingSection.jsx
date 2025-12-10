@@ -8,7 +8,7 @@ import {
   X, CheckCircle2, XCircle, Sparkles
 } from "lucide-react";
 
-// --- DATA KONTEN EDUKASI ---
+// --- DATA KONTEN EDUKASI (SAMA SEPERTI SEBELUMNYA) ---
 const CRITERIA_CONTENT = {
   fluency: {
     title: "Fluency & Coherence",
@@ -16,7 +16,7 @@ const CRITERIA_CONTENT = {
     color: "bg-blue-500",
     textColor: "text-blue-400",
     desc: "Speak without hesitation",
-    definition: "Bukan bicara 'cepat', tapi bicara mengalir tanpa jeda diam (mikor) yang panjang dan mampu menghubungkan ide antar kalimat.",
+    definition: "Bukan bicara 'cepat', tapi bicara mengalir tanpa jeda diam yang panjang dan mampu menghubungkan ide antar kalimat.",
     vs: {
       band6: "I like... umm... reading because it is... err... fun.",
       band8: "I'm really into reading, primarily because it serves as a great escape from my daily routine."
@@ -65,7 +65,7 @@ const CRITERIA_CONTENT = {
   }
 };
 
-export default function MarketingSection() {
+export default function MarketingSection({ onSelectMode }) {
   const [selectedCriteria, setSelectedCriteria] = useState(null);
 
   return (
@@ -81,13 +81,15 @@ export default function MarketingSection() {
           </p>
         </div>
 
-        {/* 2 Main Cards (TETAP SAMA) */}
+        {/* 2 Main Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-16">
           
-          {/* Card 1: FREE MODE */}
+          {/* Card 1: FREE MODE (INTERACTIVE) */}
           <motion.div 
-            whileHover={{ y: -5 }}
-            className="p-8 rounded-3xl bg-slate-900/50 border border-white/10 relative overflow-hidden group"
+            whileHover={{ y: -5, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onSelectMode && onSelectMode('cue-card')}
+            className="p-8 rounded-3xl bg-slate-900/50 border border-white/10 relative overflow-hidden group cursor-pointer hover:border-teal-500/30 transition-colors"
           >
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <Mic2 className="w-32 h-32 text-teal-500" />
@@ -98,7 +100,7 @@ export default function MarketingSection() {
                 <Zap className="w-3 h-3" /> Free Feature
               </div>
               
-              <h3 className="text-2xl font-bold text-white mb-2">Daily Cue Card</h3>
+              <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-teal-400 transition-colors">Daily Cue Card</h3>
               <p className="text-slate-400 mb-6 leading-relaxed">
                 Mode <span className="text-white font-bold">Monolog</span> untuk membangun kebiasaan. Cocok untuk pemanasan harian dan melatih kelancaran berbicara.
               </p>
@@ -117,13 +119,19 @@ export default function MarketingSection() {
                   <span>AI memberikan skor instan & perbaikan grammar.</span>
                 </li>
               </ul>
+              
+              <div className="mt-8 text-center">
+                 <span className="text-teal-400 text-xs font-bold uppercase tracking-widest border-b border-teal-500/30 pb-0.5 group-hover:border-teal-500 transition-all">Try Now &rarr;</span>
+              </div>
             </div>
           </motion.div>
 
-          {/* Card 2: PREMIUM MODE */}
+          {/* Card 2: PREMIUM MODE (INTERACTIVE) */}
           <motion.div 
-            whileHover={{ y: -5 }}
-            className="p-8 rounded-3xl bg-gradient-to-br from-slate-900/80 to-purple-900/20 border border-purple-500/30 relative overflow-hidden group shadow-2xl shadow-purple-900/20"
+            whileHover={{ y: -5, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onSelectMode && onSelectMode('mock-interview')}
+            className="p-8 rounded-3xl bg-gradient-to-br from-slate-900/80 to-purple-900/20 border border-purple-500/30 relative overflow-hidden group shadow-2xl shadow-purple-900/20 cursor-pointer hover:border-purple-500/50 transition-colors"
           >
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <Users className="w-32 h-32 text-purple-500" />
@@ -134,7 +142,7 @@ export default function MarketingSection() {
                 <Crown className="w-3 h-3" /> Premium Feature
               </div>
               
-              <h3 className="text-2xl font-bold text-white mb-2">AI Mock Interview</h3>
+              <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">AI Mock Interview</h3>
               <p className="text-slate-400 mb-6 leading-relaxed">
                 Mode <span className="text-white font-bold">Dialog Interaktif</span>. Sesi Tanya Jawab Terstruktur, Jawab rangkaian pertanyaan dan bandingkan jawabanmu dengan Model Answer Band 8.0
               </p>
@@ -153,11 +161,15 @@ export default function MarketingSection() {
                   <span><span className="text-amber-400 font-bold">New:</span> Dapatkan Model Answer Band 8.0+ eksklusif.</span>
                 </li>
               </ul>
+
+              <div className="mt-8 text-center">
+                 <span className="text-purple-400 text-xs font-bold uppercase tracking-widest border-b border-purple-500/30 pb-0.5 group-hover:border-purple-500 transition-all">Try Now &rarr;</span>
+              </div>
             </div>
           </motion.div>
         </div>
 
-        {/* Criteria Strip (INTERACTIVE) */}
+        {/* Criteria Strip (INTERACTIVE) - TETAP SAMA */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(CRITERIA_CONTENT).map(([key, item]) => (
              <motion.button 
@@ -179,7 +191,7 @@ export default function MarketingSection() {
           ))}
         </div>
 
-        {/* --- EDUCATION MODAL --- */}
+        {/* --- EDUCATION MODAL (TETAP SAMA) --- */}
         <AnimatePresence>
             {selectedCriteria && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

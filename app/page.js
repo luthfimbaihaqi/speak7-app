@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Import Router untuk Redirect
+import { useRouter } from "next/navigation"; 
 import { motion } from "framer-motion";
 import { BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
@@ -10,21 +10,22 @@ import Image from "next/image";
 import { CUE_CARDS, PART3_TOPICS, GUILT_MESSAGES } from "@/utils/constants";
 import MarketingSection from "@/components/MarketingSection";
 import UpgradeModal from "@/components/UpgradeModal";
-import AlertModal from "@/components/AlertModal"; // Import Modal Baru
+import AlertModal from "@/components/AlertModal"; 
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
 
 export default function Home() {
-  const router = useRouter(); // Inisialisasi Router
+  const router = useRouter(); 
+  
+  // --- REF UNTUK AUTO SCROLL ---
+  const heroRef = useRef(null); 
 
   const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]);
   const [analysisResult, setAnalysisResult] = useState(null);
   
   const [isRotating, setIsRotating] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
-  
-  // --- STATE BARU: JATAH GRATIS ---
   const [freeQuota, setFreeQuota] = useState(0); 
 
   const [practiceMode, setPracticeMode] = useState("cue-card"); 
@@ -81,7 +82,6 @@ export default function Home() {
         
         if (user) {
             setUserProfile(user);
-            // Ambil Status Premium DAN Kuota Gratis
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('is_premium, premium_expiry, free_mock_quota')
@@ -91,10 +91,9 @@ export default function Home() {
             if (profile) {
                 const isStillValid = profile.is_premium && (profile.premium_expiry > Date.now());
                 setIsPremium(isStillValid);
-                setFreeQuota(profile.free_mock_quota || 0); // Simpan info kuota
+                setFreeQuota(profile.free_mock_quota || 0); 
             }
         } else {
-            // Logic Fallback kalau belum login (Cek LocalStorage)
             const expiryStr = localStorage.getItem("ielts4our_premium_expiry");
             if (expiryStr && Date.now() < parseInt(expiryStr)) {
                 setIsPremium(true);
@@ -139,16 +138,13 @@ export default function Home() {
     }
   };
 
-  // --- FUNGSI UNTUK MENGHANGUSKAN KUOTA ---
   const burnFreeQuota = async () => {
     if (userProfile && !isPremium && freeQuota > 0) {
-        // Update database: set quota jadi 0
         await supabase
             .from('profiles')
             .update({ free_mock_quota: 0 })
             .eq('id', userProfile.id);
         
-        // Update tampilan lokal biar langsung terkunci nanti
         setFreeQuota(0);
     }
   };
@@ -209,8 +205,6 @@ export default function Home() {
             }
         } else {
             // --- FINAL RESULT PART 3 ---
-            
-            // 🔥 HANGUSKAN KUOTA DISINI (Kalau user gratisan)
             if (!isPremium) {
                 await burnFreeQuota();
             }
@@ -264,7 +258,6 @@ export default function Home() {
     }
   };
 
-  // --- LOGOUT LOGIC (GUILT TRIP) ---
   const handleLogoutClick = () => {
     const randomMsg = GUILT_MESSAGES[Math.floor(Math.random() * GUILT_MESSAGES.length)];
     setGuiltMessage(randomMsg);
@@ -277,10 +270,7 @@ export default function Home() {
   };
 
   const handleModeSwitch = (mode) => {
-    // 1. Cek jika user mau masuk Mock Interview
     if (mode === "mock-interview") {
-        
-        // Skenario A: Belum Login (Guest) -> ALERT KEREN (LOCK)
         if (!userProfile) {
             setAlertConfig({
                 isOpen: true,
@@ -288,18 +278,16 @@ export default function Home() {
                 title: "Login Required",
                 message: "Fitur ini khusus member. Login sekarang untuk mendapatkan akses 1x Free Trial Mock Interview.",
                 actionLabel: "Login Sekarang",
-                onAction: () => router.push("/auth") // Redirect ke Login
+                onAction: () => router.push("/auth") 
             });
             return;
         }
 
-        // Skenario B: Sudah Login, Tapi Bukan Premium, Dan Kuota Habis
         if (!isPremium && freeQuota <= 0) {
-            setShowUpgradeModal(true); // Tampilkan modal bayar
+            setShowUpgradeModal(true); 
             return;
         }
 
-        // Skenario C: Sudah Login, Gratisan, Punya Kuota 1 -> ALERT KEREN (ROCKET)
         if (!isPremium && freeQuota > 0) {
             setAlertConfig({
                 isOpen: true,
@@ -307,7 +295,7 @@ export default function Home() {
                 title: "Free Trial Activated!",
                 message: "Mode Mock Interview aktif! Kamu punya 1x kesempatan gratis. Manfaatkan sebaik mungkin ya!",
                 actionLabel: "Let's Start!",
-                onAction: null // Tidak perlu aksi, cuma tutup modal
+                onAction: null 
             });
         }
     }
@@ -320,6 +308,15 @@ export default function Home() {
     
     if (mode === "mock-interview") {
         setInterviewQuestion(part3Topic.startQ);
+    }
+  };
+
+  // --- FUNGSI UNTUK MARKETING CLICK (AUTO SCROLL) ---
+  const handleMarketingCardClick = (mode) => {
+    handleModeSwitch(mode);
+    // Scroll smooth ke Hero Section
+    if (heroRef.current) {
+        heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -399,8 +396,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* HERO SECTION */}
-      <div className="text-center max-w-3xl mx-auto mt-6 mb-12">
+      {/* HERO SECTION (Diberi REF untuk scroll target) */}
+      <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
         <div className="md:hidden mb-6">
            <Link href="/about" className="inline-flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest border-b border-slate-700 pb-0.5 hover:border-white transition-all">
              ✨ Meet the Creator <ChevronRight className="w-3 h-3" />
@@ -468,10 +465,10 @@ export default function Home() {
           <div className={`absolute -inset-1 bg-gradient-to-r ${practiceMode === 'cue-card' ? 'from-teal-500 to-purple-600' : 'from-blue-500 to-teal-400'} rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200`}></div>
           
           <div className="relative glass-panel rounded-[2rem] p-8 md:p-12 overflow-hidden min-h-[500px] flex flex-col justify-center">
-             
-             {/* MODE 1: CUE CARD */}
-             {practiceMode === "cue-card" && !analysisResult && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              
+              {/* MODE 1: CUE CARD */}
+              {practiceMode === "cue-card" && !analysisResult && (
+                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <div className="flex justify-between items-start mb-8 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-4">
                         <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
@@ -496,12 +493,12 @@ export default function Home() {
                         </div>
                     </div>
                     <Recorder cueCard={dailyCue.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={isPremium ? 120 : 60} mode={practiceMode} />
-                </motion.div>
-             )}
+                 </motion.div>
+              )}
 
-             {/* MODE 2: MOCK INTERVIEW */}
-             {practiceMode === "mock-interview" && !analysisResult && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+              {/* MODE 2: MOCK INTERVIEW */}
+              {practiceMode === "mock-interview" && !analysisResult && (
+                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
                     <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-4">
                         <div>
                            <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest text-left">Discussion Topic</h3>
@@ -532,12 +529,12 @@ export default function Home() {
                     </div>
 
                     <Recorder cueCard={part3Topic.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={60} mode={practiceMode} />
-                </motion.div>
-             )}
+                 </motion.div>
+              )}
 
-             {/* RESULT / SCORECARD */}
-             {analysisResult && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              {/* RESULT / SCORECARD */}
+              {analysisResult && (
+                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold text-white">Analysis Result</h2>
                         <button 
@@ -558,14 +555,14 @@ export default function Home() {
                         isPremiumExternal={isPremium}
                         onOpenUpgradeModal={() => setShowUpgradeModal(true)}
                     />
-                </motion.div>
-             )}
+                 </motion.div>
+              )}
 
           </div>
         </motion.div>
       </div>
       
-      {/* MODAL PEMBAYARAN (Refactored) */}
+      {/* MODAL PEMBAYARAN */}
       <UpgradeModal 
         isOpen={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)}
@@ -577,14 +574,14 @@ export default function Home() {
         }}
       />
 
-      {/* --- ALERT MODAL (NEW) --- */}
+      {/* ALERT MODAL */}
       <AlertModal 
         isOpen={alertConfig.isOpen}
         onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
         {...alertConfig}
       />
 
-      {/* --- GUILT TRIP MODAL --- */}
+      {/* GUILT TRIP MODAL */}
       {showLogoutModal && (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div 
@@ -616,8 +613,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MARKETING SECTION --- */}
-      <MarketingSection />
+      {/* --- MARKETING SECTION (Dengan Props onSelectMode) --- */}
+      <MarketingSection onSelectMode={handleMarketingCardClick} />
 
       <footer className="text-center mt-24 pb-10 text-slate-600 text-xs md:text-sm">
         <p className="mb-4">&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.</p>
