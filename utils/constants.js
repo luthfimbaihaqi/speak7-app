@@ -122,7 +122,7 @@ export const BANK_INFO = {
   bankName: "BCA",             
   accountNumber: "3010166291", 
   accountName: "LUTHFI MUHAMMAD BAIHAQI", 
-  price: "Rp 30.000",
+  price: "Rp 30.000/bulan",
   email: "luthfibaihaqi851@gmail.com",
   waNumber: "6281311364731" 
 };
