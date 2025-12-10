@@ -11,6 +11,7 @@ import { CUE_CARDS, PART3_TOPICS, GUILT_MESSAGES } from "@/utils/constants";
 import MarketingSection from "@/components/MarketingSection";
 import UpgradeModal from "@/components/UpgradeModal";
 import AlertModal from "@/components/AlertModal"; 
+import FAQSection from "@/components/FAQSection";
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
@@ -705,6 +706,9 @@ export default function Home() {
 
       {/* --- MARKETING SECTION --- */}
       <MarketingSection onSelectMode={handleMarketingCardClick} />
+
+      {/* --- FAQ SECTION (BARU) --- */}
+      <FAQSection isTeaser={true} />
 
       <footer className="text-center mt-24 pb-10 text-slate-600 text-xs md:text-sm">
         <p className="mb-4">&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.</p>
