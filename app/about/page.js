@@ -4,136 +4,158 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowLeft, Instagram, Linkedin, ExternalLink } from "lucide-react";
+import { ArrowLeft, Instagram, Linkedin, GraduationCap, Briefcase, Code, Rocket, Mail } from "lucide-react";
 
 export default function AboutPage() {
+  const milestones = [
+    {
+      year: "Education",
+      title: "English Literature Graduate",
+      desc: "Memahami fundamental bahasa dan linguistik secara mendalam.",
+      icon: <GraduationCap className="w-4 h-4 text-teal-400" />
+    },
+    {
+      year: "Experience",
+      title: "IELTS Executive at IDP Education",
+      desc: "1 tahun di industri edukasi. Berinteraksi langsung dengan ribuan calon test-taker dan memahami struggle mereka.",
+      icon: <Briefcase className="w-4 h-4 text-blue-400" />
+    },
+    {
+      year: "Pivot",
+      title: "Self-Taught Developer",
+      desc: "Menggabungkan wawasan edukasi dengan teknologi modern untuk menciptakan solusi yang scalable.",
+      icon: <Code className="w-4 h-4 text-purple-400" />
+    },
+    {
+      year: "2025",
+      title: "Founder IELTS4OUR",
+      desc: "Membangun platform latihan IELTS yang demokratis, terjangkau, dan efektif.",
+      icon: <Rocket className="w-4 h-4 text-amber-400" />
+    }
+  ];
+
   return (
-    <main className="min-h-screen bg-slate-950 pb-20 px-4 selection:bg-teal-500/30">
-      {/* Background Mesh */}
+    <main className="min-h-screen bg-slate-950 pb-20 px-4 selection:bg-teal-500/30 selection:text-teal-200">
+      
+      {/* Background Mesh (Subtle & Elegant) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(at_0%_0%,rgba(45,212,191,0.15)_0px,transparent_50%)]"></div>
-         <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(at_100%_100%,rgba(168,85,247,0.15)_0px,transparent_50%)]"></div>
+         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(at_50%_0%,rgba(45,212,191,0.1)_0px,transparent_50%)]"></div>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto pt-8">
+      <div className="relative z-10 max-w-3xl mx-auto pt-10">
         
-        {/* Header (Back Button) */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/" className="p-3 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/5">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="text-2xl font-bold text-white">Meet the Creator</h1>
-        </div>
+        {/* Nav */}
+        <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-white transition-colors text-sm font-bold uppercase tracking-widest mb-10 group">
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Home
+        </Link>
 
-        {/* GLASS PANEL CONTAINER */}
+        {/* MAIN CARD */}
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 md:p-12 overflow-hidden shadow-2xl"
+            className="bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-3xl p-8 md:p-12 overflow-hidden shadow-2xl relative"
         >
-            <div className="flex flex-col md:grid md:grid-cols-[300px_1fr] gap-8 md:gap-12">
-                
-                {/* --- KOLOM KIRI (Desktop) / ATAS (Mobile): PROFILE --- */}
-                <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                    {/* Foto Utama */}
-                    <div className="relative w-48 h-48 md:w-64 md:h-64 mb-6 group">
-                        <div className="absolute -inset-1 bg-gradient-to-br from-teal-500 to-purple-600 rounded-[2rem] blur opacity-50 group-hover:opacity-75 transition duration-500"></div>
-                        <div className="relative w-full h-full rounded-[2rem] overflow-hidden border-2 border-white/10 shadow-2xl">
-                             <Image 
+            {/* Dekorasi Garis Atas */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 via-purple-500 to-amber-500 opacity-50"></div>
+
+            {/* HEADER: PHOTO & INTRO */}
+            <div className="flex flex-col md:flex-row gap-8 items-center md:items-start mb-12">
+                <div className="relative shrink-0">
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 shadow-xl">
+                        <div className="w-full h-full rounded-full overflow-hidden relative grayscale hover:grayscale-0 transition-all duration-500">
+                            <Image 
                                 src="/luthfi-profile.jpg" 
                                 alt="Luthfi Muhammad Baihaqi"
                                 fill
                                 className="object-cover"
-                             />
+                            />
                         </div>
                     </div>
-
-                    <h2 className="text-2xl font-bold text-white mb-1">Luthfi Muhammad Baihaqi</h2>
-                    <p className="text-teal-400 font-medium text-sm mb-6">Founder IELTS4OUR</p>
-
-                    {/* Social Links */}
-                    <div className="flex gap-3">
-                        <a 
-                            href="https://www.instagram.com/luthfimbaihaqi/" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="p-3 bg-white/5 hover:bg-pink-600/20 hover:text-pink-500 rounded-xl border border-white/10 text-slate-400 transition-all"
-                        >
-                            <Instagram className="w-5 h-5" />
-                        </a>
-                        <a 
-                            href="https://www.linkedin.com/in/luthfimbaihaqi/" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="p-3 bg-white/5 hover:bg-blue-600/20 hover:text-blue-500 rounded-xl border border-white/10 text-slate-400 transition-all"
-                        >
-                            <Linkedin className="w-5 h-5" />
-                        </a>
-                    </div>
+                    {/* Status Dot */}
+                    <div className="absolute bottom-2 right-2 w-4 h-4 bg-teal-500 border-4 border-slate-900 rounded-full" title="Building features..."></div>
                 </div>
 
-                {/* --- KOLOM KANAN (Desktop) / BAWAH (Mobile): STORY TEXT --- */}
-                <div className="text-slate-300 leading-relaxed text-base md:text-lg space-y-6">
-                    <p>
-                        Halo, gue <strong className="text-white">Luthfi Muhammad Baihaqi</strong>.
+                <div className="text-center md:text-left space-y-3">
+                    <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                        Luthfi Muhammad <span className="text-slate-500">Baihaqi</span>.
+                    </h1>
+                    <p className="text-lg text-teal-400 font-medium"></p>
+                    <p className="text-slate-400 leading-relaxed max-w-lg">
+                        "Building the IELTS tool I wish I had."
                     </p>
-                    <p>
-                        Gue lulusan S1 Sastra Inggris, pernah ngajar selama 9 bulan di International Language Program, dan saat ini bekerja sebagai <span className="text-teal-400 font-bold">IELTS Executive di IDP Education</span>. Setiap hari gue ketemu berbagai macam kebutuhan siswa, standar penilaian, dan perjalanan orang-orang yang sedang berjuang mencapai skor IELTS tertentu. Dari situ, gue belajar banyak tentang apa yang sebenarnya dibutuhkan calon test-taker.
-                    </p>
-
-                    <p>
-                        Selain dunia bahasa Inggris, gue juga punya ketertarikan di dunia ngoding dan pengembangan web. Dari hobi itu, gue mulai sering bikin proyek kecil-kecilan, dan lama-lama gue sadar kalau kemampuan ini bisa gue manfaatin buat ngebangun ruang belajar yang lebih berguna untuk banyak orang.
-                    </p>
-
-                    {/* --- POLAROID INSERT (Candid Photo) --- */}
-                    <div className="py-4 flex justify-center md:float-right md:ml-6 md:mb-2">
-                        <div className="relative bg-white p-3 pb-8 shadow-xl transform rotate-2 hover:-rotate-2 transition-transform duration-500 max-w-[200px]">
-                            <div className="relative w-[180px] h-[220px] bg-slate-200 overflow-hidden">
-                                <Image 
-                                    src="/luthfi-fun.jpg" 
-                                    alt="Luthfi Coding"
-                                    fill
-                                    className="object-cover"
-                                />
-                            </div>
-                            <p className="absolute bottom-2 left-0 w-full text-center text-slate-600 font-handwriting text-xs font-bold font-mono">
-                                biasa dipanggil "ufo"
-                            </p>
-                        </div>
+                    
+                    {/* Socials */}
+                    <div className="flex gap-4 justify-center md:justify-start pt-2">
+                        <a href="https://www.instagram.com/luthfimbaihaqi/" target="_blank" className="text-slate-500 hover:text-white transition-colors"><Instagram className="w-5 h-5"/></a>
+                        <a href="https://www.linkedin.com/in/luthfimbaihaqi/" target="_blank" className="text-slate-500 hover:text-white transition-colors"><Linkedin className="w-5 h-5"/></a>
+                        <a href="mailto:luthfibaihaqi851@gmail.com" className="text-slate-500 hover:text-white transition-colors"><Mail className="w-5 h-5"/></a>
                     </div>
-
-                    <p>
-                        <strong className="text-white">IELTS4OUR</strong> lahir dari pengalaman pribadi gue waktu mempersiapkan tes. Waktu itu, gue merasa akses untuk latihan Speaking yang konsisten dan terarah cukup terbatas. Cari partner sering tidak stabil, sementara layanan profesional tidak selalu terjangkau.
-                    </p>
-
-                    <p>
-                        Dari keresahan itu, gue mulai berpikir bahwa harusnya ada ruang belajar yang lebih sederhana, mudah diakses, dan realistis untuk siapa pun.
-                    </p>
-
-                    <p>
-                        Akhirnya gue memutuskan untuk membangun IELTS4OUR ini. Tujuannya jelas: menyediakan tempat latihan yang bisa bantu orang berkembang tanpa harus terhalang biaya mahal atau waktu. Gue percaya bahwa proses belajar yang baik dimulai dari kesempatan, dan kesempatan itu seharusnya bisa dijangkau semua orang dengan mudah.
-                    </p>
-
-                    <p>
-                        Semoga IELTS4OUR bisa bantu lo mencapai target skor lo, mempersiapkan langkah berikutnya, dan membuat proses belajar lo jadi lebih terarah.
-                    </p>
-
-                    <div className="pt-8 mt-8 border-t border-white/5">
-                        <p className="mb-2">Cheers,</p>
-                        {/* Tanda Tangan Font Caveat */}
-                        <p className="text-4xl md:text-5xl text-teal-400 font-caveat transform -rotate-2 origin-left">
-                            Luthfi Muhammad Baihaqi
-                        </p>
-                    </div>
-
                 </div>
             </div>
+
+            {/* CONTENT: STORY & TIMELINE */}
+            <div className="grid md:grid-cols-2 gap-12 border-t border-white/5 pt-10">
+                
+                {/* Left: The Story */}
+                <div className="space-y-6 text-slate-300 text-sm md:text-base leading-relaxed">
+                    <h3 className="text-white font-bold text-lg uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span className="w-8 h-[1px] bg-teal-500"></span> The Story
+                    </h3>
+                    <p>
+                        Halo, saya Luthfi. <strong className="text-white">IELTS4OUR</strong> lahir dari keresahan pribadi saat saya mempersiapkan tes IELTS.
+                    </p>
+                    <p>
+                        Saya menyadari bahwa akses untuk latihan Speaking yang konsisten, terukur, dan terjangkau itu sangat langka. Partner latihan seringkali tidak stabil, dan tutor profesional memakan biaya yang tidak sedikit.
+                    </p>
+                    <p>
+                        Dengan bekal pengalaman di dunia edukasi (lulusan English Literature & bekerja di IDP Education) dan skill pemrograman, saya memutuskan untuk membangun solusi ini sendiri. 
+                    </p>
+                    <p>
+                        Visi saya sederhana: <strong>Mendemokratisasi akses persiapan IELTS.</strong> Setiap orang berhak mendapatkan alat latihan berkualitas tinggi tanpa harus terhalang biaya mahal.
+                    </p>
+
+                    <p>
+                        Cheers,
+                    </p>
+                    
+                    {/* Tanda Tangan Simpel */}
+                    <div className="pt-1">
+                        <p className="font-handwriting text-slate-500 text-lg">Luthfi M.B.</p>
+                    </div>
+                </div>
+
+                {/* Right: The Timeline */}
+                <div>
+                    <h3 className="text-white font-bold text-lg uppercase tracking-widest mb-8 flex items-center gap-2">
+                        <span className="w-8 h-[1px] bg-teal-500"></span> The Journey
+                    </h3>
+                    
+                    <div className="space-y-8 pl-2">
+                        {milestones.map((item, i) => (
+                            <div key={i} className="relative pl-8 border-l border-white/10 last:border-0 pb-1">
+                                {/* Dot Icon */}
+                                <div className="absolute -left-3 top-0 p-1.5 bg-slate-900 border border-white/10 rounded-full">
+                                    {item.icon}
+                                </div>
+                                
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.year}</span>
+                                    <h4 className="text-white font-bold text-sm">{item.title}</h4>
+                                    <p className="text-slate-400 text-xs leading-relaxed">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+            </div>
+
         </motion.div>
 
-        {/* Footer Credit */}
-        <footer className="text-center mt-20 text-slate-600 text-sm">
-             <p>Built with ❤️ & lots of BAKSO.</p>
+        <footer className="text-center mt-16 text-slate-600 text-xs">
+             <p>&copy; 2025 IELTS4our. All rights reserved.</p>
         </footer>
+
       </div>
     </main>
   );
