@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Calendar, BarChart3, Clock, ChevronRight, X, Crown, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
 import ScoreCard from "@/components/ScoreCard";
-import UpgradeModal from "@/components/UpgradeModal"; // Biar bisa upgrade dari sini juga
+import UpgradeModal from "@/components/UpgradeModal"; 
 
 export default function ProgressPage() {
   const [history, setHistory] = useState([]);
@@ -17,16 +17,20 @@ export default function ProgressPage() {
   const [isPremium, setIsPremium] = useState(false);
 
   // STATE UI
-  const [selectedItem, setSelectedItem] = useState(null); // Untuk modal detail
+  const [selectedItem, setSelectedItem] = useState(null); 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // 1. CEK USER & PREMIUM STATUS (LOGIKA SATPAM)
+  // 1. CEK USER & PREMIUM STATUS
   useEffect(() => {
     async function checkUserStatus() {
         const { data: { user } } = await supabase.auth.getUser();
         
+        let userId = null;
+
         if (user) {
             setUserProfile(user);
+            userId = user.id;
+
             // Cek Status Premium di Database
             const { data: profile } = await supabase
                 .from('profiles')
@@ -36,30 +40,61 @@ export default function ProgressPage() {
             
             if (profile) {
                 const isStillValid = profile.is_premium && (profile.premium_expiry > Date.now());
-                setIsPremium(isStillValid); // <--- KUNCI UTAMANYA DISINI
+                setIsPremium(isStillValid); 
             }
-            
-            fetchHistory(user.id);
-        } else {
-            // Kalau belum login, lempar ke halaman auth atau biarkan kosong
-            setLoading(false);
         }
+        
+        // Panggil fetch history (baik user login maupun guest)
+        fetchHistory(userId);
     }
 
     checkUserStatus();
   }, []);
 
-  // 2. AMBIL DATA RIWAYAT LATIHAN
+  // 2. AMBIL DATA RIWAYAT (CLOUD + LOCAL) - REVISI UTAMA DISINI
   const fetchHistory = async (userId) => {
     try {
-        const { data, error } = await supabase
-            .from('practice_history')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false }); // Paling baru diatas
+        let combinedData = [];
 
-        if (error) throw error;
-        setHistory(data || []);
+        // A. AMBIL DATA CLOUD (SUPABASE) - Jika User Login
+        if (userId) {
+            const { data, error } = await supabase
+                .from('practice_history')
+                .select('*')
+                .eq('user_id', userId);
+
+            if (!error && data) {
+                combinedData = [...data];
+            }
+        }
+
+        // B. AMBIL DATA LOKAL (LOCALSTORAGE) - Untuk Cue Card / Guest
+        // Data lokal biasanya disimpan dengan key 'ielts4our_history' di app/page.js
+        const localRaw = localStorage.getItem("ielts4our_history");
+        if (localRaw) {
+            const localData = JSON.parse(localRaw);
+            
+            // Normalisasi Data Lokal agar formatnya sama dengan Supabase
+            // Supabase pakai: overall_score, created_at
+            // Lokal pakai: overall, id (sebagai timestamp)
+            const normalizedLocal = localData.map(item => ({
+                id: item.id, // Timestamp ID
+                user_id: 'local_device',
+                topic: item.topic,
+                overall_score: item.overall, // Mapping field
+                created_at: new Date(item.id).toISOString(), // Convert timestamp ke ISO string
+                full_feedback: item, // Simpan full object di sini
+                is_local: true // Penanda
+            }));
+
+            // Gabungkan (Hindari duplikat jika perlu, tapi untuk aman kita gabung saja dulu)
+            combinedData = [...combinedData, ...normalizedLocal];
+        }
+
+        // C. URUTKAN DARI TERBARU (Sort Descending by Date)
+        combinedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        setHistory(combinedData);
     } catch (err) {
         console.error("Error fetching history:", err);
     } finally {
@@ -95,11 +130,6 @@ export default function ProgressPage() {
              <div className="flex justify-center py-20">
                 <Loader2 className="w-10 h-10 text-teal-500 animate-spin" />
              </div>
-        ) : !userProfile ? (
-             <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
-                <p className="text-slate-400 mb-4">Silakan Login untuk melihat riwayat latihan.</p>
-                <Link href="/auth" className="px-6 py-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-full">Login Now</Link>
-             </div>
         ) : history.length === 0 ? (
              <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
                 <p className="text-slate-400 mb-4">Belum ada riwayat latihan. Yuk mulai latihan sekarang!</p>
@@ -121,9 +151,9 @@ export default function ProgressPage() {
 
                 {/* HISTORY LIST */}
                 <div className="space-y-4">
-                    {history.map((item) => (
+                    {history.map((item, index) => (
                         <motion.div 
-                            key={item.id}
+                            key={item.id || index}
                             whileHover={{ scale: 1.01 }}
                             onClick={() => setSelectedItem(item)}
                             className="bg-white/5 hover:bg-white/10 border border-white/5 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-colors group"
@@ -180,14 +210,12 @@ export default function ProgressPage() {
                         </button>
                     </div>
                     
-                    {/* DI SINI KITA PAKAI ScoreCard 
-                        DAN MENGIRIMKAN 'isPremium' AGAR GEMBOK TERBUKA 
-                    */}
+                    {/* DETAIL SCORE CARD */}
                     <div className="pb-20">
                         <ScoreCard 
                             result={selectedItem.full_feedback} 
                             cue={selectedItem.topic}
-                            isPremiumExternal={isPremium} // <--- INI PENTING!
+                            isPremiumExternal={isPremium}
                             onOpenUpgradeModal={() => setShowUpgradeModal(true)}
                         />
                     </div>
@@ -196,7 +224,7 @@ export default function ProgressPage() {
         )}
       </AnimatePresence>
 
-      {/* MODAL UPGRADE (Jaga-jaga kalau user gratis klik fitur premium di history) */}
+      {/* MODAL UPGRADE */}
       <UpgradeModal 
         isOpen={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)}

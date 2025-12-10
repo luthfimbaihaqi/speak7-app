@@ -22,14 +22,30 @@ export default function Home() {
   const heroRef = useRef(null); 
 
   const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]);
+  const [part3Topic, setPart3Topic] = useState(PART3_TOPICS[0]);
+
+  // --- SOLUSI BUG TOPIK (STALE STATE FIX) ---
+  // Kita buat "Papan Tulis" (Ref) untuk menyimpan topik terbaru
+  // agar fungsi saving selalu membaca data paling update, bukan data lama.
+  const dailyCueRef = useRef(dailyCue);
+  const part3TopicRef = useRef(part3Topic);
+
+  // Sync Ref setiap kali State berubah
+  useEffect(() => {
+    dailyCueRef.current = dailyCue;
+  }, [dailyCue]);
+
+  useEffect(() => {
+    part3TopicRef.current = part3Topic;
+  }, [part3Topic]);
+  // ------------------------------------------
+
   const [analysisResult, setAnalysisResult] = useState(null);
-  
   const [isRotating, setIsRotating] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [freeQuota, setFreeQuota] = useState(0); 
 
   const [practiceMode, setPracticeMode] = useState("cue-card"); 
-  const [part3Topic, setPart3Topic] = useState(PART3_TOPICS[0]);
   
   const [interviewQuestion, setInterviewQuestion] = useState(""); 
   const accumulatedScoresRef = useRef([]); 
@@ -230,8 +246,11 @@ export default function Home() {
 
             const allGrammar = allScores.flatMap(s => s.grammarCorrection || []).slice(0, 5);
 
+            // 🔥 FIX: BACA TOPIK DARI REF (Papan Tulis)
+            const currentTopicTitle = part3TopicRef.current.topic;
+
             const finalResult = {
-                topic: `Mock Interview: ${part3Topic.topic}`,
+                topic: `Mock Interview: ${currentTopicTitle}`, // Gunakan data dari Ref
                 overall: finalScore,
                 fluency: Math.round(avgFluency * 2) / 2,
                 lexical: Math.round(avgLexical * 2) / 2,
@@ -250,9 +269,13 @@ export default function Home() {
 
     } else {
         setAnalysisResult(data);
+        
+        // 🔥 FIX: BACA TOPIK DARI REF JUGA UNTUK CUE CARD
+        const currentCueTitle = dailyCueRef.current.topic;
+
         const resultToSave = {
             ...data,
-            topic: data.topic || dailyCue.topic 
+            topic: data.topic || currentCueTitle // Gunakan Ref sebagai fallback
         };
         saveData(resultToSave);
     }
@@ -307,7 +330,8 @@ export default function Home() {
     setAccumulatedScoresState([]);
     
     if (mode === "mock-interview") {
-        setInterviewQuestion(part3Topic.startQ);
+        // Gunakan Ref untuk memastikan topik konsisten saat switch
+        setInterviewQuestion(part3TopicRef.current.startQ);
     }
   };
 
@@ -613,7 +637,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- MARKETING SECTION (Dengan Props onSelectMode) --- */}
+      {/* --- MARKETING SECTION --- */}
       <MarketingSection onSelectMode={handleMarketingCardClick} />
 
       <footer className="text-center mt-24 pb-10 text-slate-600 text-xs md:text-sm">
