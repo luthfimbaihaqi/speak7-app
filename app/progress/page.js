@@ -80,28 +80,31 @@ export default function ProgressPage() {
     }
   };
 
+  // --- LOGIKA BARU: RATA-RATA IELTS (PEMBULATAN 0.5) ---
+  const rawSum = history.reduce((acc, curr) => acc + (curr.overall_score || 0), 0);
+  const rawAvg = history.length > 0 ? rawSum / history.length : 0;
+  
   const averageScore = history.length > 0 
-    ? (history.reduce((acc, curr) => acc + (curr.overall_score || 0), 0) / history.length).toFixed(1)
+    ? (Math.round(rawAvg * 2) / 2).toFixed(1) // Membulatkan ke 0.5 terdekat
     : "0.0";
 
   // --- HELPER UNTUK RENDER BADGE DIFFICULTY ---
   const renderDifficultyBadge = (item) => {
     // Kita cari data difficulty di dalam object full_feedback
-    // Karena saat disimpan, structurenya: full_feedback: { difficulty: 'hard', ... }
     const diff = item.full_feedback?.difficulty; 
 
-    if (!diff) return null; // Kalau data lama (gak ada difficulty), jangan render apa-apa
+    if (!diff) return null; 
 
     const styles = {
         easy: "bg-green-500/20 text-green-400 border-green-500/30",
         medium: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-        hard: "bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]" // Ada efek glow dikit buat Hard
+        hard: "bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]" 
     };
 
     const labels = {
         easy: "Easy",
         medium: "Medium",
-        hard: "Hard 🔥" // Ada api nya biar keren
+        hard: "Hard 🔥" 
     };
 
     return (
@@ -173,7 +176,7 @@ export default function ProgressPage() {
                                     </span>
                                 </div>
                                 
-                                {/* 🔥 JUDUL TOPIK + BADGE DIFFICULTY */}
+                                {/* JUDUL TOPIK + BADGE DIFFICULTY */}
                                 <div className="flex items-center gap-2 mt-1">
                                     <h3 className="text-white font-bold truncate max-w-[200px] md:max-w-md">
                                         {item.topic.replace("Mock Interview: ", "")}
