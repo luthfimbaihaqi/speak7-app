@@ -726,7 +726,15 @@ export default function Home() {
       <FAQSection isTeaser={true} />
 
       <footer className="text-center mt-24 pb-10 text-slate-600 text-xs md:text-sm">
-        <p className="mb-4">&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.</p>
+        <p className="mb-4">
+          &copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-teal-400 transition-colors">Luthfi Baihaqi</Link>.
+        </p>
+        {/* Link Terms Baru Disini */}
+        <p>
+            <Link href="/terms" className="underline decoration-slate-700 hover:decoration-teal-400 hover:text-teal-400 transition-all">
+                Terms & Conditions
+            </Link>
+        </p>
       </footer>
     </main>
   );
