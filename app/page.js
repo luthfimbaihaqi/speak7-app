@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation"; 
 import { motion } from "framer-motion";
-import { BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock } from "lucide-react";
+import { BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock, Filter } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
 import { CUE_CARDS, PART3_TOPICS, GUILT_MESSAGES } from "@/utils/constants";
@@ -17,20 +17,18 @@ import ScoreCard from "@/components/ScoreCard";
 
 export default function Home() {
   const router = useRouter(); 
-  
-  // --- REF UNTUK AUTO SCROLL ---
   const heroRef = useRef(null); 
 
   const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]);
   const [part3Topic, setPart3Topic] = useState(PART3_TOPICS[0]);
 
-  // --- SOLUSI BUG TOPIK (STALE STATE FIX) ---
-  // Kita buat "Papan Tulis" (Ref) untuk menyimpan topik terbaru
-  // agar fungsi saving selalu membaca data paling update, bukan data lama.
+  // --- STATE BARU: DIFFICULTY FILTER ---
+  const [difficultyFilter, setDifficultyFilter] = useState("any"); // 'any', 'easy', 'medium', 'hard'
+
+  // --- REF UNTUK MENGHINDARI STALE STATE ---
   const dailyCueRef = useRef(dailyCue);
   const part3TopicRef = useRef(part3Topic);
 
-  // Sync Ref setiap kali State berubah
   useEffect(() => {
     dailyCueRef.current = dailyCue;
   }, [dailyCue]);
@@ -38,7 +36,6 @@ export default function Home() {
   useEffect(() => {
     part3TopicRef.current = part3Topic;
   }, [part3Topic]);
-  // ------------------------------------------
 
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isRotating, setIsRotating] = useState(false);
@@ -53,12 +50,11 @@ export default function Home() {
   
   const [isSpeakingAI, setIsSpeakingAI] = useState(false);
   
-  // MODALS STATE
+  // MODALS
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [guiltMessage, setGuiltMessage] = useState(GUILT_MESSAGES[0]);
   
-  // STATE ALERT KEREN
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
     type: "success", 
@@ -70,6 +66,7 @@ export default function Home() {
   
   const [userProfile, setUserProfile] = useState(null); 
 
+  // --- LOGIKA RANDOMIZE BARU (SUPPORT FILTER) ---
   const randomizeCue = () => {
     setIsRotating(true);
     
@@ -78,14 +75,25 @@ export default function Home() {
         const randomIndex = Math.floor(Math.random() * maxIndex);
         setDailyCue(CUE_CARDS[randomIndex]);
     } else {
-        const randomIndex = Math.floor(Math.random() * PART3_TOPICS.length);
-        const newTopic = PART3_TOPICS[randomIndex];
+        // --- LOGIKA FILTER DIFFICULTY ---
+        let pool = PART3_TOPICS;
+
+        // Hanya terapkan filter jika user PREMIUM dan tidak memilih 'any'
+        if (isPremium && difficultyFilter !== "any") {
+            pool = PART3_TOPICS.filter(t => t.difficulty === difficultyFilter);
+        }
+
+        // Fallback: Jika hasil filter kosong (jaga-jaga), pakai semua
+        if (pool.length === 0) pool = PART3_TOPICS;
+
+        const randomIndex = Math.floor(Math.random() * pool.length);
+        const newTopic = pool[randomIndex];
+        
         setPart3Topic(newTopic);
         setInterviewQuestion(newTopic.startQ);
         
         accumulatedScoresRef.current = []; 
         setAccumulatedScoresState([]);     
-        
         setAnalysisResult(null); 
     }
 
@@ -122,14 +130,21 @@ export default function Home() {
     checkUserStatus();
   }, []);
 
+  // Reset soal jika mode berubah atau filter berubah (optional, tapi bagus UX-nya)
   useEffect(() => {
       if (practiceMode === 'mock-interview') {
-          setInterviewQuestion(part3Topic.startQ);
+          // Kalau user ganti filter, kita acak ulang otomatis biar langsung dapat soal sesuai filter
+          // Tapi hanya jika filternya bukan 'any' saat inisialisasi awal biar gak kaget
+          if (difficultyFilter !== 'any') {
+             randomizeCue(); 
+          } else {
+             setInterviewQuestion(part3Topic.startQ);
+          }
           accumulatedScoresRef.current = [];
           setAccumulatedScoresState([]);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPremium]); 
+  }, [difficultyFilter]); // Trigger saat filter berubah
 
   useEffect(() => {
     if (analysisResult) {
@@ -168,7 +183,7 @@ export default function Home() {
   const handleAnalysisComplete = async (data) => {
     const todayStr = new Date().toDateString();
     
-    // --- STREAK LOGIC ---
+    // STREAK LOGIC
     const lastPracticeDate = localStorage.getItem("ielts4our_last_date");
     let currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
 
@@ -220,7 +235,6 @@ export default function Home() {
                 setInterviewQuestion(data.nextQuestion);
             }
         } else {
-            // --- FINAL RESULT PART 3 ---
             if (!isPremium) {
                 await burnFreeQuota();
             }
@@ -246,11 +260,12 @@ export default function Home() {
 
             const allGrammar = allScores.flatMap(s => s.grammarCorrection || []).slice(0, 5);
 
-            // 🔥 FIX: BACA TOPIK DARI REF (Papan Tulis)
-            const currentTopicTitle = part3TopicRef.current.topic;
+            // BACA DARI REF
+            const currentTopicObj = part3TopicRef.current;
 
             const finalResult = {
-                topic: `Mock Interview: ${currentTopicTitle}`, // Gunakan data dari Ref
+                topic: `Mock Interview: ${currentTopicObj.topic}`,
+                difficulty: currentTopicObj.difficulty, // 🔥 SIMPAN DIFFICULTY KE DATABASE
                 overall: finalScore,
                 fluency: Math.round(avgFluency * 2) / 2,
                 lexical: Math.round(avgLexical * 2) / 2,
@@ -269,13 +284,10 @@ export default function Home() {
 
     } else {
         setAnalysisResult(data);
-        
-        // 🔥 FIX: BACA TOPIK DARI REF JUGA UNTUK CUE CARD
         const currentCueTitle = dailyCueRef.current.topic;
-
         const resultToSave = {
             ...data,
-            topic: data.topic || currentCueTitle // Gunakan Ref sebagai fallback
+            topic: data.topic || currentCueTitle 
         };
         saveData(resultToSave);
     }
@@ -330,17 +342,33 @@ export default function Home() {
     setAccumulatedScoresState([]);
     
     if (mode === "mock-interview") {
-        // Gunakan Ref untuk memastikan topik konsisten saat switch
         setInterviewQuestion(part3TopicRef.current.startQ);
     }
   };
 
-  // --- FUNGSI UNTUK MARKETING CLICK (AUTO SCROLL) ---
   const handleMarketingCardClick = (mode) => {
     handleModeSwitch(mode);
-    // Scroll smooth ke Hero Section
     if (heroRef.current) {
         heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Helper untuk warna difficulty
+  const getDifficultyColor = (diff) => {
+    switch(diff) {
+        case 'easy': return 'bg-green-500/20 text-green-400 border-green-500/30';
+        case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+        case 'hard': return 'bg-red-500/20 text-red-400 border-red-500/30';
+        default: return 'bg-slate-700 text-slate-400';
+    }
+  };
+
+  const getDifficultyLabel = (diff) => {
+    switch(diff) {
+        case 'easy': return '☘️ Easy';
+        case 'medium': return '⚡ Medium';
+        case 'hard': return '🔥 Hard';
+        default: return '';
     }
   };
 
@@ -420,7 +448,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* HERO SECTION (Diberi REF untuk scroll target) */}
+      {/* HERO SECTION */}
       <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
         <div className="md:hidden mb-6">
            <Link href="/about" className="inline-flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest border-b border-slate-700 pb-0.5 hover:border-white transition-all">
@@ -465,7 +493,6 @@ export default function Home() {
          >
             <Users className="w-3.5 h-3.5" />
             Mock Interview
-            {/* Logic Ikon Gembok / Buka Gembok */}
             {!isPremium && (
                 <>
                   {userProfile && freeQuota > 0 ? (
@@ -523,12 +550,51 @@ export default function Home() {
               {/* MODE 2: MOCK INTERVIEW */}
               {practiceMode === "mock-interview" && !analysisResult && (
                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
-                    <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-4">
-                        <div>
-                           <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest text-left">Discussion Topic</h3>
-                           <h2 className="text-xl md:text-2xl font-bold text-white text-left">{part3Topic.topic}</h2>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-white/5 pb-4 gap-4">
+                        <div className="text-left">
+                           <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Discussion Topic</h3>
+                           <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="text-xl md:text-2xl font-bold text-white">{part3Topic.topic}</h2>
+                                {part3Topic.difficulty && (
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getDifficultyColor(part3Topic.difficulty)}`}>
+                                        {getDifficultyLabel(part3Topic.difficulty)}
+                                    </span>
+                                )}
+                           </div>
                         </div>
-                        <button onClick={randomizeCue} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all group" title="Ganti Topik"><RefreshCw className={`w-5 h-5 ${isRotating ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`} /></button>
+                        
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                         {/* --- DIFFICULTY FILTER DROPDOWN (FIXED) --- */}
+                            <div className="relative">
+                                <select 
+                                    value={difficultyFilter}
+                                    onChange={(e) => setDifficultyFilter(e.target.value)}
+                                    disabled={!isPremium} 
+                                    className={`appearance-none pl-8 pr-8 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500
+                                        ${!isPremium 
+                                            ? "bg-slate-800 text-slate-500 border-white/5 cursor-not-allowed opacity-70" 
+                                            : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+                                        }
+                                    `}
+                                >
+                                    {/* 🔥 FIX: Tambahkan class background gelap di setiap option */}
+                                    <option value="any" className="bg-slate-900 text-slate-200">Any Level</option>
+                                    <option value="easy" className="bg-slate-900 text-slate-200">Easy</option>
+                                    <option value="medium" className="bg-slate-900 text-slate-200">Medium</option>
+                                    <option value="hard" className="bg-slate-900 text-slate-200">Hard</option>
+                                </select>
+                                {/* Ikon Filter */}
+                                <Filter className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                {/* Ikon Lock jika bukan Premium */}
+                                {!isPremium && (
+                                    <Lock className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-yellow-500" />
+                                )}
+                            </div>
+
+                            <button onClick={randomizeCue} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all group shrink-0" title="Ganti Topik">
+                                <RefreshCw className={`w-5 h-5 ${isRotating ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`} />
+                            </button>
+                        </div>
                     </div>
                     
                     <div className="flex justify-center gap-2 mb-6 items-center">
@@ -646,3 +712,4 @@ export default function Home() {
     </main>
   );
 }
+

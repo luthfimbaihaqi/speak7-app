@@ -1,6 +1,6 @@
 // utils/constants.js
 
-// --- 1. GUILT TRIP MESSAGES (Dark Humor Logout) ---
+// --- 1. GUILT TRIP MESSAGES ---
 export const GUILT_MESSAGES = [
   { icon: "🧐", title: "Examiner is Judging...", text: "\"Hmm, leaving already? That looks like a Band 5.0 attitude to me.\"" },
   { icon: "💸", title: "Think about the Money", text: "The real IELTS test costs $200+. Wasting practice time is expensive. Sure you want to quit?" },
@@ -12,6 +12,7 @@ export const GUILT_MESSAGES = [
 ];
 
 // --- 2. BANK SOAL PART 2 (CUE CARDS) ---
+// (Tetap sama seperti yang kamu kirim, saya tidak ubah isinya)
 export const CUE_CARDS = [
   { topic: "Describe a book you read that you found useful.", points: ["What the book is", "When you read it", "Why you found it useful", "And explain how it helped you"] },
   { topic: "Describe a time when you helped someone.", points: ["Who you helped", "Why they needed help", "How you helped them", "And explain how you felt about it"] },
@@ -76,16 +77,44 @@ export const CUE_CARDS = [
   { topic: "Describe a traditional product from your country that is popular.", points: ["What the product is", "How it is made", "Where it is popular", "And explain why it is important to your culture"] }
 ];
 
-// --- 3. BANK SOAL PART 3 (MOCK INTERVIEW) ---
+// --- 3. BANK SOAL PART 3 (MOCK INTERVIEW WITH DIFFICULTY) ---
+// Total: 30 Topik (10 Easy, 10 Medium, 10 Hard)
 export const PART3_TOPICS = [
-  { topic: "Technology & Education", startQ: "Do you think computers will eventually replace teachers in the classroom?" },
-  { topic: "Environment", startQ: "What are the biggest environmental problems facing your country right now?" },
-  { topic: "Tourism", startQ: "Do you think tourism always benefits a local community?" },
-  { topic: "Health & Lifestyle", startQ: "How can people be encouraged to live a healthier lifestyle?" },
-  { topic: "Work & Life Balance", startQ: "Is it difficult for people in your country to find a good work-life balance?" },
-  { topic: "Social Media", startQ: "Has social media improved the way we communicate or made it worse?" },
-  { topic: "Traditional Culture", startQ: "Is it important to preserve traditional festivals and customs?" },
-  { topic: "Transport", startQ: "What is the best way to reduce traffic congestion in big cities?" }
+  // --- EASY: Personal & Concrete (10) ---
+  { difficulty: "easy", topic: "Hobbies", startQ: "Why is it important for people to have hobbies?" },
+  { difficulty: "easy", topic: "Daily Routine", startQ: "Do you think having a daily routine is helpful?" },
+  { difficulty: "easy", topic: "Food & Cooking", startQ: "How have people's eating habits changed in your country recently?" },
+  { difficulty: "easy", topic: "Shopping", startQ: "Do you prefer shopping online or in physical stores?" },
+  { difficulty: "easy", topic: "Hometown", startQ: "What are the advantages of living in a small town compared to a big city?" },
+  { difficulty: "easy", topic: "Friendship", startQ: "What qualities do you think are most important in a friend?" },
+  { difficulty: "easy", topic: "Exercise", startQ: "Why don't some people exercise enough?" },
+  { difficulty: "easy", topic: "Holidays", startQ: "Do you think holidays are more important now than in the past?" },
+  { difficulty: "easy", topic: "Music", startQ: "How does music affect people's emotions?" },
+  { difficulty: "easy", topic: "Clothing", startQ: "Does the way people dress reflect their personality?" },
+
+  // --- MEDIUM: Social & Descriptive (10) ---
+  { difficulty: "medium", topic: "Transport", startQ: "What is the best way to reduce traffic congestion in big cities?" },
+  { difficulty: "medium", topic: "Tourism", startQ: "Do you think tourism always benefits a local community?" },
+  { difficulty: "medium", topic: "Social Media", startQ: "Has social media improved the way we communicate or made it worse?" },
+  { difficulty: "medium", topic: "Traditional Culture", startQ: "Is it important to preserve traditional festivals and customs?" },
+  { difficulty: "medium", topic: "Work & Life Balance", startQ: "Is it difficult for people in your country to find a good work-life balance?" },
+  { difficulty: "medium", topic: "Advertising", startQ: "To what extent does advertising influence what people buy?" },
+  { difficulty: "medium", topic: "Celebrities", startQ: "Why do so many young people want to become famous?" },
+  { difficulty: "medium", topic: "News & Media", startQ: "How do most people in your country get their news today?" },
+  { difficulty: "medium", topic: "Online Education", startQ: "What are the disadvantages of learning online compared to a classroom?" },
+  { difficulty: "medium", topic: "Public Facilities", startQ: "Should governments spend more money on parks and libraries?" },
+
+  // --- HARD: Abstract & Global (10) ---
+  { difficulty: "hard", topic: "Artificial Intelligence", startQ: "Will AI eventually replace human creativity in jobs?" },
+  { difficulty: "hard", topic: "Globalization", startQ: "Does globalization lead to the loss of cultural identity?" },
+  { difficulty: "hard", topic: "Environmental Ethics", startQ: "Should individuals or governments be responsible for solving climate change?" },
+  { difficulty: "hard", topic: "The Future of Cities", startQ: "What will cities look like in 50 years?" },
+  { difficulty: "hard", topic: "Crime & Punishment", startQ: "Do you think prisons are effective in rehabilitating criminals?" },
+  { difficulty: "hard", topic: "Success", startQ: "How do you define success, and has this definition changed over time?" },
+  { difficulty: "hard", topic: "History", startQ: "Is it important for children to learn about history in school?" },
+  { difficulty: "hard", topic: "Space Exploration", startQ: "Is spending money on space exploration justified when we have problems on Earth?" },
+  { difficulty: "hard", topic: "Leadership", startQ: "Are leaders born or made?" },
+  { difficulty: "hard", topic: "Consumerism", startQ: "Does buying more things make people happier in the long run?" }
 ];
 
 // --- 4. INFO BANK ---

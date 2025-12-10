@@ -13,25 +13,18 @@ export default function ProgressPage() {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
   
-  // STATE PENTING (SI SATPAM)
   const [isPremium, setIsPremium] = useState(false);
-
-  // STATE UI
   const [selectedItem, setSelectedItem] = useState(null); 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // 1. CEK USER & PREMIUM STATUS
   useEffect(() => {
     async function checkUserStatus() {
         const { data: { user } } = await supabase.auth.getUser();
-        
         let userId = null;
 
         if (user) {
             setUserProfile(user);
             userId = user.id;
-
-            // Cek Status Premium di Database
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('is_premium, premium_expiry')
@@ -43,57 +36,42 @@ export default function ProgressPage() {
                 setIsPremium(isStillValid); 
             }
         }
-        
-        // Panggil fetch history (baik user login maupun guest)
         fetchHistory(userId);
     }
-
     checkUserStatus();
   }, []);
 
-  // 2. AMBIL DATA RIWAYAT (CLOUD + LOCAL) - REVISI UTAMA DISINI
   const fetchHistory = async (userId) => {
     try {
         let combinedData = [];
 
-        // A. AMBIL DATA CLOUD (SUPABASE) - Jika User Login
+        // A. DATA CLOUD
         if (userId) {
             const { data, error } = await supabase
                 .from('practice_history')
                 .select('*')
                 .eq('user_id', userId);
 
-            if (!error && data) {
-                combinedData = [...data];
-            }
+            if (!error && data) combinedData = [...data];
         }
 
-        // B. AMBIL DATA LOKAL (LOCALSTORAGE) - Untuk Cue Card / Guest
-        // Data lokal biasanya disimpan dengan key 'ielts4our_history' di app/page.js
+        // B. DATA LOKAL
         const localRaw = localStorage.getItem("ielts4our_history");
         if (localRaw) {
             const localData = JSON.parse(localRaw);
-            
-            // Normalisasi Data Lokal agar formatnya sama dengan Supabase
-            // Supabase pakai: overall_score, created_at
-            // Lokal pakai: overall, id (sebagai timestamp)
             const normalizedLocal = localData.map(item => ({
-                id: item.id, // Timestamp ID
+                id: item.id, 
                 user_id: 'local_device',
                 topic: item.topic,
-                overall_score: item.overall, // Mapping field
-                created_at: new Date(item.id).toISOString(), // Convert timestamp ke ISO string
-                full_feedback: item, // Simpan full object di sini
-                is_local: true // Penanda
+                overall_score: item.overall, 
+                created_at: new Date(item.id).toISOString(), 
+                full_feedback: item, 
+                is_local: true 
             }));
-
-            // Gabungkan (Hindari duplikat jika perlu, tapi untuk aman kita gabung saja dulu)
             combinedData = [...combinedData, ...normalizedLocal];
         }
 
-        // C. URUTKAN DARI TERBARU (Sort Descending by Date)
         combinedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
         setHistory(combinedData);
     } catch (err) {
         console.error("Error fetching history:", err);
@@ -102,10 +80,36 @@ export default function ProgressPage() {
     }
   };
 
-  // Hitung Statistik Sederhana
   const averageScore = history.length > 0 
     ? (history.reduce((acc, curr) => acc + (curr.overall_score || 0), 0) / history.length).toFixed(1)
     : "0.0";
+
+  // --- HELPER UNTUK RENDER BADGE DIFFICULTY ---
+  const renderDifficultyBadge = (item) => {
+    // Kita cari data difficulty di dalam object full_feedback
+    // Karena saat disimpan, structurenya: full_feedback: { difficulty: 'hard', ... }
+    const diff = item.full_feedback?.difficulty; 
+
+    if (!diff) return null; // Kalau data lama (gak ada difficulty), jangan render apa-apa
+
+    const styles = {
+        easy: "bg-green-500/20 text-green-400 border-green-500/30",
+        medium: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+        hard: "bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]" // Ada efek glow dikit buat Hard
+    };
+
+    const labels = {
+        easy: "Easy",
+        medium: "Medium",
+        hard: "Hard 🔥" // Ada api nya biar keren
+    };
+
+    return (
+        <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${styles[diff] || 'bg-slate-700'}`}>
+            {labels[diff] || diff}
+        </span>
+    );
+  };
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 selection:bg-teal-500/30 selection:text-teal-200">
@@ -168,7 +172,15 @@ export default function ProgressPage() {
                                         {new Date(item.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </span>
                                 </div>
-                                <h3 className="text-white font-bold truncate">{item.topic.replace("Mock Interview: ", "")}</h3>
+                                
+                                {/* 🔥 JUDUL TOPIK + BADGE DIFFICULTY */}
+                                <div className="flex items-center gap-2 mt-1">
+                                    <h3 className="text-white font-bold truncate max-w-[200px] md:max-w-md">
+                                        {item.topic.replace("Mock Interview: ", "")}
+                                    </h3>
+                                    {renderDifficultyBadge(item)}
+                                </div>
+
                             </div>
                             
                             <div className="flex items-center gap-4">
@@ -187,7 +199,7 @@ export default function ProgressPage() {
         )}
       </div>
 
-      {/* DETAIL MODAL (FULL SCREEN) */}
+      {/* DETAIL MODAL */}
       <AnimatePresence>
         {selectedItem && (
             <motion.div 
@@ -210,7 +222,6 @@ export default function ProgressPage() {
                         </button>
                     </div>
                     
-                    {/* DETAIL SCORE CARD */}
                     <div className="pb-20">
                         <ScoreCard 
                             result={selectedItem.full_feedback} 
@@ -224,7 +235,6 @@ export default function ProgressPage() {
         )}
       </AnimatePresence>
 
-      {/* MODAL UPGRADE */}
       <UpgradeModal 
         isOpen={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)}
