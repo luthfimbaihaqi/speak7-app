@@ -26,6 +26,8 @@ export async function POST(request) {
     }
 
     // 1. TRANSKRIPSI
+    // language: "en" memaksa Whisper untuk mendengarkan Inggris.
+    // Jika user bicara Indo, hasilnya seringkali jadi berantakan (gibberish) atau terjemahan aneh.
     const transcription = await groq.audio.transcriptions.create({
       file: audioFile,
       model: "whisper-large-v3",
@@ -41,7 +43,7 @@ export async function POST(request) {
     // ---------------------------------------------------------
     // LAYER 1: VALIDASI JAVASCRIPT (Tetap ada biar gak boncos)
     // ---------------------------------------------------------
-    if (wordCount < 5) { // Saya turunkan jadi 5 kata biar gak terlalu galak di awal
+    if (wordCount < 5) {
       return NextResponse.json({
         topic: cueCard,
         transcript: transcriptText,
@@ -64,11 +66,18 @@ export async function POST(request) {
     // 2. TENTUKAN SYSTEM PROMPT (BALANCING: REALISTIC SCORING)
     let systemPrompt;
 
-    // Instruksi Dasar (Updated)
+    // --- INSTRUKSI UTAMA (UPDATED: Tambah Polisi Bahasa) ---
     const baseInstruction = `
       You are an IELTS Examiner. Be REALISTIC and FAIR (Not too kind, not too mean).
       
-      CRITICAL:
+      🚨 **LANGUAGE DETECTION PROTOCOL (PRIORITY #1)**:
+      1. **CHECK THE TRANSCRIPT**: Does it look like English?
+      2. **NON-ENGLISH INPUT**: If the user speaks Indonesian, Spanish, or any other language, OR if the text is complete gibberish/nonsense (random sounds interpreted as words):
+         - **ACTION**: IMMEDIATE BAND 1.0 for ALL categories.
+         - **FEEDBACK**: Must state: "No valid English detected. Please speak in English throughout the test."
+         - **IMPROVEMENT**: "Focus on speaking English only. Do not use your native language."
+      
+      CRITICAL SCORING RULES (Only if English is detected):
       1. **PRONUNCIATION SCORING HACK**: You cannot hear audio. You must ESTIMATE 'Pronunciation' score based on the Transcript Quality.
          - If the transcript is grammatically complex and uses advanced words -> Assume GOOD Pronunciation (Score 6.5 - 8.0).
          - If the transcript is broken english or very simple -> Assume BASIC Pronunciation (Score 4.0 - 5.5).
@@ -154,14 +163,13 @@ export async function POST(request) {
         { role: "user", content: `Evaluate this answer honestly.` },
       ],
       model: "llama-3.3-70b-versatile",
-      temperature: 0.2, // Sedikit dinaikkan dari 0.1 biar gak terlalu kaku, tapi masih konsisten
+      temperature: 0.2, 
       response_format: { type: "json_object" },
     });
 
     const analysisResult = JSON.parse(completion.choices[0].message.content);
 
     // 3. LOGIKA PEMBULATAN SKOR
-    // Fallback: Kalau AI masih ngasih 0 di Pronunciation, kita ambil rata-rata dari skill lain
     let p = analysisResult.pronunciation || 0;
     const f = analysisResult.fluency || 0;
     const l = analysisResult.lexical || 0;
@@ -170,7 +178,7 @@ export async function POST(request) {
     // HACK: Kalau Pronunciation 0 (AI Gagal menebak), samakan dengan Grammar
     if (p === 0) {
         p = g; 
-        analysisResult.pronunciation = p; // Update object biar di frontend muncul
+        analysisResult.pronunciation = p; 
     }
 
     const average = (f + l + g + p) / 4;
