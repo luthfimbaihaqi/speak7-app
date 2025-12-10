@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Crown, Check, Lock, AlertTriangle, MessageCircle } from "lucide-react";
+import { X, Crown, Check, Lock, AlertTriangle, MessageCircle, Dices, Target, Mic, Clock, Star } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
 import { BANK_INFO } from "@/utils/constants"; // Pastikan BANK_INFO ada di constants
 
@@ -68,28 +68,57 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
          </div>
 
          <div className="p-5 md:p-8 space-y-6 md:space-y-8">
-            {/* --- COMPARISON TABLE --- */}
+            {/* --- COMPARISON TABLE UPDATED --- */}
             <div className="bg-white/5 rounded-2xl overflow-hidden border border-white/5">
                <div className="grid grid-cols-3 p-3 md:p-4 text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest text-center bg-black/20">
                   <div className="text-left">Feature</div>
                   <div>Free</div>
-                  <div className="text-yellow-400">Pro</div>
+                  <div className="text-yellow-400 flex items-center justify-center gap-1"><Crown className="w-3 h-3"/> PRO</div>
                </div>
                <div className="divide-y divide-white/5 text-sm">
+                  {/* Row 1: Daily Practice */}
                   <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
-                    <div className="text-left text-slate-300 text-xs md:text-sm">Mock Interview</div>
-                    <div className="text-slate-500 flex justify-center"><X className="w-3 h-3 md:w-4 md:h-4"/></div>
-                    <div className="font-bold text-white text-xs md:text-sm flex justify-center"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400"/></div>
+                    <div className="text-left text-slate-300 text-xs md:text-sm flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-slate-500 hidden md:block"/> Daily Practice
+                    </div>
+                    <div className="text-slate-400 text-[10px] md:text-xs bg-slate-800/50 py-1 rounded">2x / Day ⚠️</div>
+                    <div className="font-bold text-emerald-400 text-[10px] md:text-xs bg-emerald-500/10 py-1 rounded border border-emerald-500/20">UNLIMITED ♾️</div>
                   </div>
+
+                  {/* Row 2: Difficulty */}
                   <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
-                    <div className="text-left text-slate-300 text-xs md:text-sm">Duration</div>
-                    <div className="text-slate-500 text-xs md:text-sm">60s</div>
-                    <div className="font-bold text-white text-xs md:text-sm">2 Mins</div>
+                    <div className="text-left text-slate-300 text-xs md:text-sm flex items-center gap-2">
+                        <Dices className="w-4 h-4 text-slate-500 hidden md:block"/> Difficulty
+                    </div>
+                    <div className="text-slate-500 text-[10px] md:text-xs">Random 🎲</div>
+                    <div className="font-bold text-white text-[10px] md:text-xs">Easy/Med/Hard 🎯</div>
                   </div>
+
+                  {/* Row 3: Mock Interview */}
                   <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
-                    <div className="text-left text-slate-300 text-xs md:text-sm">Model Answer</div>
-                    <div className="text-slate-500 flex justify-center"><Lock className="w-3 h-3 md:w-4 md:h-4"/></div>
-                    <div className="font-bold text-white text-xs md:text-sm">Band 8.0</div>
+                    <div className="text-left text-slate-300 text-xs md:text-sm flex items-center gap-2">
+                        <Mic className="w-4 h-4 text-slate-500 hidden md:block"/> Mock Interview
+                    </div>
+                    <div className="text-slate-500 text-[10px] md:text-xs flex justify-center items-center gap-1"><Lock className="w-3 h-3"/> Trial Only</div>
+                    <div className="font-bold text-white text-[10px] md:text-xs flex justify-center items-center gap-1"><Check className="w-3 h-3 text-emerald-400"/> Full Access</div>
+                  </div>
+
+                  {/* Row 4: Duration */}
+                  <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
+                    <div className="text-left text-slate-300 text-xs md:text-sm flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-slate-500 hidden md:block"/> Duration
+                    </div>
+                    <div className="text-slate-500 text-[10px] md:text-xs">60s</div>
+                    <div className="font-bold text-white text-[10px] md:text-xs">120s ⏳</div>
+                  </div>
+
+                  {/* Row 5: Model Answer */}
+                  <div className="grid grid-cols-3 p-3 items-center text-center hover:bg-white/5 transition-colors">
+                    <div className="text-left text-slate-300 text-xs md:text-sm flex items-center gap-2">
+                        <Star className="w-4 h-4 text-slate-500 hidden md:block"/> Model Answer
+                    </div>
+                    <div className="text-slate-500 flex justify-center"><X className="w-3 h-3"/></div>
+                    <div className="font-bold text-yellow-400 text-[10px] md:text-xs">Band 8.0+ 🌟</div>
                   </div>
                </div>
             </div>

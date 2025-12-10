@@ -49,7 +49,7 @@ const FAQ_DATA = [
     items: [
       {
         q: "Apakah aplikasi ini Gratis?",
-        a: "Fitur Daily Cue Card 100% GRATIS selamanya. Untuk akses Mock Interview, Filter Difficulty, dan Model Answer Band 8.0, Anda perlu upgrade ke akun Pro."
+        a: "Anda bisa menggunakan fitur Daily Cue Card secara gratis dengan kuota terbatas harian. Upgrade ke Pro untuk membuka akses Unlimited Practice (Tanpa Batas), Mock Interview Interaktif, serta fitur pemilihan tingkat kesulitan (Hard Mode)."
       },
       {
         q: "Apakah ini sistem langganan bulanan?",
