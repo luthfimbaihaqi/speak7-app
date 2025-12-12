@@ -3,18 +3,25 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2, Trash2, Filter, Flame } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
 import ScoreCard from "@/components/ScoreCard";
 import UpgradeModal from "@/components/UpgradeModal"; 
 
 export default function ProgressPage() {
   const [history, setHistory] = useState([]);
+  const [filteredHistory, setFilteredHistory] = useState([]);
+  const [filterType, setFilterType] = useState("all"); 
+
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
   
   const [isPremium, setIsPremium] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null); 
+  
+  // State untuk Delete Modal Custom
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
@@ -40,6 +47,16 @@ export default function ProgressPage() {
     }
     checkUserStatus();
   }, []);
+
+  useEffect(() => {
+    if (filterType === "all") {
+        setFilteredHistory(history);
+    } else if (filterType === "cue-card") {
+        setFilteredHistory(history.filter(item => !item.topic.includes("Mock Interview")));
+    } else if (filterType === "mock-interview") {
+        setFilteredHistory(history.filter(item => item.topic.includes("Mock Interview")));
+    }
+  }, [filterType, history]);
 
   const fetchHistory = async (userId) => {
     try {
@@ -80,19 +97,56 @@ export default function ProgressPage() {
     }
   };
 
-  // --- LOGIKA BARU: RATA-RATA IELTS (PEMBULATAN 0.5) ---
+  // --- STEP 1: BUKA MODAL DELETE ---
+  const promptDelete = (e, item) => {
+    e.stopPropagation(); // Biar gak kebuka detail score-nya
+    setDeleteTarget(item);
+  };
+
+  // --- STEP 2: EKSEKUSI HAPUS (SAAT KLIK YES) ---
+  const executeDelete = async () => {
+    if (!deleteTarget) return;
+    
+    const item = deleteTarget;
+
+    try {
+        if (item.is_local) {
+            // Hapus dari Local Storage
+            const localRaw = localStorage.getItem("ielts4our_history");
+            if (localRaw) {
+                const localData = JSON.parse(localRaw);
+                const newData = localData.filter(d => d.id !== item.id);
+                localStorage.setItem("ielts4our_history", JSON.stringify(newData));
+            }
+        } else {
+            // Hapus dari Supabase
+            const { error } = await supabase
+                .from('practice_history')
+                .delete()
+                .eq('id', item.id);
+            
+            if (error) throw error;
+        }
+
+        // Update State UI
+        setHistory(prev => prev.filter(h => h.id !== item.id));
+        setDeleteTarget(null); // Tutup modal
+
+    } catch (err) {
+        console.error("Failed to delete:", err);
+        alert("Failed to delete item. Please try again.");
+    }
+  };
+
+  // --- STATISTIK ---
   const rawSum = history.reduce((acc, curr) => acc + (curr.overall_score || 0), 0);
   const rawAvg = history.length > 0 ? rawSum / history.length : 0;
-  
   const averageScore = history.length > 0 
-    ? (Math.round(rawAvg * 2) / 2).toFixed(1) // Membulatkan ke 0.5 terdekat
+    ? (Math.round(rawAvg * 2) / 2).toFixed(1) 
     : "0.0";
 
-  // --- HELPER UNTUK RENDER BADGE DIFFICULTY ---
   const renderDifficultyBadge = (item) => {
-    // Kita cari data difficulty di dalam object full_feedback
     const diff = item.full_feedback?.difficulty; 
-
     if (!diff) return null; 
 
     const styles = {
@@ -101,11 +155,7 @@ export default function ProgressPage() {
         hard: "bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]" 
     };
 
-    const labels = {
-        easy: "Easy",
-        medium: "Medium",
-        hard: "Hard 🔥" 
-    };
+    const labels = { easy: "Easy", medium: "Medium", hard: "Hard 🔥" };
 
     return (
         <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${styles[diff] || 'bg-slate-700'}`}>
@@ -156,14 +206,37 @@ export default function ProgressPage() {
                     </div>
                 </div>
 
+                {/* FILTER TABS */}
+                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                    {[
+                        { id: 'all', label: 'All History' },
+                        { id: 'cue-card', label: 'Cue Cards' },
+                        { id: 'mock-interview', label: 'Mock Tests' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setFilterType(tab.id)}
+                            className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
+                                filterType === tab.id 
+                                    ? "bg-white text-slate-900 border-white" 
+                                    : "bg-white/5 text-slate-400 border-white/5 hover:bg-white/10"
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
                 {/* HISTORY LIST */}
                 <div className="space-y-4">
-                    {history.map((item, index) => (
+                    {filteredHistory.length === 0 ? (
+                        <div className="text-center py-10 text-slate-500 text-sm">No history found for this filter.</div>
+                    ) : filteredHistory.map((item, index) => (
                         <motion.div 
                             key={item.id || index}
                             whileHover={{ scale: 1.01 }}
                             onClick={() => setSelectedItem(item)}
-                            className="bg-white/5 hover:bg-white/10 border border-white/5 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-colors group"
+                            className="bg-white/5 hover:bg-white/10 border border-white/5 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-colors group relative"
                         >
                             <div className="flex-1 min-w-0 pr-4">
                                 <div className="flex items-center gap-3 mb-1">
@@ -176,14 +249,12 @@ export default function ProgressPage() {
                                     </span>
                                 </div>
                                 
-                                {/* JUDUL TOPIK + BADGE DIFFICULTY */}
                                 <div className="flex items-center gap-2 mt-1">
-                                    <h3 className="text-white font-bold truncate max-w-[200px] md:max-w-md">
+                                    <h3 className="text-white font-bold truncate max-w-[150px] md:max-w-sm">
                                         {item.topic.replace("Mock Interview: ", "")}
                                     </h3>
                                     {renderDifficultyBadge(item)}
                                 </div>
-
                             </div>
                             
                             <div className="flex items-center gap-4">
@@ -191,6 +262,16 @@ export default function ProgressPage() {
                                     <p className="text-[10px] text-slate-500 uppercase font-bold">Band</p>
                                     <p className="text-xl font-black text-white">{item.overall_score}</p>
                                 </div>
+                                
+                                {/* DELETE BUTTON */}
+                                <button 
+                                    onClick={(e) => promptDelete(e, item)}
+                                    className="p-2 rounded-full bg-white/5 hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-all border border-white/5 hover:border-red-500/30"
+                                    title="Delete Result"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+
                                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors">
                                     <ChevronRight className="w-4 h-4" />
                                 </div>
@@ -234,6 +315,53 @@ export default function ProgressPage() {
                         />
                     </div>
                 </div>
+            </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🔥 CUSTOM DELETE MODAL (HUMOROUS) 🔥 */}
+      <AnimatePresence>
+        {deleteTarget && (
+            <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            >
+                <motion.div 
+                    initial={{ scale: 0.95, opacity: 0 }} 
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-sm text-center shadow-2xl relative overflow-hidden"
+                >
+                    {/* Background glow effect */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-orange-500" />
+                    
+                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                        <Flame className="w-8 h-8 text-red-500 animate-pulse" />
+                    </div>
+                    
+                    <h3 className="text-xl font-black text-white mb-2">Burning the evidence? 🔥</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                        Are you sure you want to delete this? Don't worry, I won't tell anyone about that score. 
+                        <br/><span className="text-slate-500 text-xs italic mt-2 block">(But remember, mistakes make you stronger!)</span>
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                        <button 
+                            onClick={executeDelete}
+                            className="w-full py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-all"
+                        >
+                            Yes, Burn It
+                        </button>
+                        <button 
+                            onClick={() => setDeleteTarget(null)}
+                            className="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-xl transition-all"
+                        >
+                            Keep It (I'm brave)
+                        </button>
+                    </div>
+                </motion.div>
             </motion.div>
         )}
       </AnimatePresence>
