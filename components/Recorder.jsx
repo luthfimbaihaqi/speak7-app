@@ -9,21 +9,24 @@ const ReactMic = dynamic(() => import("react-mic").then((mod) => mod.ReactMic), 
   ssr: false,
 });
 
-export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60, mode = "cue-card" }) {
+export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60, mode = "cue-card", difficulty = "medium" }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const [timeLeft, setTimeLeft] = useState(maxDuration);
-  const [errorMessage, setErrorMessage] = useState(null); // State pesan error inline
+  const [errorMessage, setErrorMessage] = useState(null); 
 
   const timerRef = useRef(null);
   const cueCardRef = useRef(cueCard);
   const modeRef = useRef(mode);
+  // 🔥 NEW: Ref untuk Difficulty
+  const difficultyRef = useRef(difficulty);
 
   useEffect(() => {
     cueCardRef.current = cueCard;
     modeRef.current = mode; 
-  }, [cueCard, mode]);
+    difficultyRef.current = difficulty; // Update ref saat props berubah
+  }, [cueCard, mode, difficulty]);
 
   useEffect(() => {
     setTimeLeft(maxDuration);
@@ -57,7 +60,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
 
   const startRecording = () => {
     setTimeLeft(maxDuration); 
-    setErrorMessage(null); // Reset error saat mulai
+    setErrorMessage(null); 
     setIsRecording(true);
   };
 
@@ -70,13 +73,11 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
     const durationSec = (recordedBlob.stopTime - recordedBlob.startTime) / 1000;
     const minDuration = mode === "mock-interview" ? 5 : 10; 
 
-    // VALIDASI 1: WAKTU (GANTI ALERT DENGAN INLINE MESSAGE)
     if (durationSec < minDuration) {
       setErrorMessage(`⚠️ Too short! Keep speaking for at least ${minDuration}s.`);
       return; 
     }
 
-    // VALIDASI 2: UKURAN FILE
     if (!recordedBlob.blob || recordedBlob.blob.size < 5000) {
         setErrorMessage("⚠️ Audio Empty. Please refresh & check mic.");
         return;
@@ -91,6 +92,8 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
     formData.append("audio", recordedBlob.blob, `recording.${extension}`);
     formData.append("cue_card", cueCardRef.current);
     formData.append("mode", modeRef.current); 
+    // 🔥 NEW: Kirim data difficulty ke Backend
+    formData.append("difficulty", difficultyRef.current); 
 
     try {
       const response = await fetch("/api/analyze", {
@@ -109,7 +112,12 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
         throw new Error(data.error || "Gagal melakukan analisis.");
       }
 
-      onAnalysisComplete(data);
+      const audioUrl = URL.createObjectURL(recordedBlob.blob);
+      
+      onAnalysisComplete({
+          ...data,
+          audioUrl: audioUrl 
+      });
 
     } catch (error) {
       console.error("Error uploading:", error);
@@ -136,7 +144,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
           record={isRecording}
           className="w-full h-full opacity-80"
           onStop={onStop}
-          strokeColor={errorMessage ? "#f43f5e" : "#2dd4bf"} // Merah kalau error, Teal kalau normal
+          strokeColor={errorMessage ? "#f43f5e" : "#2dd4bf"} 
           backgroundColor="transparent" 
           mimeType="audio/webm"
         />
@@ -164,7 +172,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
         </div>
       </div>
 
-      {/* ERROR MESSAGE TOAST (INLINE) */}
+      {/* ERROR MESSAGE TOAST */}
       <AnimatePresence>
         {errorMessage && (
             <motion.div 

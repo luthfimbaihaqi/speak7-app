@@ -221,22 +221,24 @@ export default function Home() {
 
     const saveData = async (finalResult) => {
         try {
+            const { audioUrl, audioPlaylist, ...dataToSave } = finalResult;
+
             if (userProfile) {
                 const { error } = await supabase.from('practice_history').insert({
                     user_id: userProfile.id,
-                    topic: finalResult.topic,
-                    overall_score: finalResult.overall,
-                    fluency: finalResult.fluency,
-                    lexical: finalResult.lexical,
-                    grammar: finalResult.grammar,
-                    pronunciation: finalResult.pronunciation,
-                    full_feedback: finalResult 
+                    topic: dataToSave.topic,
+                    overall_score: dataToSave.overall,
+                    fluency: dataToSave.fluency,
+                    lexical: dataToSave.lexical,
+                    grammar: dataToSave.grammar,
+                    pronunciation: dataToSave.pronunciation,
+                    full_feedback: dataToSave 
                 });
             } else {
                 const historyItem = {
                     id: Date.now(),
                     date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
-                    ...finalResult 
+                    ...dataToSave 
                 };
                 const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
                 const updatedHistory = [...existingHistory, historyItem].slice(-30); 
@@ -287,7 +289,8 @@ export default function Home() {
                 improvement: allScores[2].improvement, 
                 grammarCorrection: allGrammar,
                 transcript: stitchedTranscript, 
-                modelAnswer: stitchedModelAnswer 
+                modelAnswer: stitchedModelAnswer,
+                audioPlaylist: allScores.map(score => score.audioUrl) 
             };
 
             setAnalysisResult(finalResult);
@@ -297,18 +300,19 @@ export default function Home() {
     } else {
         if (!isPremium) await handleQuotaConsumption('cue-card');
 
-        setAnalysisResult(data);
         const currentCueTitle = dailyCueRef.current.topic;
-        const resultToSave = {
+        
+        const finalResult = {
             ...data,
-            topic: data.topic || currentCueTitle 
+            topic: data.topic || currentCueTitle,
         };
-        saveData(resultToSave);
+
+        setAnalysisResult(finalResult);
+        saveData(finalResult);
     }
   };
 
   const handleLogoutClick = () => {
-    // Tutup menu dulu biar rapi
     setIsUserMenuOpen(false);
     const randomMsg = GUILT_MESSAGES[Math.floor(Math.random() * GUILT_MESSAGES.length)];
     setGuiltMessage(randomMsg);
@@ -412,7 +416,6 @@ export default function Home() {
              <Image src="/logo-white.png" alt="IELTS4our Logo" fill className="object-contain object-center md:object-left" priority />
           </div>
           
-          {/* LINK INI TETAP DIPERTAHANKAN SESUAI REQUEST */}
           <Link href="/about" className="hidden md:block ml-2 text-sm font-medium text-slate-400 hover:text-white transition-colors tracking-wide">
             Meet the Creator
           </Link>
@@ -425,10 +428,7 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Tombol My Progress sudah dihapus dari sini */}
-
           {userProfile ? (
-            // --- NEW: USER DROPDOWN MENU ---
             <div className="relative" ref={userMenuRef}>
                 <motion.button 
                     whileHover={{ scale: 1.02 }}
@@ -441,7 +441,6 @@ export default function Home() {
                     <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`} />
                 </motion.button>
 
-                {/* Dropdown Content */}
                 <AnimatePresence>
                     {isUserMenuOpen && (
                         <motion.div 
@@ -449,10 +448,8 @@ export default function Home() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.15 }}
-                            // 🔥 FIX: w-48 (HP) dan md:w-56 (Laptop)
                             className="absolute right-0 mt-2 w-48 md:w-56 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden py-1 z-50"
                         >
-                            {/* Status Header */}
                             <div className="px-4 py-3 border-b border-white/5 bg-white/5">
                                 <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Status</p>
                                 {isPremium ? (
@@ -466,7 +463,6 @@ export default function Home() {
                                 )}
                             </div>
 
-                            {/* Menu Items */}
                             <Link href="/progress" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-slate-300 hover:text-white transition-colors">
                                 <BarChart3 className="w-4 h-4 text-teal-400" /> My Progress
                             </Link>
@@ -507,14 +503,12 @@ export default function Home() {
       {/* HERO SECTION */}
       <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
         
-        {/* Link Mobile "Meet Creator" (Tetap Ada) */}
         <div className="md:hidden mb-6">
            <Link href="/about" className="inline-flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest border-b border-slate-700 pb-0.5 hover:border-white transition-all">
              ✨ Meet the Creator <ChevronRight className="w-3 h-3" />
            </Link>
         </div>
 
-        {/* 🔥 NEW PILL BADGE: Link ke Mission 🔥 */}
         <Link href="/mission">
           <motion.div
             initial={{ y: -10, opacity: 0 }}
@@ -598,7 +592,14 @@ export default function Home() {
                     </div>
                     
                     {dailyCueQuotaStatus === 'allowed' ? (
-                        <Recorder cueCard={dailyCue.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={isPremium ? 120 : 60} mode={practiceMode} />
+                        <Recorder 
+                            cueCard={dailyCue.topic} 
+                            onAnalysisComplete={handleAnalysisComplete} 
+                            maxDuration={isPremium ? 120 : 60} 
+                            mode={practiceMode} 
+                            // 🔥 FIX: Mode Cue Card default Medium
+                            difficulty="medium" 
+                        />
                     ) : (
                         <LimitReachedView type={dailyCueQuotaStatus} />
                     )}
@@ -673,7 +674,15 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <Recorder cueCard={part3Topic.topic} onAnalysisComplete={handleAnalysisComplete} maxDuration={60} mode={practiceMode} />
+                    <Recorder 
+                        cueCard={part3Topic.topic} 
+                        onAnalysisComplete={handleAnalysisComplete} 
+                        maxDuration={60} 
+                        mode={practiceMode}
+                        // 🔥 FIX: Kirim data difficulty filter ke Recorder
+                        // Jika 'any', kita lempar 'medium' sebagai default
+                        difficulty={difficultyFilter === 'any' ? 'medium' : difficultyFilter} 
+                    />
                  </motion.div>
               )}
 
@@ -694,6 +703,7 @@ export default function Home() {
                             Try Another Topic
                         </button>
                     </div>
+                    {/* Mengirim props result (yang berisi audioUrl atau audioPlaylist) ke ScoreCard */}
                     <ScoreCard 
                         result={analysisResult} 
                         cue={analysisResult.topic || dailyCue.topic} 

@@ -2,11 +2,15 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, AlertOctagon, Lock, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight, XCircle } from "lucide-react";
+import { CheckCircle2, AlertOctagon, Lock, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight, XCircle, PlayCircle, ListMusic } from "lucide-react";
 import Confetti from "react-confetti";
 
 export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgradeModal }) {
   const [showTranscript, setShowTranscript] = useState(false); 
+
+  // Ambil data audio (Single URL atau Playlist Array)
+  const audioUrl = result?.audioUrl;
+  const audioPlaylist = result?.audioPlaylist;
 
   if (!result) return null;
 
@@ -58,6 +62,38 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
             </div>
         </div>
       </motion.div>
+
+      {/* --- AUDIO SECTION (SMART RENDER: PLAYLIST vs SINGLE) --- */}
+      {audioPlaylist && audioPlaylist.length > 0 ? (
+        // UI: PLAYLIST (Untuk Mock Interview - 3 Player Kecil)
+        <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 space-y-4">
+            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
+                <ListMusic className="w-4 h-4 text-purple-400" />
+                <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Interview Recordings</span>
+            </div>
+            {audioPlaylist.map((url, index) => (
+                <div key={index} className="flex items-center gap-3 bg-black/20 p-2 rounded-xl border border-white/5">
+                    <div className="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 text-xs font-bold border border-teal-500/20 shrink-0">
+                        Q{index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <audio controls src={url} className="w-full h-6 opacity-90" />
+                    </div>
+                </div>
+            ))}
+        </div>
+      ) : audioUrl ? (
+        // UI: SINGLE PLAYER (Untuk Cue Card - 1 Player Besar)
+        <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-4 flex items-center gap-4">
+            <div className="p-3 bg-teal-500/20 rounded-full text-teal-400">
+                <PlayCircle className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+                <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Your Recording</p>
+                <audio controls src={audioUrl} className="w-full h-8 opacity-80" />
+            </div>
+        </div>
+      ) : null}
 
       {/* --- TRANSCRIPT ACCORDION --- */}
       {result.transcript && (

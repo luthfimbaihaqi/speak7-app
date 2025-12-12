@@ -20,14 +20,14 @@ export async function POST(request) {
     const audioFile = formData.get("audio");
     const cueCard = formData.get("cue_card");
     const mode = formData.get("mode") || "cue-card"; 
+    // 🔥 NEW: Tangkap data difficulty (Default: Medium)
+    const difficulty = formData.get("difficulty") || "medium";
 
     if (!audioFile) {
       return NextResponse.json({ error: "Audio is required" }, { status: 400 });
     }
 
     // 1. TRANSKRIPSI
-    // language: "en" memaksa Whisper untuk mendengarkan Inggris.
-    // Jika user bicara Indo, hasilnya seringkali jadi berantakan (gibberish) atau terjemahan aneh.
     const transcription = await groq.audio.transcriptions.create({
       file: audioFile,
       model: "whisper-large-v3",
@@ -41,7 +41,7 @@ export async function POST(request) {
     console.log(`🎤 Transcript (${wordCount} words): ${transcriptText}`);
 
     // ---------------------------------------------------------
-    // LAYER 1: VALIDASI JAVASCRIPT (Tetap ada biar gak boncos)
+    // LAYER 1: VALIDASI JAVASCRIPT
     // ---------------------------------------------------------
     if (wordCount < 5) {
       return NextResponse.json({
@@ -63,40 +63,59 @@ export async function POST(request) {
       });
     }
 
-    // 2. TENTUKAN SYSTEM PROMPT (BALANCING: REALISTIC SCORING)
-    let systemPrompt;
+    // 2. TENTUKAN KEPRIBADIAN AI BERDASARKAN DIFFICULTY
+    let difficultyInstruction = "";
+    
+    if (difficulty === "easy") {
+        difficultyInstruction = `
+        🎭 **EXAMINER PERSONA: FRIENDLY & SUPPORTIVE (Level: Easy)**
+        - **Question Style:** Simple, direct, and personal.
+        - **Target:** Ask about user's preferences, habits, or frequency.
+        - **Constraint:** DO NOT ask complex "Why" questions about society. Keep it about the USER.
+        - **Example Follow-up:** "Do you go there often?" or "Do you like doing that with friends?"
+        `;
+    } else if (difficulty === "hard") {
+        difficultyInstruction = `
+        🎭 **EXAMINER PERSONA: CRITICAL & ANALYTICAL (Level: Hard)**
+        - **Question Style:** Challenging, abstract, and debate-oriented.
+        - **Target:** Challenge the user's argument, ask for social implications, or predictions.
+        - **Constraint:** Use sophisticated vocabulary in your question. Test their ability to defend an opinion.
+        - **Example Follow-up:** "You mentioned X, but critics say Y. How do you justify that?" or "What impact does this have on the wider community?"
+        `;
+    } else {
+        // Medium (Default)
+        difficultyInstruction = `
+        🎭 **EXAMINER PERSONA: STANDARD IELTS (Level: Medium)**
+        - **Question Style:** Professional and inquisitive.
+        - **Target:** Ask for elaboration (Reasons/Explanations).
+        - **Example Follow-up:** "Why do you think that is?" or "Can you explain why you prefer X over Y?"
+        `;
+    }
 
-    // --- INSTRUKSI UTAMA (UPDATED: Tambah Polisi Bahasa) ---
+    // 3. INSTRUKSI UTAMA & SYSTEM PROMPT
     const baseInstruction = `
-      You are an IELTS Examiner. Be REALISTIC and FAIR (Not too kind, not too mean).
+      You are an IELTS Examiner. Be REALISTIC and FAIR.
       
+      ${difficultyInstruction}  <-- APPLY THIS PERSONA!
+
       🚨 **LANGUAGE DETECTION PROTOCOL (PRIORITY #1)**:
       1. **CHECK THE TRANSCRIPT**: Does it look like English?
-      2. **NON-ENGLISH INPUT**: If the user speaks Indonesian, Spanish, or any other language, OR if the text is complete gibberish/nonsense (random sounds interpreted as words):
+      2. **NON-ENGLISH INPUT**: If the user speaks Indonesian, Spanish, or any other language, OR if the text is complete gibberish:
          - **ACTION**: IMMEDIATE BAND 1.0 for ALL categories.
-         - **FEEDBACK**: Must state: "No valid English detected. Please speak in English throughout the test."
-         - **IMPROVEMENT**: "Focus on speaking English only. Do not use your native language."
+         - **FEEDBACK**: "No valid English detected."
+         - **IMPROVEMENT**: "Speak English only."
       
       CRITICAL SCORING RULES (Only if English is detected):
-      1. **PRONUNCIATION SCORING HACK**: You cannot hear audio. You must ESTIMATE 'Pronunciation' score based on the Transcript Quality.
-         - If the transcript is grammatically complex and uses advanced words -> Assume GOOD Pronunciation (Score 6.5 - 8.0).
-         - If the transcript is broken english or very simple -> Assume BASIC Pronunciation (Score 4.0 - 5.5).
-         - DO NOT RETURN 0 for Pronunciation. Give a realistic estimate.
-
-      2. **CONTENT-AWARE FEEDBACK**:
-         - Quote specific things the user said in 'feedback' (Strengths) and 'improvement'.
-         - Example: "You argued that 'traffic is bad', but..."
-      
-      SCORING GUIDE (0-9 Scale):
-      - Native-like flow & vocab: 8.0 - 9.0
-      - Good flow, minor errors: 6.5 - 7.5
-      - Frequent pauses, simple sentences: 5.0 - 6.0
-      - Broken sentences, hard to understand: 3.0 - 4.5
-      - Very short (< 20 words): Max Score 3.0
+      1. **PRONUNCIATION SCORING HACK**: ESTIMATE 'Pronunciation' score based on Transcript Quality.
+         - Complex/Advanced words -> Good Pronunciation (6.5 - 8.0).
+         - Simple/Broken English -> Basic Pronunciation (4.0 - 5.5).
+      2. **CONTENT-AWARE FEEDBACK**: Quote specific details from the user's answer.
     `;
 
+    let systemPrompt;
+
     if (mode === "mock-interview") {
-      // --- PROMPT PART 3 ---
+      // --- PROMPT PART 3 (UPDATED WITH DIFFICULTY LOGIC) ---
       systemPrompt = `
         ${baseInstruction}
         
@@ -104,16 +123,16 @@ export async function POST(request) {
         User's Answer: "${transcriptText}"
 
         Task:
-        1. SCORE: Give realistic scores (Fluency, Lexical, Grammar, Pronunciation).
-        2. INTERACTION: One follow-up question.
+        1. SCORE: Realistic scores.
+        2. **INTERACTION (CRITICAL)**: Create a *Follow-up Question* based on the User's Answer AND the **EXAMINER PERSONA** defined above.
+           - **Easy:** Ask personal preference/habit.
+           - **Medium:** Ask "Why".
+           - **Hard:** Challenge their idea or ask about society.
         3. FEEDBACK (Strengths - Min 3 points):
            - Content: Quote user's idea.
-           - Fluency: Comment on length/flow.
-           - Vocab: Praise a good word used.
+           - Fluency & Vocab.
         4. IMPROVEMENT (Weaknesses - Min 3 points):
-           - Elaboration: What was missing?
-           - Vocab: Suggest a C1 synonym for a specific word they used.
-           - Grammar: Fix a mistake.
+           - Elaboration, Vocab, Grammar.
         5. MODEL ANSWER: Band 8.5 rewriting (Natural style).
 
         Return JSON:
@@ -136,14 +155,8 @@ export async function POST(request) {
         
         Task:
         1. SCORE: Realistic scores.
-        2. FEEDBACK (Strengths - Min 3 points):
-           - Content: Quote specific details.
-           - Fluency.
-           - Vocab.
-        3. IMPROVEMENT (Weaknesses - Min 3 points):
-           - Elaboration.
-           - Vocab Upgrade.
-           - Grammar Fix.
+        2. FEEDBACK (Strengths).
+        3. IMPROVEMENT (Weaknesses).
         4. MODEL ANSWER: Storytelling style (Band 8.5).
 
         Return JSON:
@@ -169,13 +182,12 @@ export async function POST(request) {
 
     const analysisResult = JSON.parse(completion.choices[0].message.content);
 
-    // 3. LOGIKA PEMBULATAN SKOR
+    // 4. LOGIKA PEMBULATAN SKOR
     let p = analysisResult.pronunciation || 0;
     const f = analysisResult.fluency || 0;
     const l = analysisResult.lexical || 0;
     const g = analysisResult.grammar || 0;
 
-    // HACK: Kalau Pronunciation 0 (AI Gagal menebak), samakan dengan Grammar
     if (p === 0) {
         p = g; 
         analysisResult.pronunciation = p; 
