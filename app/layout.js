@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import { Geist, Geist_Mono, Caveat } from "next/font/google"; // Import Caveat
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} antialiased`}
       >
         {children}
+        <Analytics />
       </body>
     </html>
   );
