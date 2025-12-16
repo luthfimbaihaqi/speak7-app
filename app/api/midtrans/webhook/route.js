@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 
 // Init Midtrans Core API (Bukan Snap) untuk verifikasi notifikasi
 const apiClient = new Midtrans.CoreApi({
-  isProduction: false, // Ganti true nanti saat production
+  isProduction: true, // Ganti true nanti saat production
   serverKey: process.env.MIDTRANS_SERVER_KEY,
   clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY,
 });

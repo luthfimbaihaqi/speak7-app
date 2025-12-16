@@ -9,13 +9,14 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   
-  // State untuk Manual Token
+  // State Manual Token
   const [tokenInput, setTokenInput] = useState("");
   const [redeemLoading, setRedeemLoading] = useState(false);
 
-  // --- 1. LOAD SCRIPT MIDTRANS SNAP ---
+  // --- 1. LOAD SCRIPT MIDTRANS SNAP (PRODUCTION) ---
   useEffect(() => {
-    const snapUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
+    // 🔥 UBAH KE URL PRODUCTION (Hapus kata 'sandbox')
+    const snapUrl = "https://app.midtrans.com/snap/snap.js"; 
     const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
 
     const script = document.createElement("script");
@@ -66,7 +67,8 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
                 onClose();
             },
             onError: function(result) {
-                alert("Pembayaran gagal!");
+                console.log(result); // Cek console kalau ada error
+                alert("Pembayaran belum diselesaikan.");
             },
             onClose: function() {
                 setLoading(false);
@@ -94,7 +96,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
       setTimeout(() => setCopied(false), 2000);
   };
 
-  // --- 4. OPS 3: REDEEM TOKEN (LOGIKA LAMA DIKEMBALIKAN) ---
+  // --- 4. OPS 3: REDEEM TOKEN ---
   const validateToken = async () => {
     const cleanToken = tokenInput.trim().toUpperCase();
     
@@ -109,7 +111,6 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
     setRedeemLoading(true);
     try {
-        // Memanggil RPC 'redeem_token' di Supabase
         const { data, error } = await supabase.rpc('redeem_token', { 
             code_input: cleanToken 
         });
@@ -131,7 +132,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
     } catch (err) {
         console.error("Token Error:", err);
-        alert("Terjadi kesalahan koneksi atau Token salah.");
+        alert("Terjadi kesalahan. Pastikan token benar atau hubungi admin.");
     } finally {
         setRedeemLoading(false);
     }
@@ -168,19 +169,22 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
                 <div className="grid grid-cols-1 gap-3">
                     
-                    {/* OPTION 1: MIDTRANS (COMING SOON) */}
-                    <div className="relative group">
-                        <button 
-                            disabled={true} 
-                            className="w-full py-3.5 bg-white/5 border border-white/10 text-slate-500 font-bold text-sm rounded-xl cursor-not-allowed flex items-center justify-center gap-2 grayscale opacity-60"
-                        >
-                            <Zap className="w-4 h-4 fill-slate-500" />
-                            Instant Activation (QRIS / VA)
-                        </button>
-                        <div className="absolute -top-2 right-4 bg-yellow-500 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded shadow-lg border border-yellow-400">
-                            COMING SOON
+                    {/* 🔥 OPS 1: MIDTRANS (SUDAH AKTIF!) */}
+                    <button 
+                        onClick={handlePayment} 
+                        disabled={loading}
+                        className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-bold text-sm rounded-xl shadow-lg shadow-teal-500/20 transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
+                    >
+                         {/* Animasi Ping */}
+                        <div className="absolute top-0 right-0 p-1">
+                            <span className="flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+                            </span>
                         </div>
-                    </div>
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
+                        Instant Activation (QRIS / VA)
+                    </button>
 
                     <div className="relative flex py-1 items-center">
                         <div className="flex-grow border-t border-white/10"></div>
@@ -188,7 +192,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
                         <div className="flex-grow border-t border-white/10"></div>
                     </div>
 
-                    {/* OPTION 2: WHATSAPP */}
+                    {/* OPS 2: WHATSAPP */}
                     <button 
                         onClick={confirmViaWA} 
                         className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-sm rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2 transform hover:scale-[1.02]"
@@ -197,7 +201,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
                         Chat Admin via WhatsApp
                     </button>
 
-                    {/* BANK INSTRUCTION BOX */}
+                    {/* BANK INSTRUCTION */}
                     <div className="mt-2 bg-slate-900/60 rounded-xl p-4 border border-white/10 text-left">
                         <div className="flex items-start gap-3">
                             <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400 mt-1 shrink-0">
@@ -205,7 +209,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
                             </div>
                             <div className="space-y-2 w-full">
                                 <p className="text-xs text-slate-300 leading-relaxed">
-                                    Transfer <span className="text-white font-bold">Rp 30.000</span> ke rekening di bawah, lalu kirim bukti bayar yang menunjukkan jam dan tanggal transaksinya via tombol WA di atas dan tunggu TOKEN untuk aktivasi dari admin:
+                                    Transfer <span className="text-white font-bold">Rp 30.000</span> ke rekening di bawah, lalu kirim bukti via tombol WA di atas:
                                 </p>
                                 
                                 <div 
@@ -227,7 +231,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
                         </div>
                     </div>
 
-                    {/* 🔥 OPS 3: REDEEM TOKEN (RESTORED!) */}
+                    {/* OPS 3: REDEEM TOKEN */}
                     <div className="pt-4 border-t border-white/10">
                         <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-2 flex items-center justify-center gap-1">
                             <Ticket className="w-3 h-3" /> Have a Token?

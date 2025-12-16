@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 );
 
 const snap = new Midtrans.Snap({
-  isProduction: false, // Ganti true nanti kalau sudah live production
+  isProduction: true, // Ganti true nanti kalau sudah live production
   serverKey: process.env.MIDTRANS_SERVER_KEY,
 });
 
