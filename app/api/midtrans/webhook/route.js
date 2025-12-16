@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import Midtrans from "midtrans-client";
 import { createClient } from "@supabase/supabase-js";
 
-// Init Supabase Admin (Wajib Service Role untuk update user lain)
+// Init Supabase Admin
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Init Midtrans Core API (Bukan Snap) untuk verifikasi notifikasi
+// Init Midtrans Core API (Production)
 const apiClient = new Midtrans.CoreApi({
-  isProduction: true, // Ganti true nanti saat production
+  isProduction: true, // Pastikan ini true
   serverKey: process.env.MIDTRANS_SERVER_KEY,
   clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY,
 });
@@ -19,8 +19,7 @@ export async function POST(request) {
   try {
     const notificationJson = await request.json();
 
-    // 1. Verifikasi Signature Midtrans (Keamanan)
-    // Fungsi ini mengecek apakah data benar-benar dari Midtrans
+    // 1. Verifikasi Signature Midtrans
     const statusResponse = await apiClient.transaction.notification(notificationJson);
     
     const orderId = statusResponse.order_id;
@@ -31,79 +30,82 @@ export async function POST(request) {
 
     // 2. Tentukan Status Transaksi
     let paymentStatus = "pending";
-    
     if (transactionStatus == "capture") {
       if (fraudStatus == "challenge") {
-        paymentStatus = "challenge"; // Perlu tinjauan manual
+        paymentStatus = "challenge";
       } else if (fraudStatus == "accept") {
-        paymentStatus = "success"; // Pembayaran Kartu Kredit Sukses
+        paymentStatus = "success";
       }
     } else if (transactionStatus == "settlement") {
-      paymentStatus = "success"; // Pembayaran VA/QRIS/E-Wallet Sukses
+      paymentStatus = "success";
     } else if (transactionStatus == "cancel" || transactionStatus == "deny" || transactionStatus == "expire") {
       paymentStatus = "failed";
-    } else if (transactionStatus == "pending") {
-      paymentStatus = "pending";
     }
 
-    // 3. Update Status di Tabel Transactions
+    // 3. Cek apakah Order ID ada di Database? (Pakai maybeSingle biar gak error kalau kosong)
+    const { data: txData, error: fetchError } = await supabaseAdmin
+        .from("transactions")
+        .select("user_id, id")
+        .eq("order_id", orderId)
+        .maybeSingle(); // <--- INI KUNCI PERBAIKANNYA
+
+    // Jika data tidak ditemukan (misal: Test Notification dari Midtrans), kita stop di sini tapi tetap balas 200 OK
+    if (!txData) {
+        console.warn(`⚠️ Order ID ${orderId} tidak ditemukan di database. Mengabaikan webhook.`);
+        return NextResponse.json({ status: "OK", message: "Order ID not found, ignored." });
+    }
+
+    // 4. Update Status di Tabel Transactions
     const { error: txError } = await supabaseAdmin
         .from("transactions")
         .update({ status: paymentStatus })
         .eq("order_id", orderId);
 
-    if (txError) throw new Error("Gagal update tabel transaksi");
+    if (txError) {
+        console.error("Gagal update transaksi:", txError);
+        // Jangan throw error agar Midtrans tidak kirim email error, cukup log saja
+        return NextResponse.json({ status: "OK", message: "Database update failed" });
+    }
 
-    // 4. JIKA SUKSES -> Update Status User jadi Premium & Tambah 30 Hari
+    // 5. JIKA SUKSES -> Update Status User jadi Premium
     if (paymentStatus === "success") {
-        // Ambil user_id dari order_id atau query ulang tabel transaksi
-        // Kita query tabel transactions untuk dapat user_id
-        const { data: txData } = await supabaseAdmin
-            .from("transactions")
-            .select("user_id")
-            .eq("order_id", orderId)
+        const userId = txData.user_id;
+
+        // Ambil Data Profile User
+        const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("premium_expiry")
+            .eq("id", userId)
             .single();
-        
-        if (txData) {
-            const userId = txData.user_id;
 
-            // A. Ambil Data Profile User Saat Ini
-            const { data: profile } = await supabaseAdmin
-                .from("profiles")
-                .select("premium_expiry")
-                .eq("id", userId)
-                .single();
+        // Hitung Tanggal Expired Baru
+        const now = new Date();
+        let newExpiryDate = new Date();
 
-            // B. Hitung Tanggal Expired Baru
-            const now = new Date();
-            let newExpiryDate = new Date(); // Default hari ini
-
-            // Cek apakah user masih punya masa aktif?
-            if (profile?.premium_expiry) {
-                const currentExpiry = new Date(profile.premium_expiry);
-                if (currentExpiry > now) {
-                    // Masih aktif: Tambahkan 30 hari dari tanggal expired lama
-                    newExpiryDate = currentExpiry;
-                }
+        if (profile?.premium_expiry) {
+            const currentExpiry = new Date(profile.premium_expiry);
+            if (currentExpiry > now) {
+                newExpiryDate = currentExpiry;
             }
-
-            // Tambah 30 Hari (30 * 24 * 60 * 60 * 1000 ms)
-            newExpiryDate.setTime(newExpiryDate.getTime() + (30 * 24 * 60 * 60 * 1000));
-
-            // C. Update Profile User
-            await supabaseAdmin.from("profiles").update({
-                is_premium: true,
-                premium_expiry: newExpiryDate.getTime(), // Simpan dalam format timestamp (angka)
-            }).eq("id", userId);
-            
-            console.log(`✅ User ${userId} upgraded until ${newExpiryDate}`);
         }
+
+        // Tambah 30 Hari
+        newExpiryDate.setTime(newExpiryDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+
+        // Update Profile
+        await supabaseAdmin.from("profiles").update({
+            is_premium: true,
+            premium_expiry: newExpiryDate.getTime(),
+        }).eq("id", userId);
+        
+        console.log(`✅ User ${userId} upgraded until ${newExpiryDate}`);
     }
 
     return NextResponse.json({ status: "OK" });
 
   } catch (error) {
     console.error("Webhook Error:", error);
+    // Kita tetap return 500 jika errornya parah (misal Midtrans key salah)
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
