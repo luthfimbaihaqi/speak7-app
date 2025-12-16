@@ -58,20 +58,23 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
         window.snap.pay(data.token, {
             onSuccess: function(result) {
+                setLoading(false); // 🔥 STOP LOADING
                 alert("Pembayaran Berhasil! Mohon tunggu sebentar, sistem sedang memproses...");
                 onClose();
                 window.location.reload(); 
             },
             onPending: function(result) {
+                setLoading(false); // 🔥 STOP LOADING (Agar tidak muter terus saat alert muncul)
                 alert("Menunggu pembayaran...");
                 onClose();
             },
             onError: function(result) {
-                console.log(result); // Cek console kalau ada error
-                alert("Pembayaran belum diselesaikan.");
+                setLoading(false); // 🔥 STOP LOADING
+                console.log(result); 
+                alert("Pembayaran gagal/dibatalkan.");
             },
             onClose: function() {
-                setLoading(false);
+                setLoading(false); // 🔥 STOP LOADING (Jika user menutup popup tanpa bayar)
             }
         });
 
@@ -169,19 +172,12 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
                 <div className="grid grid-cols-1 gap-3">
                     
-                    {/* 🔥 OPS 1: MIDTRANS (SUDAH AKTIF!) */}
+                    {/* 🔥 OPS 1: MIDTRANS (DESIGN CLEAN & FIX LOADING) */}
                     <button 
                         onClick={handlePayment} 
                         disabled={loading}
-                        className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-bold text-sm rounded-xl shadow-lg shadow-teal-500/20 transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
+                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                     >
-                         {/* Animasi Ping */}
-                        <div className="absolute top-0 right-0 p-1">
-                            <span className="flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
-                            </span>
-                        </div>
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
                         Instant Activation (QRIS / VA)
                     </button>
