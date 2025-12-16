@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { X, Crown, Clock, Mic, Dices, Star, ShieldCheck, Loader2, Zap, MessageCircle, Copy, Wallet, Ticket } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Crown, Clock, Mic, Dices, Star, ShieldCheck, Loader2, Zap, MessageCircle, Copy, Wallet, Ticket, Lock } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSuccess }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   
@@ -13,9 +15,11 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
   const [tokenInput, setTokenInput] = useState("");
   const [redeemLoading, setRedeemLoading] = useState(false);
 
-  // --- 1. LOAD SCRIPT MIDTRANS SNAP (PRODUCTION) ---
+  // State Popup Login
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
+
+  // --- 1. LOAD SCRIPT MIDTRANS ---
   useEffect(() => {
-    // 🔥 UBAH KE URL PRODUCTION (Hapus kata 'sandbox')
     const snapUrl = "https://app.midtrans.com/snap/snap.js"; 
     const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
 
@@ -33,10 +37,16 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
   if (!isOpen) return null;
 
-  // --- 2. OPS 1: ONLINE PAYMENT (MIDTRANS) ---
+  // --- Helper: Redirect ke Login ---
+  const handleLoginRedirect = () => {
+     onClose(); 
+     router.push("/auth"); 
+  };
+
+  // --- 2. PAYMENT LOGIC ---
   const handlePayment = async () => {
     if (!userProfile) {
-        alert("Please login first!");
+        setShowLoginAlert(true); // Trigger Popup
         return;
     }
 
@@ -58,23 +68,23 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
         window.snap.pay(data.token, {
             onSuccess: function(result) {
-                setLoading(false); // 🔥 STOP LOADING
+                setLoading(false);
                 alert("Pembayaran Berhasil! Mohon tunggu sebentar, sistem sedang memproses...");
                 onClose();
                 window.location.reload(); 
             },
             onPending: function(result) {
-                setLoading(false); // 🔥 STOP LOADING (Agar tidak muter terus saat alert muncul)
+                setLoading(false);
                 alert("Menunggu pembayaran...");
                 onClose();
             },
             onError: function(result) {
-                setLoading(false); // 🔥 STOP LOADING
+                setLoading(false);
                 console.log(result); 
                 alert("Pembayaran gagal/dibatalkan.");
             },
             onClose: function() {
-                setLoading(false); // 🔥 STOP LOADING (Jika user menutup popup tanpa bayar)
+                setLoading(false);
             }
         });
 
@@ -85,7 +95,6 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
     }
   };
 
-  // --- 3. OPS 2: MANUAL WHATSAPP ---
   const confirmViaWA = () => {
     const text = `Halo Admin IELTS4our, saya sudah transfer Rp 30.000 ke BCA Luthfi untuk upgrade Premium. Mohon diproses.`;
     const waNumber = "6281311364731"; 
@@ -99,12 +108,11 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
       setTimeout(() => setCopied(false), 2000);
   };
 
-  // --- 4. OPS 3: REDEEM TOKEN ---
   const validateToken = async () => {
     const cleanToken = tokenInput.trim().toUpperCase();
     
     if (!userProfile) {
-        alert("Please login first!");
+        setShowLoginAlert(true);
         return;
     }
     if (!cleanToken) {
@@ -143,7 +151,66 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      
+      {/* 🔥 FIX MOBILE: POPUP LOGIN DIPINDAH KESINI (OUTSIDE SCROLLABLE AREA) 
+          Sekarang posisinya Fixed relative to Screen, bukan relative to Modal Content
+      */}
+      <AnimatePresence>
+        {showLoginAlert && (
+            <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[60] flex items-center justify-center p-4" // z-60 agar di atas modal utama
+            >
+                {/* Backdrop Gelap Khusus Popup Ini */}
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowLoginAlert(false)}></div>
+
+                {/* Box Popup */}
+                <motion.div 
+                    initial={{ scale: 0.9, y: 20 }} 
+                    animate={{ scale: 1, y: 0 }} 
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="relative bg-slate-900 border border-white/10 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl overflow-hidden"
+                >
+                    {/* Background Light Effect */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-blue-500/20 blur-[50px] rounded-full pointer-events-none"></div>
+
+                    {/* Icon Lock */}
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-5 border border-white/5 relative z-10 shadow-[0_0_15px_rgba(250,204,21,0.2)]">
+                        <Lock className="w-8 h-8 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.6)]" />
+                    </div>
+
+                    {/* Text */}
+                    <h4 className="text-xl font-black text-white mb-2 relative z-10 tracking-tight">Who goes there?</h4>
+                    <p className="text-slate-400 text-sm mb-6 relative z-10 leading-relaxed px-2">
+                        Let&apos;s sign you in first so you can start practicing immediately.
+                    </p>
+
+                    {/* Buttons */}
+                    <div className="space-y-3 relative z-10">
+                        <button
+                            onClick={handleLoginRedirect}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                        >
+                            Sign In Now
+                        </button>
+                        <button
+                            onClick={() => setShowLoginAlert(false)}
+                            className="text-slate-500 text-xs font-bold hover:text-white transition-colors py-2 uppercase tracking-wider"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+      </AnimatePresence>
+
+
+      {/* --- MAIN MODAL CONTENT (SCROLLABLE) --- */}
       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-panel w-full max-w-lg rounded-3xl overflow-hidden relative max-h-[90vh] overflow-y-auto">
+         
          <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white z-10 p-2 bg-black/20 rounded-full"><X className="w-5 h-5"/></button>
          
          <div className="bg-gradient-to-br from-amber-500/10 to-purple-600/10 p-8 text-center border-b border-white/5 relative overflow-hidden">
@@ -172,7 +239,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
 
                 <div className="grid grid-cols-1 gap-3">
                     
-                    {/* 🔥 OPS 1: MIDTRANS (DESIGN CLEAN & FIX LOADING) */}
+                    {/* BUTTON MIDTRANS */}
                     <button 
                         onClick={handlePayment} 
                         disabled={loading}
@@ -188,7 +255,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
                         <div className="flex-grow border-t border-white/10"></div>
                     </div>
 
-                    {/* OPS 2: WHATSAPP */}
+                    {/* BUTTON WHATSAPP */}
                     <button 
                         onClick={confirmViaWA} 
                         className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-sm rounded-xl shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-2 transform hover:scale-[1.02]"
@@ -227,7 +294,7 @@ export default function UpgradeModal({ isOpen, onClose, userProfile, onUpgradeSu
                         </div>
                     </div>
 
-                    {/* OPS 3: REDEEM TOKEN */}
+                    {/* REDEEM TOKEN */}
                     <div className="pt-4 border-t border-white/10">
                         <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-2 flex items-center justify-center gap-1">
                             <Ticket className="w-3 h-3" /> Have a Token?
