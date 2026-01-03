@@ -203,7 +203,7 @@ export default function MarketingSection({ onSelectMode }) {
                 </li>
                 <li className="flex gap-3 text-sm text-slate-400">
                   <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 text-indigo-400 font-bold text-[10px]">2</div>
-                  <span>Strict Examiner Persona & Timer.</span>
+                  <span>Interaksi natural dengan standar penguji Native.</span>
                 </li>
                 <li className="flex gap-3 text-sm text-slate-400">
                   <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 text-indigo-400 font-bold text-[10px]">3</div>
