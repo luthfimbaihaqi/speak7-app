@@ -43,12 +43,12 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
                         {result.overall}
                     </span>
                     <div className="flex flex-col gap-1">
-                         <div className="flex">
+                          <div className="flex">
                             {[...Array(Math.floor(result.overall))].map((_, i) => (
                                 <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                             ))}
-                         </div>
-                         <span className="text-sm font-bold text-teal-400">{result.overall >= 7 ? "Excellent!" : "Keep Going!"}</span>
+                          </div>
+                          <span className="text-sm font-bold text-teal-400">{result.overall >= 7 ? "Excellent!" : "Keep Going!"}</span>
                     </div>
                 </div>
             </div>
@@ -63,9 +63,8 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       </motion.div>
 
-      {/* --- AUDIO SECTION (SMART RENDER: PLAYLIST vs SINGLE) --- */}
+      {/* --- AUDIO SECTION --- */}
       {audioPlaylist && audioPlaylist.length > 0 ? (
-        // UI: PLAYLIST (Untuk Mock Interview - 3 Player Kecil)
         <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 space-y-4">
             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
                 <ListMusic className="w-4 h-4 text-purple-400" />
@@ -83,7 +82,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
             ))}
         </div>
       ) : audioUrl ? (
-        // UI: SINGLE PLAYER (Untuk Cue Card - 1 Player Besar)
         <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-4 flex items-center gap-4">
             <div className="p-3 bg-teal-500/20 rounded-full text-teal-400">
                 <PlayCircle className="w-6 h-6" />
@@ -95,7 +93,7 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       ) : null}
 
-      {/* --- TRANSCRIPT ACCORDION --- */}
+      {/* --- TRANSCRIPT ACCORDION (SCROLLABLE UPDATE) --- */}
       {result.transcript && (
         <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
           <button 
@@ -106,7 +104,7 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
               <div className="p-2 bg-teal-500/10 rounded-lg text-teal-400 group-hover:text-teal-300 transition-colors">
                   <FileText className="w-5 h-5" />
               </div>
-              View Transcription
+              View Full Interview Transcript
             </div>
             {showTranscript ? <ChevronUp className="w-5 h-5 text-slate-500" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
           </button>
@@ -117,8 +115,9 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
               >
-                <div className="p-6 pt-0 text-slate-400 leading-relaxed text-sm border-t border-white/5">
-                  "{result.transcript}"
+                {/* REVISI: Added max-h-96, overflow-y-auto, whitespace-pre-wrap */}
+                <div className="p-6 pt-0 text-slate-400 leading-relaxed text-sm border-t border-white/5 max-h-96 overflow-y-auto whitespace-pre-wrap font-mono">
+                  {result.transcript}
                 </div>
               </motion.div>
             )}
@@ -152,57 +151,51 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       </div>
 
-      {/* --- GRAMMAR CLINIC (TEASER) --- */}
+      {/* --- GRAMMAR CLINIC --- */}
       {result.grammarCorrection && result.grammarCorrection.length > 0 && (
         <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
           <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
             <h3 className="font-bold text-white flex items-center gap-2">
               <span className="text-lg">🛠️</span> Grammar Clinic
             </h3>
+            {/* Full Sim user always gets access */}
             {!isPremiumExternal && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded border border-white/10">PREVIEW MODE</span>}
           </div>
           
           <div className="divide-y divide-white/5">
-            {/* ITEM 1 (FREE) */}
-            <div className="p-5 hover:bg-white/5 transition-colors">
-              <div className="flex flex-col md:flex-row gap-4 md:items-center text-sm mb-2">
-                <div className="text-rose-400 line-through decoration-rose-500/50 md:w-1/2 opacity-80 flex gap-2">
-                    <XCircle className="w-4 h-4 shrink-0 mt-0.5"/> "{result.grammarCorrection[0].original}"
-                </div>
-                <div className="hidden md:block text-slate-600"><ArrowRight className="w-4 h-4"/></div>
-                <div className="text-emerald-400 font-bold md:w-1/2 flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5"/> "{result.grammarCorrection[0].correction}"
-                </div>
-              </div>
-              <p className="text-xs text-slate-500 pl-6 border-l-2 border-slate-700 ml-1">💡 {result.grammarCorrection[0].reason}</p>
-            </div>
-
-            {/* LOCKED ITEMS */}
-            {result.grammarCorrection.slice(1).map((item, i) => (
-              <div key={i} className={`p-5 relative ${!isPremiumExternal ? "blur-[6px] select-none opacity-50" : "hover:bg-white/5"}`}>
+            {/* Tampilkan semua koreksi untuk Full Sim User */}
+            {result.grammarCorrection.map((item, i) => (
+              <div key={i} className={`p-5 hover:bg-white/5 transition-colors relative`}>
                 <div className="flex flex-col md:flex-row gap-4 md:items-center text-sm mb-2">
-                  <div className="text-rose-400 line-through md:w-1/2">"{item.original}"</div>
+                  <div className="text-rose-400 line-through decoration-rose-500/50 md:w-1/2 opacity-80 flex gap-2">
+                      <XCircle className="w-4 h-4 shrink-0 mt-0.5"/> "{item.original}"
+                  </div>
                   <div className="hidden md:block text-slate-600"><ArrowRight className="w-4 h-4"/></div>
-                  <div className="text-emerald-400 font-bold md:w-1/2">"{item.correction}"</div>
+                  <div className="text-emerald-400 font-bold md:w-1/2 flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5"/> "{item.correction}"
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500">💡 {item.reason}</p>
+                <p className="text-xs text-slate-500 pl-6 border-l-2 border-slate-700 ml-1">💡 {item.reason}</p>
+                
+                {/* Lock Logic jika bukan premium (Untuk reuse component di fitur lain) */}
+                {!isPremiumExternal && i > 0 && (
+                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-10 flex items-center justify-center">
+                         <Lock className="w-4 h-4 text-slate-500" />
+                     </div>
+                )}
               </div>
             ))}
           </div>
 
-          {/* OVERLAY */}
+          {/* OVERLAY FOR NON-PREMIUM (Contextual) */}
           {!isPremiumExternal && result.grammarCorrection.length > 1 && (
-            <div className="absolute top-[120px] left-0 w-full h-full flex flex-col items-center pt-8 z-10 bg-gradient-to-b from-transparent to-slate-950/90">
-              <div className="p-4 bg-slate-900/90 rounded-2xl border border-white/10 shadow-2xl text-center transform hover:scale-105 transition-transform duration-300">
-                <Lock className="w-6 h-6 text-yellow-500 mx-auto mb-2" />
-                <p className="text-white font-bold text-sm mb-1">Unlock {result.grammarCorrection.length - 1} More Corrections</p>
-                <button 
+            <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-slate-950 to-transparent flex items-end justify-center pb-6 z-20">
+               <button 
                   onClick={onOpenUpgradeModal}
-                  className="mt-2 px-5 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold rounded-full text-xs shadow-lg"
+                  className="px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-full text-xs shadow-lg"
                 >
-                  Upgrade Now
+                  Unlock All Corrections
                 </button>
-              </div>
             </div>
           )}
         </div>
@@ -216,7 +209,7 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-md font-bold text-indigo-300 flex items-center gap-2">
-            <Star className="w-4 h-4 fill-indigo-300"/> Band 8.0 Model Answer
+            <Star className="w-4 h-4 fill-indigo-300"/> Band 8.0 Part 2 Model Answer
           </h3>
           {isPremiumExternal && <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded border border-indigo-500/30">UNLOCKED</span>}
         </div>

@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import Midtrans from "midtrans-client";
 import { createClient } from "@supabase/supabase-js";
 
-// Init Supabase Admin
+// 1. Init Supabase Admin (Bypass RLS)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Init Midtrans Core API (Production)
+// 2. Init Midtrans Core API (Production)
 const apiClient = new Midtrans.CoreApi({
-  isProduction: true,
+  isProduction: true, // Pastikan Server Key di Vercel sudah mode Production
   serverKey: process.env.MIDTRANS_SERVER_KEY,
   clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY,
 });
@@ -21,15 +21,14 @@ export async function POST(request) {
 
     // -------------------------------------------------------------------------
     // 🔥 PERBAIKAN UTAMA: BYPASS TEST NOTIFICATION
-    // Jika Order ID mengandung kata "test", langsung return OK agar Midtrans senang.
-    // Ini mencegah error Signature Validation pada data dummy.
+    // Jika Order ID mengandung kata "test", langsung return OK.
     // -------------------------------------------------------------------------
     if (notificationJson.order_id && notificationJson.order_id.includes("test")) {
         console.warn("⚠️ Menerima Test Notification Midtrans. Mengabaikan proses logic.");
         return NextResponse.json({ status: "OK", message: "Test notification received and ignored." });
     }
 
-    // 1. Verifikasi Signature Midtrans (Hanya untuk transaksi real)
+    // 3. Verifikasi Signature Midtrans
     const statusResponse = await apiClient.transaction.notification(notificationJson);
     
     const orderId = statusResponse.order_id;
@@ -38,7 +37,7 @@ export async function POST(request) {
 
     console.log(`🔔 Webhook received: ${orderId} | Status: ${transactionStatus}`);
 
-    // 2. Tentukan Status Transaksi
+    // 4. Tentukan Status Transaksi
     let paymentStatus = "pending";
     if (transactionStatus == "capture") {
       if (fraudStatus == "challenge") {
@@ -52,20 +51,20 @@ export async function POST(request) {
       paymentStatus = "failed";
     }
 
-    // 3. Cek Database (Pakai maybeSingle agar aman)
+    // 5. Cek Database & Ambil Jumlah Token yang Dibeli
+    // PENTING: Kita select 'tokens_purchased' dari tabel transactions
     const { data: txData, error: fetchError } = await supabaseAdmin
         .from("transactions")
-        .select("user_id, id")
+        .select("user_id, id, tokens_purchased") 
         .eq("order_id", orderId)
         .maybeSingle();
 
     if (!txData) {
-        // Jika data beneran tidak ada (bukan test), log warning tapi jangan error 500
-        console.warn(`⚠️ Order ID ${orderId} real transaction tapi tidak ada di DB.`);
+        console.warn(`⚠️ Order ID ${orderId} tidak ditemukan di DB.`);
         return NextResponse.json({ status: "OK", message: "Transaction not found in DB" });
     }
 
-    // 4. Update Status Transaksi
+    // 6. Update Status Transaksi di Tabel Transactions
     const { error: txError } = await supabaseAdmin
         .from("transactions")
         .update({ status: paymentStatus })
@@ -76,44 +75,56 @@ export async function POST(request) {
         return NextResponse.json({ status: "OK", message: "DB Update Failed" }); 
     }
 
-    // 5. Upgrade User Jika Sukses
+    // 7. PROSES TOP UP TOKEN (Hanya jika status success)
     if (paymentStatus === "success") {
         const userId = txData.user_id;
+        // Default ke 0 jika entah kenapa kosong, agar tidak error matematika
+        const tokensToAdd = txData.tokens_purchased || 0; 
 
-        const { data: profile } = await supabaseAdmin
+        console.log(`Processing Top Up: User ${userId} buys ${tokensToAdd} tokens.`);
+
+        // A. Ambil Saldo User Saat Ini
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from("profiles")
-            .select("premium_expiry")
+            .select("token_balance, lifetime_token_purchased")
             .eq("id", userId)
             .single();
-
-        const now = new Date();
-        let newExpiryDate = new Date();
-
-        if (profile?.premium_expiry) {
-            const currentExpiry = new Date(profile.premium_expiry);
-            if (currentExpiry > now) {
-                newExpiryDate = currentExpiry;
-            }
+        
+        if (profileError || !profile) {
+            console.error("Gagal ambil profil user:", profileError);
+            // Tetap return OK ke Midtrans karena transaksi sudah sukses tercatat,
+            // Admin bisa manual fix jika profil tidak ketemu.
+            return NextResponse.json({ status: "OK", message: "Profile not found" });
         }
 
-        // Tambah 30 Hari
-        newExpiryDate.setTime(newExpiryDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+        // B. Hitung Saldo Baru (Handle nilai null dengan || 0)
+        const currentBalance = profile.token_balance || 0;
+        const currentLifetime = profile.lifetime_token_purchased || 0;
 
-        await supabaseAdmin.from("profiles").update({
-            is_premium: true,
-            premium_expiry: newExpiryDate.getTime(),
-        }).eq("id", userId);
-        
-        console.log(`✅ User ${userId} upgraded until ${newExpiryDate}`);
+        const newBalance = currentBalance + tokensToAdd;
+        const newLifetime = currentLifetime + tokensToAdd;
+
+        // C. Update ke Database Profile
+        const { error: updateError } = await supabaseAdmin
+            .from("profiles")
+            .update({
+                token_balance: newBalance,
+                lifetime_token_purchased: newLifetime,
+                // Kita tidak menyentuh is_premium atau expiry date lagi
+            })
+            .eq("id", userId);
+
+        if (updateError) {
+             console.error("Gagal update saldo token:", updateError);
+        } else {
+             console.log(`✅ Success! User ${userId} balance updated: ${currentBalance} -> ${newBalance}`);
+        }
     }
 
     return NextResponse.json({ status: "OK" });
 
   } catch (error) {
     console.error("Webhook Error:", error);
-    // Tetap return 200 OK dengan pesan error agar Midtrans berhenti kirim email spam,
-    // kecuali errornya benar-benar fatal yang butuh retry.
-    // Tapi untuk keamanan "Test Notification", return 200 adalah jalan terbaik.
     return NextResponse.json({ status: "OK", error: error.message }); 
   }
 }

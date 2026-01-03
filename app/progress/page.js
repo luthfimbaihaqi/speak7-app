@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2, Trash2, Filter, Flame } from "lucide-react";
+import { ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2, Trash2, Filter, Flame, Sparkles, Zap } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
 import ScoreCard from "@/components/ScoreCard";
 import UpgradeModal from "@/components/UpgradeModal"; 
@@ -48,13 +48,25 @@ export default function ProgressPage() {
     checkUserStatus();
   }, []);
 
+  // --- UPDATE LOGIC FILTER (SUPPORT QUICK TEST & LEGACY MOCK) ---
   useEffect(() => {
     if (filterType === "all") {
         setFilteredHistory(history);
     } else if (filterType === "cue-card") {
-        setFilteredHistory(history.filter(item => !item.topic.includes("Mock Interview")));
-    } else if (filterType === "mock-interview") {
-        setFilteredHistory(history.filter(item => item.topic.includes("Mock Interview")));
+        // Exclude Mock, Quick Test & Full Exam
+        setFilteredHistory(history.filter(item => 
+            !item.topic.includes("Mock Interview") && 
+            !item.topic.includes("QUICK TEST") && 
+            !item.topic.includes("FULL EXAM")
+        ));
+    } else if (filterType === "quick-test") {
+        // Gabungkan "Quick Test" (Baru) dan "Mock Interview" (Lama)
+        setFilteredHistory(history.filter(item => 
+            item.topic.includes("QUICK TEST") || item.topic.includes("Mock Interview")
+        ));
+    } else if (filterType === "full-exam") {
+        // Filter khusus Full Exam
+        setFilteredHistory(history.filter(item => item.topic.includes("FULL EXAM")));
     }
   }, [filterType, history]);
 
@@ -99,11 +111,11 @@ export default function ProgressPage() {
 
   // --- STEP 1: BUKA MODAL DELETE ---
   const promptDelete = (e, item) => {
-    e.stopPropagation(); // Biar gak kebuka detail score-nya
+    e.stopPropagation(); 
     setDeleteTarget(item);
   };
 
-  // --- STEP 2: EKSEKUSI HAPUS (SAAT KLIK YES) ---
+  // --- STEP 2: EKSEKUSI HAPUS ---
   const executeDelete = async () => {
     if (!deleteTarget) return;
     
@@ -111,7 +123,6 @@ export default function ProgressPage() {
 
     try {
         if (item.is_local) {
-            // Hapus dari Local Storage
             const localRaw = localStorage.getItem("ielts4our_history");
             if (localRaw) {
                 const localData = JSON.parse(localRaw);
@@ -119,7 +130,6 @@ export default function ProgressPage() {
                 localStorage.setItem("ielts4our_history", JSON.stringify(newData));
             }
         } else {
-            // Hapus dari Supabase
             const { error } = await supabase
                 .from('practice_history')
                 .delete()
@@ -128,9 +138,8 @@ export default function ProgressPage() {
             if (error) throw error;
         }
 
-        // Update State UI
         setHistory(prev => prev.filter(h => h.id !== item.id));
-        setDeleteTarget(null); // Tutup modal
+        setDeleteTarget(null); 
 
     } catch (err) {
         console.error("Failed to delete:", err);
@@ -162,6 +171,25 @@ export default function ProgressPage() {
             {labels[diff] || diff}
         </span>
     );
+  };
+
+  // --- HELPER UNTUK BADGE TIPE LATIHAN (UPDATED) ---
+  const getBadgeStyle = (topic) => {
+      if (topic.includes("FULL EXAM")) {
+          return "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.2)]";
+      } else if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) {
+          // Ungu untuk Quick Test (Consistent with Dashboard)
+          return "bg-purple-500/20 text-purple-300 border border-purple-500/30";
+      } else {
+          // Teal untuk Cue Card
+          return "bg-teal-500/20 text-teal-300 border border-teal-500/30";
+      }
+  };
+
+  const getBadgeLabel = (topic) => {
+      if (topic.includes("FULL EXAM")) return "Full Simulation";
+      if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) return "Quick Test";
+      return "Cue Card";
   };
 
   return (
@@ -206,12 +234,13 @@ export default function ProgressPage() {
                     </div>
                 </div>
 
-                {/* FILTER TABS */}
+                {/* FILTER TABS (UPDATED) */}
                 <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                     {[
                         { id: 'all', label: 'All History' },
                         { id: 'cue-card', label: 'Cue Cards' },
-                        { id: 'mock-interview', label: 'Mock Tests' }
+                        { id: 'quick-test', label: 'Quick Tests' }, // Renamed & Updated Logic
+                        { id: 'full-exam', label: 'Full Simulation' }
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -236,12 +265,14 @@ export default function ProgressPage() {
                             key={item.id || index}
                             whileHover={{ scale: 1.01 }}
                             onClick={() => setSelectedItem(item)}
-                            className="bg-white/5 hover:bg-white/10 border border-white/5 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-colors group relative"
+                            className={`bg-white/5 hover:bg-white/10 border p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-colors group relative ${item.topic.includes("FULL EXAM") ? "border-indigo-500/30 bg-indigo-900/10" : "border-white/5"}`}
                         >
                             <div className="flex-1 min-w-0 pr-4">
                                 <div className="flex items-center gap-3 mb-1">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.topic.includes("Mock Interview") ? "bg-purple-500/20 text-purple-300" : "bg-teal-500/20 text-teal-300"}`}>
-                                        {item.topic.includes("Mock Interview") ? "Mock Test" : "Cue Card"}
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${getBadgeStyle(item.topic)}`}>
+                                        {item.topic.includes("FULL EXAM") && <Sparkles className="w-3 h-3" />}
+                                        {item.topic.includes("QUICK TEST") && <Zap className="w-3 h-3" />}
+                                        {getBadgeLabel(item.topic)}
                                     </span>
                                     <span className="text-xs text-slate-500 flex items-center gap-1">
                                         <Calendar className="w-3 h-3" />
@@ -251,7 +282,11 @@ export default function ProgressPage() {
                                 
                                 <div className="flex items-center gap-2 mt-1">
                                     <h3 className="text-white font-bold truncate max-w-[150px] md:max-w-sm">
-                                        {item.topic.replace("Mock Interview: ", "")}
+                                        {/* Clean Topic Name */}
+                                        {item.topic
+                                            .replace("Mock Interview: ", "")
+                                            .replace("FULL EXAM: ", "")
+                                            .replace("QUICK TEST: ", "")}
                                     </h3>
                                     {renderDifficultyBadge(item)}
                                 </div>
@@ -260,7 +295,7 @@ export default function ProgressPage() {
                             <div className="flex items-center gap-4">
                                 <div className="text-right">
                                     <p className="text-[10px] text-slate-500 uppercase font-bold">Band</p>
-                                    <p className="text-xl font-black text-white">{item.overall_score}</p>
+                                    <p className={`text-xl font-black ${item.topic.includes("FULL EXAM") ? "text-indigo-400" : "text-white"}`}>{item.overall_score}</p>
                                 </div>
                                 
                                 {/* DELETE BUTTON */}
@@ -293,14 +328,16 @@ export default function ProgressPage() {
                 className="fixed inset-0 z-50 bg-slate-950 overflow-y-auto"
             >
                 <div className="max-w-4xl mx-auto p-4 py-8">
-                    <div className="flex items-center justify-between mb-8 sticky top-0 bg-slate-950/90 backdrop-blur-md py-4 z-10 border-b border-white/10">
+                    <div className="flex items-center justify-between mb-8 sticky top-0 bg-slate-900/90 backdrop-blur-md py-4 z-10 border-b border-white/10 rounded-b-2xl px-4 -mx-4 md:mx-0 md:px-0">
                         <button 
                             onClick={() => setSelectedItem(null)}
                             className="flex items-center gap-2 text-slate-400 hover:text-white font-bold uppercase text-sm tracking-widest"
                         >
                             <ArrowLeft className="w-4 h-4" /> Back to List
                         </button>
-                        <h2 className="text-white font-bold hidden md:block">Result Details</h2>
+                        <h2 className="text-white font-bold hidden md:block">
+                            {selectedItem.topic.includes("FULL EXAM") ? "Full Exam Result" : "Result Details"}
+                        </h2>
                         <button onClick={() => setSelectedItem(null)} className="p-2 bg-white/10 rounded-full hover:bg-white/20 text-white">
                             <X className="w-5 h-5" />
                         </button>
@@ -319,7 +356,7 @@ export default function ProgressPage() {
         )}
       </AnimatePresence>
 
-      {/* 🔥 CUSTOM DELETE MODAL (HUMOROUS) 🔥 */}
+      {/* CUSTOM DELETE MODAL */}
       <AnimatePresence>
         {deleteTarget && (
             <motion.div 
@@ -334,7 +371,6 @@ export default function ProgressPage() {
                     exit={{ scale: 0.95, opacity: 0 }}
                     className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-sm text-center shadow-2xl relative overflow-hidden"
                 >
-                    {/* Background glow effect */}
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-orange-500" />
                     
                     <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
