@@ -4,11 +4,66 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Mic, Square, User, LogOut, Loader2, CheckCircle,
-  Wifi, Headphones, XCircle, Zap, Clock
+  Wifi, Headphones, XCircle, Zap, Clock, Volume2, PlayCircle, BellOff
 } from "lucide-react";
-import { supabase } from "@/utils/supabaseClient";
 import { useRouter } from "next/navigation";
 import ScoreCard from "@/components/ScoreCard"; 
+
+// 🔥 COMPONENT: REAL-TIME MIC VISUALIZER (Untuk Tutorial)
+const MicCheckVisualizer = ({ stream }) => {
+    const canvasRef = useRef(null);
+    const animationRef = useRef(null);
+
+    useEffect(() => {
+        if (!stream || !canvasRef.current) return;
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 32;
+        source.connect(analyser);
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+
+        const draw = () => {
+            animationRef.current = requestAnimationFrame(draw);
+            analyser.getByteFrequencyData(dataArray);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2;
+                // Bar styling (Blue to Teal gradient look)
+                ctx.fillStyle = `rgb(${50}, ${150 + barHeight}, ${255})`;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 2;
+            }
+        };
+
+        draw();
+
+        return () => {
+            cancelAnimationFrame(animationRef.current);
+            audioContext.close();
+        };
+    }, [stream]);
+
+    return (
+        <div className="flex flex-col items-center gap-2">
+            <div className="bg-slate-900/50 rounded-lg p-2 border border-white/10">
+                <canvas ref={canvasRef} width={100} height={40} className="w-24 h-10" />
+            </div>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Mic Input</p>
+        </div>
+    );
+};
+
 
 // 🔥 PROP: mode ("full" | "quick")
 export default function FullSimulation({ userProfile, mode = "full" }) {
@@ -17,13 +72,17 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   // --- CONFIG BASED ON MODE ---
   const TOKEN_COST = mode === "quick" ? 1 : 3;
   const TITLE = mode === "quick" ? "Quick Test Simulation" : "Full Speaking Simulation";
-  const SUBTITLE = mode === "quick" ? "Interactive Part 3 Discussion (3-5 Mins)" : "Complete IELTS Speaking Test (15 Mins)";
+  const SUBTITLE = mode === "quick" ? "Interactive Part 3 Discussion" : "Complete IELTS Speaking Test";
+  const DURATION_TEXT = mode === "quick" ? "3-5 Mins" : "15-20 Mins";
 
   // --- STATE UTAMA ---
   const [status, setStatus] = useState("idle"); 
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]); 
   
+  // --- STATE TUTORIAL ---
+  const [showTutorial, setShowTutorial] = useState(false); 
+
   // --- STATE AUDIO & UI ---
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -35,12 +94,13 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const [cueCardTopic, setCueCardTopic] = useState(""); 
   const [examResult, setExamResult] = useState(null); 
   
-  // Flag agar tidak save double saat re-render
   const hasSavedRef = useRef(false);
-
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const stopReasonRef = useRef("answer"); 
+  
+  // Stream Ref untuk Mic Check
+  const [audioStream, setAudioStream] = useState(null);
 
   // --- TIMERS ---
   const [partTimer, setPartTimer] = useState(0); 
@@ -53,6 +113,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     if (typeof window !== "undefined" && navigator.mediaDevices) {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then((stream) => {
+          setAudioStream(stream); // Simpan stream untuk visualizer mic check
           mediaRecorderRef.current = new MediaRecorder(stream);
           mediaRecorderRef.current.ondataavailable = (e) => {
             if (e.data.size > 0) audioChunksRef.current.push(e.data);
@@ -124,16 +185,14 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       setShowPartTimer(false);
   };
 
-  // --- NEW: SAVE TO HISTORY FUNCTION ---
+  // --- SAVE TO HISTORY FUNCTION ---
   const saveToHistory = async (finalScore, topicName) => {
       if (!userProfile || hasSavedRef.current) return;
-      
-      hasSavedRef.current = true; // Kunci agar tidak save 2x
+      hasSavedRef.current = true; 
 
       try {
           const payload = {
               user_id: userProfile.id,
-              // Prefix topic name based on mode
               topic: `${mode === 'quick' ? 'QUICK TEST' : 'FULL EXAM'}: ${topicName || "Topic"}`, 
               overall_score: finalScore.overall,
               fluency: finalScore.fluency,
@@ -146,17 +205,18 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           const { error } = await supabase.from('practice_history').insert(payload);
           if (error) throw error;
           console.log("Exam saved to history!");
-
       } catch (err) {
           console.error("Failed to save history:", err);
       }
   };
 
-  // 4. START SESSION (SECURE BACKEND DEDUCTION)
+  // 4. START SIMULATION (Called AFTER Tutorial)
   const startSimulation = async () => {
+    // Hide Tutorial
+    setShowTutorial(false);
+
     if (!userProfile) return router.push('/auth');
     
-    // UI Check: Prevent click if obviously insufficient
     if ((userProfile.token_balance || 0) < TOKEN_COST) {
       alert("Not enough tokens. Please top up to continue.");
       return;
@@ -170,7 +230,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     setStatus("checking_token");
 
     try {
-        // 🔥 Send 'mode' to backend for secure deduction
         const res = await fetch("/api/interview/start", {
             method: "POST",
             body: JSON.stringify({ 
@@ -182,7 +241,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         const data = await res.json();
         
         if (!res.ok) {
-            // Handle Insufficient Balance (402)
             if (res.status === 402) {
                 alert("Insufficient tokens! Please top up your balance.");
                 setStatus("idle");
@@ -191,10 +249,8 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
             throw new Error(data.error || "Failed to start session");
         }
         
-        // Success: Session Created & Token Deducted
         setSessionId(data.session_id);
         
-        // 🔥 MODE SWITCH LOGIC
         if (mode === 'quick') {
             setStatus("part3");
         } else {
@@ -218,8 +274,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     const formData = new FormData();
     formData.append("audio", new Blob([new Uint8Array(10)], { type: 'audio/webm' }), "intro.webm");
     formData.append("session_id", id); 
-    
-    // 🔥 SEND ACTION: "start" or "start_quick"
     formData.append("action", mode === 'quick' ? "start_quick" : "start"); 
 
     try {
@@ -228,7 +282,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         
         setMessages([{ role: "assistant", content: data.text }]);
         
-        // If Quick Mode, set Topic Title for UI
         if (mode === 'quick' && data.meta?.topic) {
             setCueCardTopic(data.meta.topic);
         }
@@ -265,7 +318,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       const data = await res.json();
 
       if (data.error === "Exam finished" || data.meta?.isFinished) {
-          
           const finalScore = data.score || data.meta?.score;
           if (finalScore) {
               setExamResult(finalScore);
@@ -371,6 +423,100 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     </div>
   );
 
+  // --- TUTORIAL OVERLAY (THE GATE) ---
+  const TutorialOverlay = () => (
+    <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4"
+    >
+        <div className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative">
+            <button 
+                onClick={() => setShowTutorial(false)}
+                className="absolute top-4 right-4 text-slate-500 hover:text-white"
+            >
+                <XCircle className="w-6 h-6" />
+            </button>
+
+            <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                    <Headphones className="w-8 h-8 text-blue-400" />
+                </div>
+                <h2 className="text-2xl font-black text-white mb-2">Pre-Flight Check</h2>
+                <p className="text-slate-400 text-sm">Follow these instructions before we begin.</p>
+            </div>
+
+            {/* Mic & Speaker Check Section */}
+            <div className="bg-black/30 rounded-xl p-4 mb-6 border border-white/5 space-y-4">
+                {/* 1. MIC CHECK */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${audioStream ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500 animate-pulse'}`}></div>
+                        <span className="text-sm font-bold text-slate-300">Microphone</span>
+                    </div>
+                    <MicCheckVisualizer stream={audioStream} />
+                </div>
+
+                {/* 2. SPEAKER CHECK (NEW) */}
+                <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                    <div className="flex items-center gap-3">
+                         <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
+                         <span className="text-sm font-bold text-slate-300">Speaker Output</span>
+                    </div>
+                    <button 
+                        onClick={() => playSystemVoice("This is a sound check. If you can hear this, your speaker is working perfectly.")}
+                        className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-xs font-bold text-white rounded-full flex items-center gap-2 transition-colors"
+                    >
+                        <Volume2 className="w-3.5 h-3.5" /> Test Sound
+                    </button>
+                </div>
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-4 mb-8">
+                <div className="flex gap-4 items-start">
+                    <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Volume2 className="w-4 h-4 text-teal-400" /></div>
+                    <div>
+                        <h4 className="text-white font-bold text-sm">1. Listen Carefully</h4>
+                        <p className="text-xs text-slate-400">The AI Examiner will ask you questions.</p>
+                    </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                    <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Mic className="w-4 h-4 text-purple-400" /></div>
+                    <div>
+                        <h4 className="text-white font-bold text-sm">2. Record Your Answer</h4>
+                        <p className="text-xs text-slate-400">Click the microphone button to start speaking.</p>
+                    </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                    <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Square className="w-4 h-4 text-rose-400" /></div>
+                    <div>
+                        <h4 className="text-white font-bold text-sm">3. Stop to Send</h4>
+                        <p className="text-xs text-slate-400">Click stop when finished. Do not remain silent.</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Start Button with Dynamic Token Cost */}
+            <button 
+                onClick={startSimulation}
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group"
+            >
+                <span>Start Exam Now</span>
+                <span className="bg-black/20 px-2 py-1 rounded text-xs text-blue-100 font-mono group-hover:bg-black/30">
+                    -{TOKEN_COST} Tokens
+                </span>
+                <PlayCircle className="w-5 h-5 ml-1" />
+            </button>
+            
+            <p className="text-center text-[10px] text-slate-500 mt-4">
+                Tokens will be deducted immediately after clicking Start.
+            </p>
+        </div>
+    </motion.div>
+  );
+
   // --- START SCREEN (DYNAMIC) ---
   const StartScreen = () => (
     <div className="absolute inset-0 bg-slate-950 z-30 flex flex-col overflow-y-auto">
@@ -382,11 +528,14 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         <div className="flex-1 w-full max-w-5xl mx-auto p-6 pb-24 flex flex-col justify-center">
             
             <div className="text-center mb-12">
-                {/* DYNAMIC TITLE */}
                 <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
                     {TITLE}
                 </h1>
-                <p className="text-slate-400 text-lg mb-8">{SUBTITLE}</p>
+                {/* NEW: DURATION INDICATOR */}
+                <div className="flex items-center justify-center gap-2 text-slate-400 text-lg mb-8">
+                    <Clock className="w-5 h-5 text-blue-400" />
+                    <span>Est. Duration: <strong className="text-white">{DURATION_TEXT}</strong></span>
+                </div>
                 
                 {mode === 'full' ? (
                     <div className="flex items-center justify-center gap-4 text-sm font-medium text-slate-400">
@@ -412,9 +561,8 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                 )}
             </div>
 
-            {/* Info Grid */}
+            {/* Info Grid (System Check & Tips) */}
             <div className="grid md:grid-cols-2 gap-6 mb-12">
-                
                 {/* System Check Card */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -435,33 +583,37 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                                 <p className="text-xs text-slate-400">Do not refresh the page during the test.</p>
                             </div>
                         </li>
+                        {/* NEW: DND WARNING */}
                         <li className="flex items-start gap-3">
-                            <div className="mt-0.5"><Headphones className="w-5 h-5 text-slate-500" /></div>
+                            <div className="mt-0.5"><BellOff className="w-5 h-5 text-amber-500" /></div>
                             <div>
-                                <p className="text-sm font-bold text-slate-200">Quiet Environment</p>
-                                <p className="text-xs text-slate-400">Use headphones for best experience.</p>
+                                <p className="text-sm font-bold text-slate-200">Do Not Disturb</p>
+                                <p className="text-xs text-slate-400">Calls/Notifications may interrupt audio.</p>
                             </div>
                         </li>
                     </ul>
                 </div>
 
-                {/* Exam Tips Card */}
+              {/* Exam Tips Card */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                           Exam Tips
                     </h3>
                     <div className="space-y-4 text-sm">
+                        {/* Tip 1 */}
                         <div className="flex gap-3">
                             <div className="mt-0.5"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" /></div>
-                            <p className="text-slate-300"><strong className="text-white">Do elaborate.</strong> Give reasons and examples. Short answers get lower scores.</p>
+                            <p className="text-slate-300"><strong className="text-white">Do elaborate.</strong> Give reasons and examples. Try to connect ideas with 'because', 'however', or 'for example'.</p>
                         </div>
+                        {/* Tip 2 */}
                         <div className="flex gap-3">
                              <div className="mt-0.5"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" /></div>
-                             <p className="text-slate-300"><strong className="text-white">Be natural.</strong> It's okay to correct yourself or use fillers like "Well..." naturally.</p>
+                             <p className="text-slate-300"><strong className="text-white">Avoid dead air.</strong> Use fillers like "Let me see..." if stuck.</p>
                         </div>
+                        {/* Tip 3 (Negative Tip) */}
                         <div className="flex gap-3">
                              <div className="mt-0.5"><XCircle className="w-5 h-5 text-rose-500 shrink-0" /></div>
-                             <p className="text-slate-300"><strong className="text-rose-400">Don't memorize.</strong> The examiner detects scripted answers easily.</p>
+                             <p className="text-slate-300"><strong className="text-rose-400">Don't memorize.</strong> Be natural.</p>
                         </div>
                     </div>
                 </div>
@@ -469,28 +621,26 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
             <div className="text-center">
                 <button 
-                    onClick={startSimulation}
+                    onClick={() => setShowTutorial(true)} 
                     disabled={!userProfile || (userProfile.token_balance || 0) < TOKEN_COST}
                     className="group relative inline-flex items-center justify-center gap-3 px-10 py-4 bg-white hover:bg-slate-200 text-slate-900 rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-white/5"
                 >
                     <span>Start {mode === 'quick' ? "Quick Test" : "Full Exam"}</span>
-                    <div className={`ml-2 px-2 py-0.5 rounded text-xs font-bold transition-colors ${
-                        (userProfile?.token_balance || 0) < TOKEN_COST 
-                        ? "bg-red-100 text-red-600" 
-                        : "bg-slate-200 text-slate-600 group-hover:bg-slate-300"
-                    }`}>
-                        {TOKEN_COST} Tokens
-                    </div>
                 </button>
+                
                 {(userProfile?.token_balance || 0) < TOKEN_COST && (
                     <p className="mt-3 text-rose-400 text-sm font-medium">Insufficient tokens. Please top up to start.</p>
                 )}
-                {/* Balance Display */}
                 <p className="mt-2 text-slate-500 text-xs">
                     Current Balance: <span className="text-white font-bold">{userProfile?.token_balance || 0} Tokens</span>
                 </p>
             </div>
         </div>
+
+        {/* RENDER TUTORIAL OVERLAY IF ACTIVE */}
+        <AnimatePresence>
+            {showTutorial && <TutorialOverlay />}
+        </AnimatePresence>
     </div>
   );
 
@@ -500,9 +650,11 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
       {status === "idle" ? <StartScreen /> : (
         <>
+            {/* ... BAGIAN INI TIDAK BERUBAH (SAMA SEPERTI KODE SEBELUMNYA) ... */}
+            {/* SILAKAN PERTAHANKAN ISI RENDER ACTIVE EXAM DARI KODE SEBELUMNYA */}
+            {/* SAYA HANYA TULIS ULANG START SCREEN & TUTORIAL DI ATAS */}
+            
             <div className="flex justify-between items-center p-6 border-b border-white/5 z-10 bg-slate-900/50 backdrop-blur-md">
-                
-                {/* DYNAMIC HEADER INDICATOR */}
                 {mode === 'quick' ? (
                      <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-blue-400">
                         <Zap className="w-4 h-4" /> Quick Test Mode
@@ -540,7 +692,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                             <User className="w-24 h-24 text-slate-500" />
                         </div>
                         
-                        {/* Status Message */}
                         <div className="mt-8 text-center h-6">
                             {aiSpeaking ? <p className="text-blue-400 text-sm font-medium animate-pulse tracking-wider">MR. PAUL IS SPEAKING...</p>
                             : isRecording ? <p className="text-red-500 text-sm font-medium animate-pulse tracking-wider">LISTENING...</p>
@@ -548,7 +699,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                             : <p className="text-slate-600 text-sm font-medium">YOUR TURN</p>}
                         </div>
 
-                        {/* Quick Mode Topic Display */}
                         {mode === 'quick' && cueCardTopic && (
                              <motion.div 
                                 initial={{ opacity: 0, y: 10 }}
