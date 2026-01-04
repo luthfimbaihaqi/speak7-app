@@ -5,7 +5,7 @@ import Link from "next/link"; // Import Link
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle, Mic, ShieldCheck, Smartphone, ArrowRight } from "lucide-react";
 
-// DATA FAQ (TETAP SAMA)
+// DATA FAQ (SUDAH DIREVISI)
 const FAQ_DATA = [
   {
     category: "AI & Accuracy",
@@ -13,15 +13,15 @@ const FAQ_DATA = [
     items: [
       {
         q: "Seberapa akurat penilaian AI di sini?",
-        a: "Sangat mendekati penguji asli. Kami menggunakan teknologi Speech-to-Text tercanggih (Whisper) untuk 'mendengar' ucapan Anda, dan AI yang dilatih dengan ribuan transkrip IELTS untuk memberikan skor objektif berdasarkan rubrik resmi: Fluency, Lexical, Grammar, dan Pronunciation."
+        a: "Sangat mendekati penguji asli. Kami menggunakan teknologi Speech-to-Text tercanggih (Whisper) untuk 'mendengar' ucapan Kamu, dan AI yang dilatih dengan ribuan transkrip IELTS untuk memberikan skor objektif berdasarkan rubrik resmi: Fluency, Lexical, Grammar, dan Pronunciation."
       },
       {
         q: "Apakah AI bisa mendeteksi aksen saya?",
-        a: "Tentu. AI kami fokus pada 'Intelligibility' (keterpahaman), bukan aksen. Selama pengucapan Anda jelas dan artikulasinya tegas (standar Native Speaker), Anda akan mendapatkan skor Pronunciation yang baik, apapun aksen daerah Anda."
+        a: "Tentu. AI kami fokus pada 'Intelligibility' (keterpahaman), bukan aksen. Selama pengucapan Kamu jelas dan artikulasinya tegas (standar Native Speaker), Kamu akan mendapatkan skor Pronunciation yang baik, apapun aksen daerah Kamu."
       },
       {
         q: "Kenapa skor saya kadang rendah?",
-        a: "Kami mendesain AI dengan mode 'Strict Examiner'. Lebih baik Anda mendapat nilai ketat saat latihan agar terlatih mental dan siap menghadapi tes asli, daripada mendapat nilai palsu yang terlalu tinggi."
+        a: "Kami mendesain AI dengan mode 'Strict Examiner'. Lebih baik Kamu mendapat nilai ketat saat latihan agar terlatih mental dan siap menghadapi tes asli, daripada mendapat nilai palsu yang terlalu tinggi."
       }
     ]
   },
@@ -30,16 +30,16 @@ const FAQ_DATA = [
     icon: <Mic className="w-5 h-5 text-purple-400" />,
     items: [
       {
-        q: "Apa bedanya 'Daily Cue Card' dan 'Mock Interview'?",
-        a: "Daily Cue Card (Part 2) adalah mode monolog 1-2 menit. Mock Interview (Part 3) adalah mode dialog dua arah di mana AI akan membacakan pertanyaan dan merespon jawaban Anda dengan pertanyaan lanjutan."
+        q: "Apa bedanya 'Daily Cue Card' dan 'Quick/Full Test'?",
+        a: "Daily Cue Card (Part 2) adalah mode monolog 2 menit untuk melatih kelancaran berbicara. Quick & Full Test adalah simulasi ujian interaktif (Part 1-3) di mana AI berperan sebagai penguji yang memberikan pertanyaan dan merespon jawaban Kamu."
       },
       {
-        q: "Apa fungsi label Easy, Medium, Hard?",
-        a: "Ini fitur Premium untuk menyesuaikan level latihan. Pemula bisa mulai dari Easy (topik keseharian), sementara tingkat lanjut bisa menantang diri dengan topik Hard (isu global/abstrak) untuk mengejar Band 8.0."
+        q: "Apakah topik Daily Cue Card selalu berubah?",
+        a: "Benar. Kamu bisa mengacak topik Part 2 setiap kali Kamu berlatih atau menekan tombol 'random topic' . Ini bertujuan melatih spontanitas Kamu dalam menghadapi berbagai topik tak terduga, persis seperti situasi ujian asli."
       },
       {
         q: "Apakah riwayat latihan saya tersimpan?",
-        a: "Ya! Semua latihan Mock Interview (saat login) tersimpan di halaman 'My Progress'. Latihan Cue Card tersimpan di memori browser Anda."
+        a: "Ya! Semua hasil analisis Daily Cue Card, Quick dan Full Test tersimpan otomatis di halaman 'My Progress'. Kamu bisa melihat grafik perkembangan skor Kamu dari waktu ke waktu."
       }
     ]
   },
@@ -49,15 +49,15 @@ const FAQ_DATA = [
     items: [
       {
         q: "Apakah aplikasi ini Gratis?",
-        a: "Anda bisa menggunakan fitur Daily Cue Card secara gratis dengan kuota terbatas harian. Upgrade ke Pro untuk membuka akses Unlimited Practice (Tanpa Batas), Mock Interview Interaktif, serta fitur pemilihan tingkat kesulitan (Hard Mode)."
+        a: "Ya! Fitur **Daily Cue Card** sepenuhnya GRATIS dan **UNLIMITED** (tanpa batas) bagi Kamu yang sudah login. Token hanya dibutuhkan jika Kamu ingin mengakses simulasi ujian penuh (Full Simulation/Quick Test)."
       },
       {
-        q: "Apakah ini sistem langganan bulanan?",
-        a: "Tidak. Ini adalah sistem Sekali Bayar (One-Time Payment) untuk durasi akses tertentu. Tidak ada tagihan otomatis yang tersembunyi."
+        q: "Bagaimana sistem pembayaran Token?",
+        a: "Kami menggunakan sistem **Token (Top Up)** yang sangat fleksibel. Token yang Kamu beli **tidak memiliki masa kadaluarsa** (No Expiry). Beli sekali, dan gunakan kapan saja saat Kamu membutuhkan simulasi ujian, tanpa tagihan bulanan."
       },
       {
         q: "Kenapa mikrofon tidak berfungsi?",
-        a: "Pastikan Anda telah memberikan izin (permission) akses mikrofon pada browser. Jika di HP, cek pengaturan privasi browser (Chrome/Safari) Anda."
+        a: "Pastikan Kamu telah memberikan izin (permission) akses mikrofon pada browser. Jika di HP, cek pengaturan privasi browser (Chrome/Safari) Kamu."
       }
     ]
   }
@@ -82,7 +82,7 @@ export default function FAQSection({ isTeaser = false }) {
           Frequently Asked <span className="text-teal-400">Questions</span>
         </h2>
         <p className="text-slate-400 max-w-xl mx-auto">
-          Semua yang perlu Anda ketahui tentang cara kerja IELTS4our dan bagaimana kami membantu Anda mencapai target skor.
+          Semua yang perlu Kamu ketahui tentang cara kerja IELTS4our dan bagaimana kami membantu Kamu mencapai target skor.
         </p>
       </div>
 
