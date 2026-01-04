@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2, Trash2, Filter, Flame, Sparkles, Zap } from "lucide-react";
+import { 
+  ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2, Trash2, 
+  Filter, Flame, Sparkles, Zap, Trophy, Star, Target, Plus 
+} from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
 import ScoreCard from "@/components/ScoreCard";
 import UpgradeModal from "@/components/UpgradeModal"; 
@@ -34,11 +37,13 @@ export default function ProgressPage() {
             userId = user.id;
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('is_premium, premium_expiry')
+                .select('is_premium, premium_expiry, token_balance') // Ambil token_balance
                 .eq('id', user.id)
                 .single();
             
             if (profile) {
+                // Merge token info
+                setUserProfile(prev => ({ ...prev, ...profile }));
                 const isStillValid = profile.is_premium && (profile.premium_expiry > Date.now());
                 setIsPremium(isStillValid); 
             }
@@ -48,24 +53,21 @@ export default function ProgressPage() {
     checkUserStatus();
   }, []);
 
-  // --- UPDATE LOGIC FILTER (SUPPORT QUICK TEST & LEGACY MOCK) ---
+  // --- LOGIC FILTER ---
   useEffect(() => {
     if (filterType === "all") {
         setFilteredHistory(history);
     } else if (filterType === "cue-card") {
-        // Exclude Mock, Quick Test & Full Exam
         setFilteredHistory(history.filter(item => 
-            !item.topic.includes("Mock Interview") && 
             !item.topic.includes("QUICK TEST") && 
-            !item.topic.includes("FULL EXAM")
+            !item.topic.includes("FULL EXAM") &&
+            !item.topic.includes("Mock Interview")
         ));
     } else if (filterType === "quick-test") {
-        // Gabungkan "Quick Test" (Baru) dan "Mock Interview" (Lama)
         setFilteredHistory(history.filter(item => 
             item.topic.includes("QUICK TEST") || item.topic.includes("Mock Interview")
         ));
     } else if (filterType === "full-exam") {
-        // Filter khusus Full Exam
         setFilteredHistory(history.filter(item => item.topic.includes("FULL EXAM")));
     }
   }, [filterType, history]);
@@ -109,16 +111,13 @@ export default function ProgressPage() {
     }
   };
 
-  // --- STEP 1: BUKA MODAL DELETE ---
   const promptDelete = (e, item) => {
     e.stopPropagation(); 
     setDeleteTarget(item);
   };
 
-  // --- STEP 2: EKSEKUSI HAPUS ---
   const executeDelete = async () => {
     if (!deleteTarget) return;
-    
     const item = deleteTarget;
 
     try {
@@ -134,13 +133,10 @@ export default function ProgressPage() {
                 .from('practice_history')
                 .delete()
                 .eq('id', item.id);
-            
             if (error) throw error;
         }
-
         setHistory(prev => prev.filter(h => h.id !== item.id));
         setDeleteTarget(null); 
-
     } catch (err) {
         console.error("Failed to delete:", err);
         alert("Failed to delete item. Please try again.");
@@ -150,66 +146,68 @@ export default function ProgressPage() {
   // --- STATISTIK ---
   const rawSum = history.reduce((acc, curr) => acc + (curr.overall_score || 0), 0);
   const rawAvg = history.length > 0 ? rawSum / history.length : 0;
-  const averageScore = history.length > 0 
-    ? (Math.round(rawAvg * 2) / 2).toFixed(1) 
-    : "0.0";
+  const averageScore = history.length > 0 ? (Math.round(rawAvg * 2) / 2).toFixed(1) : "0.0";
+  
+  // Highest Score Logic
+  const highestScore = history.length > 0 
+    ? Math.max(...history.map(item => item.overall_score || 0)) 
+    : 0;
 
-  const renderDifficultyBadge = (item) => {
-    const diff = item.full_feedback?.difficulty; 
-    if (!diff) return null; 
-
-    const styles = {
-        easy: "bg-green-500/20 text-green-400 border-green-500/30",
-        medium: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-        hard: "bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]" 
-    };
-
-    const labels = { easy: "Easy", medium: "Medium", hard: "Hard 🔥" };
-
-    return (
-        <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${styles[diff] || 'bg-slate-700'}`}>
-            {labels[diff] || diff}
-        </span>
-    );
+  // --- HELPER VISUAL ---
+  const getCleanTitle = (topic) => {
+      // Menghapus prefix untuk mendapatkan Judul Topik Asli
+      return topic
+        .replace("Mock Interview: ", "")
+        .replace("FULL EXAM: ", "")
+        .replace("QUICK TEST: ", "")
+        .replace("Cue Card: ", "");
   };
 
-  // --- HELPER UNTUK BADGE TIPE LATIHAN (UPDATED) ---
-  const getBadgeStyle = (topic) => {
-      if (topic.includes("FULL EXAM")) {
-          return "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shadow-[0_0_10px_rgba(99,102,241,0.2)]";
-      } else if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) {
-          // Ungu untuk Quick Test (Consistent with Dashboard)
-          return "bg-purple-500/20 text-purple-300 border border-purple-500/30";
-      } else {
-          // Teal untuk Cue Card
-          return "bg-teal-500/20 text-teal-300 border border-teal-500/30";
-      }
+  const getTopicTypeLabel = (topic) => {
+      if (topic.includes("FULL EXAM")) return { label: "Full Simulation", icon: <Sparkles className="w-3 h-3" />, color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" };
+      if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) return { label: "Quick Test", icon: <Zap className="w-3 h-3" />, color: "text-purple-400 bg-purple-500/10 border-purple-500/20" };
+      return { label: "Daily Cue Card", icon: <Target className="w-3 h-3" />, color: "text-teal-400 bg-teal-500/10 border-teal-500/20" };
   };
 
-  const getBadgeLabel = (topic) => {
-      if (topic.includes("FULL EXAM")) return "Full Simulation";
-      if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) return "Quick Test";
-      return "Cue Card";
+  const getScoreColor = (score) => {
+      if (score >= 7.0) return "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]";
+      if (score >= 5.5) return "bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]";
+      return "bg-slate-700 text-slate-300";
   };
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 selection:bg-teal-500/30 selection:text-teal-200">
       
       {/* HEADER */}
-      <div className="max-w-3xl mx-auto mb-8 flex items-center justify-between">
-        <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-bold uppercase tracking-wider">
-            <ArrowLeft className="w-4 h-4" /> Back to Practice
-        </Link>
-        {isPremium && (
-            <div className="px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg shadow-yellow-500/20 flex items-center gap-1">
-                <Crown className="w-3 h-3" /> Pro Member
+      <div className="max-w-4xl mx-auto mb-8 flex items-center justify-between">
+        <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-bold uppercase tracking-wider group">
+            <div className="p-1.5 bg-white/5 rounded-full group-hover:bg-white/10 transition-colors">
+                <ArrowLeft className="w-4 h-4" /> 
             </div>
+            Back to Practice
+        </Link>
+        
+        {/* REPLACED PRO BADGE WITH TOKEN BALANCE */}
+        {userProfile && (
+            <button 
+                onClick={() => setShowUpgradeModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 border border-slate-700 hover:border-blue-500/50 rounded-full transition-all group"
+            >
+                <span className="text-yellow-400 text-sm">🪙</span>
+                <span className="text-white text-xs font-bold tabular-nums">
+                    {userProfile.token_balance || 0} Tokens
+                </span>
+                <div className="w-px h-3 bg-slate-600 mx-1"></div>
+                <Plus className="w-3 h-3 text-blue-400 group-hover:text-white" />
+            </button>
         )}
       </div>
 
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Your Progress 📈</h1>
-        <p className="text-slate-400 mb-8">Lacak perkembangan Speaking IELTS kamu dari waktu ke waktu.</p>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-10">
+            <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Your Progress 📈</h1>
+            <p className="text-slate-400">Lacak perkembangan Speaking IELTS kamu dari waktu ke waktu.</p>
+        </div>
 
         {loading ? (
              <div className="flex justify-center py-20">
@@ -217,29 +215,55 @@ export default function ProgressPage() {
              </div>
         ) : history.length === 0 ? (
              <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
-                <p className="text-slate-400 mb-4">Belum ada riwayat latihan. Yuk mulai latihan sekarang!</p>
-                <Link href="/" className="px-6 py-2 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-full">Start Practice</Link>
+                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BarChart3 className="w-8 h-8 text-slate-500" />
+                </div>
+                <p className="text-slate-400 mb-6">Belum ada riwayat latihan. Yuk mulai sekarang!</p>
+                <Link href="/" className="px-8 py-3 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-full transition-all shadow-lg hover:shadow-teal-500/20">
+                    Start Practice
+                </Link>
              </div>
         ) : (
             <>
-                {/* STATS CARDS */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/10 text-center">
-                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">Total Practices</p>
-                        <p className="text-3xl font-black text-white">{history.length}</p>
+                {/* NEW STATS CARDS (3 Columns) */}
+                <div className="grid grid-cols-3 gap-3 md:gap-4 mb-10">
+                    {/* Card 1: Total */}
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl border border-white/10 relative overflow-hidden group">
+                        <div className="absolute right-2 top-2 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+                            <Target className="w-16 h-16 text-white" />
+                        </div>
+                        <p className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Total</p>
+                        <p className="text-2xl md:text-4xl font-black text-white">{history.length}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Practices</p>
                     </div>
-                    <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/10 text-center">
-                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">Average Band</p>
-                        <p className="text-3xl font-black text-teal-400">{averageScore}</p>
+
+                    {/* Card 2: Average */}
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl border border-white/10 relative overflow-hidden group">
+                        <div className="absolute right-2 top-2 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+                            <BarChart3 className="w-16 h-16 text-blue-400" />
+                        </div>
+                        <p className="text-[10px] md:text-xs text-blue-400 font-bold uppercase tracking-widest mb-1">Average</p>
+                        <p className="text-2xl md:text-4xl font-black text-white">{averageScore}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Band Score</p>
+                    </div>
+
+                    {/* Card 3: Best (New) */}
+                    <div className="bg-gradient-to-br from-amber-900/20 to-slate-900 p-5 rounded-2xl border border-amber-500/20 relative overflow-hidden group">
+                        <div className="absolute right-2 top-2 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+                            <Trophy className="w-16 h-16 text-amber-500" />
+                        </div>
+                        <p className="text-[10px] md:text-xs text-amber-500 font-bold uppercase tracking-widest mb-1">Best</p>
+                        <p className="text-2xl md:text-4xl font-black text-white">{highestScore}</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Highest Band</p>
                     </div>
                 </div>
 
-                {/* FILTER TABS (UPDATED) */}
+                {/* FILTER TABS */}
                 <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                     {[
                         { id: 'all', label: 'All History' },
                         { id: 'cue-card', label: 'Cue Cards' },
-                        { id: 'quick-test', label: 'Quick Tests' }, // Renamed & Updated Logic
+                        { id: 'quick-test', label: 'Quick Tests' }, 
                         { id: 'full-exam', label: 'Full Simulation' }
                     ].map(tab => (
                         <button
@@ -247,8 +271,8 @@ export default function ProgressPage() {
                             onClick={() => setFilterType(tab.id)}
                             className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
                                 filterType === tab.id 
-                                    ? "bg-white text-slate-900 border-white" 
-                                    : "bg-white/5 text-slate-400 border-white/5 hover:bg-white/10"
+                                    ? "bg-white text-slate-900 border-white shadow-lg" 
+                                    : "bg-white/5 text-slate-400 border-white/5 hover:bg-white/10 hover:text-white"
                             }`}
                         >
                             {tab.label}
@@ -256,69 +280,72 @@ export default function ProgressPage() {
                     ))}
                 </div>
 
-                {/* HISTORY LIST */}
-                <div className="space-y-4">
+                {/* HISTORY LIST (REDESIGNED) */}
+                <div className="space-y-3">
                     {filteredHistory.length === 0 ? (
-                        <div className="text-center py-10 text-slate-500 text-sm">No history found for this filter.</div>
-                    ) : filteredHistory.map((item, index) => (
-                        <motion.div 
-                            key={item.id || index}
-                            whileHover={{ scale: 1.01 }}
-                            onClick={() => setSelectedItem(item)}
-                            className={`bg-white/5 hover:bg-white/10 border p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-colors group relative ${item.topic.includes("FULL EXAM") ? "border-indigo-500/30 bg-indigo-900/10" : "border-white/5"}`}
-                        >
-                            <div className="flex-1 min-w-0 pr-4">
-                                <div className="flex items-center gap-3 mb-1">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${getBadgeStyle(item.topic)}`}>
-                                        {item.topic.includes("FULL EXAM") && <Sparkles className="w-3 h-3" />}
-                                        {item.topic.includes("QUICK TEST") && <Zap className="w-3 h-3" />}
-                                        {getBadgeLabel(item.topic)}
-                                    </span>
-                                    <span className="text-xs text-slate-500 flex items-center gap-1">
-                                        <Calendar className="w-3 h-3" />
-                                        {new Date(item.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' })}
-                                    </span>
-                                </div>
-                                
-                                <div className="flex items-center gap-2 mt-1">
-                                    <h3 className="text-white font-bold truncate max-w-[150px] md:max-w-sm">
-                                        {/* Clean Topic Name */}
-                                        {item.topic
-                                            .replace("Mock Interview: ", "")
-                                            .replace("FULL EXAM: ", "")
-                                            .replace("QUICK TEST: ", "")}
+                        <div className="text-center py-10 text-slate-500 text-sm italic bg-white/5 rounded-2xl border border-dashed border-slate-800">
+                            No history found for this filter.
+                        </div>
+                    ) : filteredHistory.map((item, index) => {
+                        const typeInfo = getTopicTypeLabel(item.topic);
+                        const cleanTitle = getCleanTitle(item.topic);
+                        
+                        return (
+                            <motion.div 
+                                key={item.id || index}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                onClick={() => setSelectedItem(item)}
+                                className={`bg-[#1A1D26] hover:bg-[#20242e] border p-4 md:p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all group relative ${item.topic.includes("FULL EXAM") ? "border-indigo-500/20" : "border-slate-800 hover:border-slate-700"}`}
+                            >
+                                <div className="flex-1 min-w-0 pr-4">
+                                    {/* Type Badge & Date */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border ${typeInfo.color}`}>
+                                            {typeInfo.icon} {typeInfo.label}
+                                        </span>
+                                        <span className="text-[10px] text-slate-600 flex items-center gap-1 font-medium">
+                                            • {new Date(item.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' })}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Main Title */}
+                                    <h3 className="text-white font-bold truncate max-w-[200px] md:max-w-md text-base md:text-lg group-hover:text-blue-400 transition-colors">
+                                        {cleanTitle}
                                     </h3>
-                                    {renderDifficultyBadge(item)}
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-4">
-                                <div className="text-right">
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold">Band</p>
-                                    <p className={`text-xl font-black ${item.topic.includes("FULL EXAM") ? "text-indigo-400" : "text-white"}`}>{item.overall_score}</p>
                                 </div>
                                 
-                                {/* DELETE BUTTON */}
-                                <button 
-                                    onClick={(e) => promptDelete(e, item)}
-                                    className="p-2 rounded-full bg-white/5 hover:bg-red-500/20 text-slate-500 hover:text-red-400 transition-all border border-white/5 hover:border-red-500/30"
-                                    title="Delete Result"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-
-                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-teal-500 group-hover:text-slate-900 transition-colors">
-                                    <ChevronRight className="w-4 h-4" />
+                                <div className="flex items-center gap-4 md:gap-6">
+                                    {/* Band Score Circle */}
+                                    <div className={`w-12 h-12 rounded-full flex flex-col items-center justify-center ${getScoreColor(item.overall_score)}`}>
+                                        <span className="text-xs font-bold opacity-80 uppercase leading-none">Band</span>
+                                        <span className="text-lg font-black leading-none">{item.overall_score}</span>
+                                    </div>
+                                    
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={(e) => promptDelete(e, item)}
+                                            className="p-2 rounded-full text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                            title="Delete"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        <div className="p-2 rounded-full text-slate-600 group-hover:text-white transition-colors">
+                                            <ChevronRight className="w-5 h-5" />
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </motion.div>
-                    ))}
+                            </motion.div>
+                        );
+                    })}
                 </div>
             </>
         )}
       </div>
 
-      {/* DETAIL MODAL */}
+      {/* DETAIL MODAL (No Change needed, reusing logic) */}
       <AnimatePresence>
         {selectedItem && (
             <motion.div 

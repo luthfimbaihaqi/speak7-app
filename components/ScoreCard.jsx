@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, AlertOctagon, Lock, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight, XCircle, PlayCircle, ListMusic } from "lucide-react";
+import { CheckCircle2, AlertOctagon, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight, XCircle, PlayCircle, ListMusic } from "lucide-react";
 import Confetti from "react-confetti";
 
-export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgradeModal }) {
+// Prop isPremiumExternal & onOpenUpgradeModal dihapus karena sudah tidak dipakai (Auto-unlocked)
+export default function ScoreCard({ result, cue }) {
   const [showTranscript, setShowTranscript] = useState(false); 
 
   // Ambil data audio (Single URL atau Playlist Array)
@@ -93,7 +94,7 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       ) : null}
 
-      {/* --- TRANSCRIPT ACCORDION (SCROLLABLE UPDATE) --- */}
+      {/* --- TRANSCRIPT ACCORDION --- */}
       {result.transcript && (
         <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
           <button 
@@ -115,7 +116,6 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
               >
-                {/* REVISI: Added max-h-96, overflow-y-auto, whitespace-pre-wrap */}
                 <div className="p-6 pt-0 text-slate-400 leading-relaxed text-sm border-t border-white/5 max-h-96 overflow-y-auto whitespace-pre-wrap font-mono">
                   {result.transcript}
                 </div>
@@ -151,19 +151,17 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
         </div>
       </div>
 
-      {/* --- GRAMMAR CLINIC --- */}
+      {/* --- GRAMMAR CLINIC (UNLOCKED) --- */}
       {result.grammarCorrection && result.grammarCorrection.length > 0 && (
         <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
           <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
             <h3 className="font-bold text-white flex items-center gap-2">
               <span className="text-lg">🛠️</span> Grammar Clinic
             </h3>
-            {/* Full Sim user always gets access */}
-            {!isPremiumExternal && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded border border-white/10">PREVIEW MODE</span>}
           </div>
           
           <div className="divide-y divide-white/5">
-            {/* Tampilkan semua koreksi untuk Full Sim User */}
+            {/* Tampilkan SEMUA koreksi (Tanpa Lock) */}
             {result.grammarCorrection.map((item, i) => (
               <div key={i} className={`p-5 hover:bg-white/5 transition-colors relative`}>
                 <div className="flex flex-col md:flex-row gap-4 md:items-center text-sm mb-2">
@@ -176,32 +174,13 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 pl-6 border-l-2 border-slate-700 ml-1">💡 {item.reason}</p>
-                
-                {/* Lock Logic jika bukan premium (Untuk reuse component di fitur lain) */}
-                {!isPremiumExternal && i > 0 && (
-                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-10 flex items-center justify-center">
-                         <Lock className="w-4 h-4 text-slate-500" />
-                     </div>
-                )}
               </div>
             ))}
           </div>
-
-          {/* OVERLAY FOR NON-PREMIUM (Contextual) */}
-          {!isPremiumExternal && result.grammarCorrection.length > 1 && (
-            <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-slate-950 to-transparent flex items-end justify-center pb-6 z-20">
-               <button 
-                  onClick={onOpenUpgradeModal}
-                  className="px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-full text-xs shadow-lg"
-                >
-                  Unlock All Corrections
-                </button>
-            </div>
-          )}
         </div>
       )}
 
-      {/* --- MODEL ANSWER --- */}
+      {/* --- MODEL ANSWER (UNLOCKED) --- */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -211,26 +190,13 @@ export default function ScoreCard({ result, cue, isPremiumExternal, onOpenUpgrad
           <h3 className="text-md font-bold text-indigo-300 flex items-center gap-2">
             <Star className="w-4 h-4 fill-indigo-300"/> Band 8.0 Part 2 Model Answer
           </h3>
-          {isPremiumExternal && <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded border border-indigo-500/30">UNLOCKED</span>}
         </div>
 
-        <div className={`relative ${!isPremiumExternal ? "blur-md select-none h-32 overflow-hidden opacity-60" : ""}`}>
+        <div className="relative">
           <p className="text-slate-200 italic leading-relaxed whitespace-pre-line text-sm md:text-base">
             "{result.modelAnswer}"
           </p>
         </div>
-
-        {!isPremiumExternal && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-            <button 
-              onClick={onOpenUpgradeModal}
-              className="px-6 py-2.5 bg-white text-slate-900 hover:bg-slate-100 rounded-full font-bold shadow-xl text-sm flex items-center gap-2 transform hover:scale-105 transition-all"
-            >
-              <Lock className="w-4 h-4 text-indigo-600" />
-              Unlock Model Answer
-            </button>
-          </div>
-        )}
       </motion.div>
 
       <motion.button
