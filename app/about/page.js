@@ -62,9 +62,10 @@ export default function AboutPage() {
             <div className="flex flex-col md:flex-row gap-8 items-center md:items-start mb-12">
                 <div className="relative shrink-0">
                     <div className="w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 shadow-xl">
-                        <div className="w-full h-full rounded-full overflow-hidden relative grayscale hover:grayscale-0 transition-all duration-500">
+                        {/* FOTO: Full Color & Zoom on Hover */}
+                        <div className="w-full h-full rounded-full overflow-hidden relative transition-transform duration-500 hover:scale-110">
                             <Image 
-                                src="/luthfi-profile.jpg" 
+                                src="/luthfi-profile-idp.jpg" 
                                 alt="Luthfi Muhammad Baihaqi"
                                 fill
                                 className="object-cover"
@@ -79,16 +80,18 @@ export default function AboutPage() {
                     <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
                         Luthfi Muhammad <span className="text-slate-500">Baihaqi</span>.
                     </h1>
-                    <p className="text-lg text-teal-400 font-medium"></p>
+                    
+                    {/* Tag kosong dihapus di sini */}
+
                     <p className="text-slate-400 leading-relaxed max-w-lg">
                         "Building the IELTS tool I wish I had."
                     </p>
                     
-                    {/* Socials */}
+                    {/* Socials dengan Warna Asli saat Hover */}
                     <div className="flex gap-4 justify-center md:justify-start pt-2">
-                        <a href="https://www.instagram.com/luthfimbaihaqi/" target="_blank" className="text-slate-500 hover:text-white transition-colors"><Instagram className="w-5 h-5"/></a>
-                        <a href="https://www.linkedin.com/in/luthfimbaihaqi/" target="_blank" className="text-slate-500 hover:text-white transition-colors"><Linkedin className="w-5 h-5"/></a>
-                        <a href="mailto:luthfibaihaqi851@gmail.com" className="text-slate-500 hover:text-white transition-colors"><Mail className="w-5 h-5"/></a>
+                        <a href="https://www.instagram.com/luthfimbaihaqi/" target="_blank" className="text-slate-500 hover:text-pink-500 transition-colors"><Instagram className="w-5 h-5"/></a>
+                        <a href="https://www.linkedin.com/in/luthfimbaihaqi/" target="_blank" className="text-slate-500 hover:text-blue-500 transition-colors"><Linkedin className="w-5 h-5"/></a>
+                        <a href="mailto:luthfibaihaqi851@gmail.com" className="text-slate-500 hover:text-teal-400 transition-colors"><Mail className="w-5 h-5"/></a>
                     </div>
                 </div>
             </div>
