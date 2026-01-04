@@ -530,7 +530,7 @@ export default function Home() {
                             <Recorder 
                                 cueCard={dailyCue.topic} 
                                 onAnalysisComplete={handleAnalysisComplete} 
-                                maxDuration={isPremium ? 120 : 60} 
+                                maxDuration={120} 
                                 mode={practiceMode} 
                                 difficulty="medium" 
                             />

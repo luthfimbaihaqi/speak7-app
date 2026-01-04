@@ -237,7 +237,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
           <Info className="w-3.5 h-3.5" />
           {mode === "mock-interview" 
              ? "Mock Interview: Speak naturally like a conversation."
-             : maxDuration > 60 ? "Pro Mode: Max 2 mins." : "Free Mode: Max 60 secs."}
+             : "Duration: Max 2 mins."}
         </p>
       )}
     </div>
