@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react"; // TAMBAHAN: Import Suspense
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation"; // TAMBAHAN: useSearchParams
+import { useRouter, useSearchParams } from "next/navigation"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, 
@@ -16,14 +16,31 @@ import MarketingSection from "@/components/MarketingSection";
 import UpgradeModal from "@/components/UpgradeModal";
 import AlertModal from "@/components/AlertModal"; 
 import FAQSection from "@/components/FAQSection"; 
-import Confetti from "react-confetti"; // TAMBAHAN: Import Confetti
+import Confetti from "react-confetti"; 
 
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
 
+// --- KOMPONEN KECIL: Menangani URL Params (Dipisah agar bisa di-Suspense) ---
+function WelcomeListener({ setShowWelcomeModal }) {
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    if (searchParams.get('welcome') === 'true') {
+        setShowWelcomeModal(true);
+        // Bersihkan URL agar popup tidak muncul lagi saat refresh
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams, setShowWelcomeModal]);
+
+  return null; // Komponen ini tidak menampilkan visual apa-apa
+}
+
+// --- KOMPONEN UTAMA ---
 export default function Home() {
   const router = useRouter(); 
-  const searchParams = useSearchParams(); // TAMBAHAN: Hook URL
+  // const searchParams = useSearchParams(); // HAPUS INI DARI SINI (Pindah ke WelcomeListener)
   const heroRef = useRef(null); 
   const userMenuRef = useRef(null);
 
@@ -56,22 +73,14 @@ export default function Home() {
   
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false); // TAMBAHAN: State Welcome Modal
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false); 
   const [guiltMessage, setGuiltMessage] = useState(GUILT_MESSAGES[0]);
   
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false, type: "success", title: "", message: "", actionLabel: "", onAction: null
   });
 
-  // --- LOGIKA DETEKSI WELCOME BONUS ---
-  useEffect(() => {
-    if (searchParams.get('welcome') === 'true') {
-        setShowWelcomeModal(true);
-        // Bersihkan URL agar popup tidak muncul lagi saat refresh
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
-    }
-  }, [searchParams]);
+  // (LOGIKA DETEKSI WELCOME BONUS SUDAH PINDAH KE WelcomeListener DI BAWAH)
 
   // --- 1. CEK STATUS USER ---
   useEffect(() => {
@@ -377,6 +386,11 @@ export default function Home() {
       {/* Content Wrapper */}
       <div className="relative z-10">
 
+        {/* --- 🔥 FIX: SUSPENSE BOUNDARY UNTUK URL PARAMS --- */}
+        <Suspense fallback={null}>
+            <WelcomeListener setShowWelcomeModal={setShowWelcomeModal} />
+        </Suspense>
+
         {/* --- HEADER --- */}
         <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4 relative">
             {/* LOGO & DESKTOP NAV */}
@@ -430,7 +444,7 @@ export default function Home() {
                                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                                 className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-200 transition-all text-sm font-medium flex items-center gap-2"
                             >
-                                {/* LOGIKA FOTO PROFIL */}
+                                {/* LOGIKA FOTO PROFIL BARU */}
                                 {userProfile?.user_metadata?.avatar_url ? (
                                     <div className="relative w-5 h-5 rounded-full overflow-hidden border border-slate-600">
                                         <Image src={userProfile.user_metadata.avatar_url} alt="Profile" fill className="object-cover" />
@@ -474,15 +488,9 @@ export default function Home() {
                         </div>
                     </>
                 ) : (
-                    <div className="flex flex-col items-end gap-1">
-                        <Link href="/auth">
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors text-xs font-bold">Login</motion.button>
-                        </Link>
-                        {/* 🔥 MARKETING TEXT DI HEADER DESKTOP */}
-                        <p className="text-[10px] text-slate-400">
-                            New? Get <span className="text-yellow-400 font-bold">2 Free Tokens</span>
-                        </p>
-                    </div>
+                    <Link href="/auth">
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors text-xs font-bold">Login</motion.button>
+                    </Link>
                 )}
             </div>
         </header>
@@ -538,6 +546,7 @@ export default function Home() {
                                             
                                             <div>
                                                 <p className="text-sm font-bold text-white truncate max-w-[140px]">{userProfile.email?.split('@')[0]}</p>
+                                                {/* BADGE PRO SUDAH DIHAPUS DARI SINI */}
                                             </div>
                                         </div>
                                         <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg">
@@ -574,10 +583,6 @@ export default function Home() {
                                     <Link href="/auth">
                                         <button className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Login / Register</button>
                                     </Link>
-                                    {/* 🔥 MARKETING TEXT DI MOBILE MENU */}
-                                    <p className="text-[10px] text-slate-500 mt-2">
-                                        New? Get <span className="text-yellow-400 font-bold">2 Free Tokens</span>
-                                    </p>
                                 </div>
                             )}
                         </div>
@@ -595,7 +600,9 @@ export default function Home() {
             )}
         </AnimatePresence>
 
-        {/* HERO SECTION */}
+        {/* ... (SISANYA TETAP SAMA SEPERTI KODE SEBELUMNYA) ... */}
+        {/* HERO, UI TAB, CONTENT, FOOTER - TIDAK BERUBAH */}
+        
         <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
             <Link href="/mission">
             <motion.div
@@ -618,8 +625,6 @@ export default function Home() {
             </p>
         </div>
 
-        {/* ... (SISANYA TETAP SAMA SEPERTI KODE SEBELUMNYA) ... */}
-        {/* UI TAB SWITCHER, CONTENT AREA, ETC */}
         <div className="max-w-md mx-auto mb-12 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
             <button onClick={() => handleModeSwitch("cue-card")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "cue-card" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
                 <Mic2 className="w-3.5 h-3.5" /> Cue Card
@@ -632,23 +637,15 @@ export default function Home() {
             </button>
         </div>
 
-        {/* CONTENT AREA */}
         <div className="max-w-4xl mx-auto space-y-12">
             <motion.div initial={{ scale: 0.99, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
             
-            {/* --- DISPLAY BASED ON MODE --- */}
-            
-            {/* 1. FULL SIMULATION HERO */}
             {practiceMode === "full-simulation" && <PremiumHeroCard />}
-
-            {/* 2. QUICK TEST HERO */}
             {practiceMode === "mock-interview" && <QuickTestHeroCard />}
 
-            {/* 3. CUE CARD RECORDER (EXISTING LOGIC) */}
             {practiceMode === "cue-card" && (
                 <div className="relative bg-[#1A1D26] border border-slate-800 rounded-3xl p-8 md:p-12 overflow-hidden min-h-[500px] flex flex-col justify-center shadow-xl">
                 
-                {/* MODE 1: CUE CARD */}
                 {!analysisResult && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                         <div className="flex justify-between items-start mb-8 border-b border-slate-800 pb-6">
@@ -687,7 +684,6 @@ export default function Home() {
                     </motion.div>
                 )}
 
-                {/* RESULT AREA FOR CUE CARD */}
                 {analysisResult && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <div className="flex justify-between items-center mb-6">
