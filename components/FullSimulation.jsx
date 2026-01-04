@@ -9,7 +9,7 @@ import {
 import { useRouter } from "next/navigation";
 import ScoreCard from "@/components/ScoreCard"; 
 
-// 🔥 COMPONENT: REAL-TIME MIC VISUALIZER (Untuk Tutorial)
+// 🔥 COMPONENT 1: REAL-TIME MIC VISUALIZER
 const MicCheckVisualizer = ({ stream }) => {
     const canvasRef = useRef(null);
     const animationRef = useRef(null);
@@ -61,6 +61,137 @@ const MicCheckVisualizer = ({ stream }) => {
             </div>
             <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Mic Input</p>
         </div>
+    );
+};
+
+// 🔥 COMPONENT 2: TUTORIAL OVERLAY (Dipisah agar State Audio aman)
+const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
+    const [isPlayingSound, setIsPlayingSound] = useState(false);
+
+    // LOGIKA AUDIO YANG AMAN (Stop-Lock-Clean)
+    const handleTestSound = () => {
+        if (isPlayingSound) return; // Cegah spam klik
+
+        // 1. Stop antrian sebelumnya (PENTING)
+        window.speechSynthesis.cancel();
+
+        // 2. Lock UI
+        setIsPlayingSound(true);
+
+        const text = "This is a sound check. If you can hear this, your speaker is working perfectly.";
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        // 3. Unlock saat selesai
+        utterance.onend = () => setIsPlayingSound(false);
+        utterance.onerror = () => setIsPlayingSound(false);
+
+        window.speechSynthesis.speak(utterance);
+    };
+
+    // 4. Cleanup saat komponen ditutup/unmount (PENTING)
+    useEffect(() => {
+        return () => {
+            window.speechSynthesis.cancel();
+        };
+    }, []);
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4"
+        >
+            <div className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative">
+                <button 
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                >
+                    <XCircle className="w-6 h-6" />
+                </button>
+
+                <div className="text-center mb-8">
+                    <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                        <Headphones className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <h2 className="text-2xl font-black text-white mb-2">Pre-Flight Check</h2>
+                    <p className="text-slate-400 text-sm">Follow these instructions before we begin.</p>
+                </div>
+
+                {/* Mic & Speaker Check Section */}
+                <div className="bg-black/30 rounded-xl p-4 mb-6 border border-white/5 space-y-4">
+                    {/* 1. MIC CHECK */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${audioStream ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500 animate-pulse'}`}></div>
+                            <span className="text-sm font-bold text-slate-300">Microphone</span>
+                        </div>
+                        <MicCheckVisualizer stream={audioStream} />
+                    </div>
+
+                    {/* 2. SPEAKER CHECK (FIXED) */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                        <div className="flex items-center gap-3">
+                             <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
+                             <span className="text-sm font-bold text-slate-300">Speaker Output</span>
+                        </div>
+                        <button 
+                            onClick={handleTestSound}
+                            disabled={isPlayingSound}
+                            className={`px-3 py-1.5 text-xs font-bold text-white rounded-full flex items-center gap-2 transition-all ${
+                                isPlayingSound 
+                                ? "bg-slate-700 cursor-wait opacity-80" 
+                                : "bg-white/10 hover:bg-white/20"
+                            }`}
+                        >
+                            {isPlayingSound ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Volume2 className="w-3.5 h-3.5" />}
+                            {isPlayingSound ? "Playing..." : "Test Sound"}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Steps */}
+                <div className="space-y-4 mb-8">
+                    <div className="flex gap-4 items-start">
+                        <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Volume2 className="w-4 h-4 text-teal-400" /></div>
+                        <div>
+                            <h4 className="text-white font-bold text-sm">1. Listen Carefully</h4>
+                            <p className="text-xs text-slate-400">The AI Examiner will ask you questions.</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-4 items-start">
+                        <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Mic className="w-4 h-4 text-purple-400" /></div>
+                        <div>
+                            <h4 className="text-white font-bold text-sm">2. Record Your Answer</h4>
+                            <p className="text-xs text-slate-400">Click the microphone button to start speaking.</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-4 items-start">
+                        <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Square className="w-4 h-4 text-rose-400" /></div>
+                        <div>
+                            <h4 className="text-white font-bold text-sm">3. Stop to Send</h4>
+                            <p className="text-xs text-slate-400">Click stop when finished. Do not remain silent.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Start Button */}
+                <button 
+                    onClick={onStart}
+                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group"
+                >
+                    <span>Start Exam Now</span>
+                    <span className="bg-black/20 px-2 py-1 rounded text-xs text-blue-100 font-mono group-hover:bg-black/30">
+                        -{tokenCost} Tokens
+                    </span>
+                    <PlayCircle className="w-5 h-5 ml-1" />
+                </button>
+                
+                <p className="text-center text-[10px] text-slate-500 mt-4">
+                    Tokens will be deducted immediately after clicking Start.
+                </p>
+            </div>
+        </motion.div>
     );
 };
 
@@ -423,100 +554,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     </div>
   );
 
-  // --- TUTORIAL OVERLAY (THE GATE) ---
-  const TutorialOverlay = () => (
-    <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4"
-    >
-        <div className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative">
-            <button 
-                onClick={() => setShowTutorial(false)}
-                className="absolute top-4 right-4 text-slate-500 hover:text-white"
-            >
-                <XCircle className="w-6 h-6" />
-            </button>
-
-            <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
-                    <Headphones className="w-8 h-8 text-blue-400" />
-                </div>
-                <h2 className="text-2xl font-black text-white mb-2">Pre-Flight Check</h2>
-                <p className="text-slate-400 text-sm">Follow these instructions before we begin.</p>
-            </div>
-
-            {/* Mic & Speaker Check Section */}
-            <div className="bg-black/30 rounded-xl p-4 mb-6 border border-white/5 space-y-4">
-                {/* 1. MIC CHECK */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${audioStream ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500 animate-pulse'}`}></div>
-                        <span className="text-sm font-bold text-slate-300">Microphone</span>
-                    </div>
-                    <MicCheckVisualizer stream={audioStream} />
-                </div>
-
-                {/* 2. SPEAKER CHECK (NEW) */}
-                <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                    <div className="flex items-center gap-3">
-                         <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
-                         <span className="text-sm font-bold text-slate-300">Speaker Output</span>
-                    </div>
-                    <button 
-                        onClick={() => playSystemVoice("This is a sound check. If you can hear this, your speaker is working perfectly.")}
-                        className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-xs font-bold text-white rounded-full flex items-center gap-2 transition-colors"
-                    >
-                        <Volume2 className="w-3.5 h-3.5" /> Test Sound
-                    </button>
-                </div>
-            </div>
-
-            {/* Steps */}
-            <div className="space-y-4 mb-8">
-                <div className="flex gap-4 items-start">
-                    <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Volume2 className="w-4 h-4 text-teal-400" /></div>
-                    <div>
-                        <h4 className="text-white font-bold text-sm">1. Listen Carefully</h4>
-                        <p className="text-xs text-slate-400">The AI Examiner will ask you questions.</p>
-                    </div>
-                </div>
-                <div className="flex gap-4 items-start">
-                    <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Mic className="w-4 h-4 text-purple-400" /></div>
-                    <div>
-                        <h4 className="text-white font-bold text-sm">2. Record Your Answer</h4>
-                        <p className="text-xs text-slate-400">Click the microphone button to start speaking.</p>
-                    </div>
-                </div>
-                <div className="flex gap-4 items-start">
-                    <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Square className="w-4 h-4 text-rose-400" /></div>
-                    <div>
-                        <h4 className="text-white font-bold text-sm">3. Stop to Send</h4>
-                        <p className="text-xs text-slate-400">Click stop when finished. Do not remain silent.</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Start Button with Dynamic Token Cost */}
-            <button 
-                onClick={startSimulation}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group"
-            >
-                <span>Start Exam Now</span>
-                <span className="bg-black/20 px-2 py-1 rounded text-xs text-blue-100 font-mono group-hover:bg-black/30">
-                    -{TOKEN_COST} Tokens
-                </span>
-                <PlayCircle className="w-5 h-5 ml-1" />
-            </button>
-            
-            <p className="text-center text-[10px] text-slate-500 mt-4">
-                Tokens will be deducted immediately after clicking Start.
-            </p>
-        </div>
-    </motion.div>
-  );
-
   // --- START SCREEN (DYNAMIC) ---
   const StartScreen = () => (
     <div className="absolute inset-0 bg-slate-950 z-30 flex flex-col overflow-y-auto">
@@ -531,7 +568,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                 <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
                     {TITLE}
                 </h1>
-                {/* NEW: DURATION INDICATOR */}
+                {/* DURATION INDICATOR */}
                 <div className="flex items-center justify-center gap-2 text-slate-400 text-lg mb-8">
                     <Clock className="w-5 h-5 text-blue-400" />
                     <span>Est. Duration: <strong className="text-white">{DURATION_TEXT}</strong></span>
@@ -583,7 +620,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                                 <p className="text-xs text-slate-400">Do not refresh the page during the test.</p>
                             </div>
                         </li>
-                        {/* NEW: DND WARNING */}
                         <li className="flex items-start gap-3">
                             <div className="mt-0.5"><BellOff className="w-5 h-5 text-amber-500" /></div>
                             <div>
@@ -594,23 +630,20 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                     </ul>
                 </div>
 
-              {/* Exam Tips Card */}
+                {/* Exam Tips Card */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                           Exam Tips
                     </h3>
                     <div className="space-y-4 text-sm">
-                        {/* Tip 1 */}
                         <div className="flex gap-3">
                             <div className="mt-0.5"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" /></div>
-                            <p className="text-slate-300"><strong className="text-white">Do elaborate.</strong> Give reasons and examples. Try to connect ideas with 'because', 'however', or 'for example'.</p>
+                            <p className="text-slate-300"><strong className="text-white">Do elaborate.</strong> Give reasons and examples. Connect ideas with 'because', 'however', or 'for example'.</p>
                         </div>
-                        {/* Tip 2 */}
                         <div className="flex gap-3">
                              <div className="mt-0.5"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" /></div>
                              <p className="text-slate-300"><strong className="text-white">Avoid dead air.</strong> Use fillers like "Let me see..." if stuck.</p>
                         </div>
-                        {/* Tip 3 (Negative Tip) */}
                         <div className="flex gap-3">
                              <div className="mt-0.5"><XCircle className="w-5 h-5 text-rose-500 shrink-0" /></div>
                              <p className="text-slate-300"><strong className="text-rose-400">Don't memorize.</strong> Be natural.</p>
@@ -636,11 +669,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                 </p>
             </div>
         </div>
-
-        {/* RENDER TUTORIAL OVERLAY IF ACTIVE */}
-        <AnimatePresence>
-            {showTutorial && <TutorialOverlay />}
-        </AnimatePresence>
     </div>
   );
 
@@ -650,10 +678,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
       {status === "idle" ? <StartScreen /> : (
         <>
-            {/* ... BAGIAN INI TIDAK BERUBAH (SAMA SEPERTI KODE SEBELUMNYA) ... */}
-            {/* SILAKAN PERTAHANKAN ISI RENDER ACTIVE EXAM DARI KODE SEBELUMNYA */}
-            {/* SAYA HANYA TULIS ULANG START SCREEN & TUTORIAL DI ATAS */}
-            
+            {/* Bagian Active Exam tetap sama */}
             <div className="flex justify-between items-center p-6 border-b border-white/5 z-10 bg-slate-900/50 backdrop-blur-md">
                 {mode === 'quick' ? (
                      <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-blue-400">
@@ -793,6 +818,18 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
             )}
         </>
       )}
+
+      {/* RENDER TUTORIAL OVERLAY IF ACTIVE */}
+      <AnimatePresence>
+          {showTutorial && (
+              <TutorialOverlay 
+                  onClose={() => setShowTutorial(false)}
+                  onStart={startSimulation}
+                  tokenCost={TOKEN_COST}
+                  audioStream={audioStream}
+              />
+          )}
+      </AnimatePresence>
     </div>
   );
 }
