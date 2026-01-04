@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, 
   BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock, 
-  Filter, AlertTriangle, LogIn, ChevronDown, LogOut, User, Info, Zap, Clock, Plus 
+  Filter, AlertTriangle, LogIn, ChevronDown, LogOut, User, Info, Zap, Clock, Plus, Menu, X 
 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
@@ -46,7 +46,9 @@ export default function Home() {
   // State quota daily cue card
   const [dailyCueQuotaStatus, setDailyCueQuotaStatus] = useState('allowed'); 
 
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  // MENU STATES
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // Desktop Dropdown
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Drawer
 
   const [practiceMode, setPracticeMode] = useState("cue-card"); 
   
@@ -214,6 +216,7 @@ export default function Home() {
 
   const handleLogoutClick = () => {
     setIsUserMenuOpen(false);
+    setIsMobileMenuOpen(false); // Close mobile menu too
     setGuiltMessage(GUILT_MESSAGES[Math.floor(Math.random() * GUILT_MESSAGES.length)]);
     setShowLogoutModal(true);
   };
@@ -224,8 +227,6 @@ export default function Home() {
   };
 
   const handleModeSwitch = (mode) => {
-    // Kita longgarkan logic switch tab agar user bisa melihat Hero Card (Teaser)
-    // Validasi ketat dilakukan saat user klik tombol "Start" di dalam card masing-masing
     setPracticeMode(mode);
     setAnalysisResult(null); 
   };
@@ -299,7 +300,7 @@ export default function Home() {
             </h2>
             
             <p className="text-slate-400 text-lg leading-relaxed">
-                Experience the real exam format. Complete Part 1, 2, and 3 in one go with our AI Examiner. Get a comprehensive Band 9.0 analysis.
+                Experience the real exam format. Complete Part 1, 2, and 3 in one go with our AI Examiner. Get a comprehensive Band 8.0 analysis.
             </p>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left my-8">
@@ -358,98 +359,225 @@ export default function Home() {
   );
 
   return (
-    // ✨✨✨ BACKGROUND: CLEAN CALM DARK GRADIENT (NO GRID/NOISE) ✨✨✨
     <main className="min-h-screen pb-20 px-4 bg-gradient-to-b from-[#0F1117] to-[#151824] selection:bg-blue-500/30 selection:text-blue-200 font-sans relative overflow-hidden">
       
       {/* Content Wrapper */}
       <div className="relative z-10">
 
-        {/* HEADER */}
-        <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4">
-            <div className="flex items-center gap-3">
-            <div className="relative w-32 h-10 md:w-40 md:h-12">
-                <Image src="/logo-white.png" alt="IELTS4our Logo" fill className="object-contain object-center md:object-left" priority />
+        {/* --- HEADER --- */}
+        <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4 relative">
+            {/* LOGO & DESKTOP NAV */}
+            <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                {/* HAMBURGER BUTTON (Mobile Only) */}
+                <button 
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="md:hidden p-2 text-slate-300 hover:text-white rounded-lg hover:bg-white/10"
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
+
+                <div className="relative w-32 h-10 md:w-40 md:h-12">
+                    <Image src="/logo-white.png" alt="IELTS4our Logo" fill className="object-contain object-center md:object-left" priority />
+                </div>
+                
+                {/* Desktop Link */}
+                <Link href="/about" className="hidden md:block ml-2 text-sm font-medium text-slate-400 hover:text-white transition-colors tracking-wide">Meet the Creator</Link>
+                
+                {/* BADGE PRO SUDAH DIHAPUS DARI SINI */}
+
+                {/* Spacer untuk centering logo di mobile */}
+                <div className="w-8 md:hidden"></div> 
             </div>
-            <Link href="/about" className="hidden md:block ml-2 text-sm font-medium text-slate-400 hover:text-white transition-colors tracking-wide">Meet the Creator</Link>
-            {isPremium && (
-                <span className="ml-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[10px] font-bold uppercase tracking-widest rounded-full">Pro</span>
-            )}
-            </div>
 
-          <div className="flex items-center gap-3">
-            {userProfile ? (
-                <>
-                    {/* 1. TOKEN BADGE (Tampilan Saldo) */}
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-full mr-1">
-                        <span className="text-yellow-400 text-sm">🪙</span>
-                        <span className="text-slate-200 text-xs font-bold tabular-nums">
-                            {userProfile.token_balance || 0}
-                        </span>
-                    </div>
+            {/* DESKTOP RIGHT ACTIONS */}
+            <div className="hidden md:flex items-center gap-3">
+                {userProfile ? (
+                    <>
+                        {/* TOKEN BADGE */}
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-full mr-1">
+                            <span className="text-yellow-400 text-sm">🪙</span>
+                            <span className="text-slate-200 text-xs font-bold tabular-nums">
+                                {userProfile.token_balance || 0}
+                            </span>
+                        </div>
 
-                    {/* 2. TOMBOL TOP UP (Selalu Muncul untuk User Login) */}
-                    <motion.button 
-                        whileHover={{ scale: 1.05 }} 
-                        whileTap={{ scale: 0.95 }} 
-                        onClick={() => setShowUpgradeModal(true)} 
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full text-xs md:text-sm flex items-center gap-1 transition-all shadow-lg shadow-blue-500/20"
-                    >
-                        <Plus className="w-4 h-4" /> Top Up
-                    </motion.button>
-
-                    {/* 3. USER MENU DROPDOWN (Existing) */}
-                    <div className="relative" ref={userMenuRef}>
+                        {/* TOMBOL TOP UP */}
                         <motion.button 
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                            className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-200 transition-all text-sm font-medium flex items-center gap-2"
+                            whileHover={{ scale: 1.05 }} 
+                            whileTap={{ scale: 0.95 }} 
+                            onClick={() => setShowUpgradeModal(true)} 
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full text-xs md:text-sm flex items-center gap-1 transition-all shadow-lg shadow-blue-500/20"
                         >
-                            <User className="w-4 h-4 text-blue-400" />
-                            <span className="max-w-[80px] truncate hidden md:block">{userProfile.email?.split('@')[0]}</span>
-                            <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`} />
+                            <Plus className="w-4 h-4" /> Top Up
                         </motion.button>
-                        
-                        {/* Dropdown Content */}
-                        <AnimatePresence>
-                            {isUserMenuOpen && (
-                                <motion.div 
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute right-0 mt-2 w-56 bg-[#1A1D26] border border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 z-50"
-                                >
-                                    <div className="px-4 py-3 border-b border-slate-800">
-                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">My Wallet</p>
-                                        <div className="flex justify-between items-center">
-                                            <p className="text-xs font-bold text-white">Token Balance</p>
-                                            <p className="text-sm font-bold text-yellow-400">{userProfile.token_balance || 0} 🪙</p>
-                                        </div>
+
+                        {/* USER DROPDOWN (Desktop) */}
+                        <div className="relative" ref={userMenuRef}>
+                            <motion.button 
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-200 transition-all text-sm font-medium flex items-center gap-2"
+                            >
+                                {/* LOGIKA FOTO PROFIL BARU */}
+                                {userProfile?.user_metadata?.avatar_url ? (
+                                    <div className="relative w-5 h-5 rounded-full overflow-hidden border border-slate-600">
+                                        <Image src={userProfile.user_metadata.avatar_url} alt="Profile" fill className="object-cover" />
                                     </div>
-                                    <Link href="/progress" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-slate-300 hover:text-white transition-colors">
-                                        <BarChart3 className="w-4 h-4 text-blue-400" /> My Progress
-                                    </Link>
-                                    <Link href="/mission" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-slate-300 hover:text-white transition-colors">
-                                        <Info className="w-4 h-4 text-blue-400" /> Why Speaking?
-                                    </Link>
-                                    <div className="h-px bg-slate-800 my-1"></div>
-                                    <button onClick={handleLogoutClick} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-sm text-slate-400 hover:text-red-400 transition-colors text-left">
-                                        <LogOut className="w-4 h-4" /> Logout
-                                    </button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </>
-            ) : (
-                <Link href="/auth">
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors text-xs font-bold">Login</motion.button>
-                </Link>
-            )}
+                                ) : (
+                                    <User className="w-4 h-4 text-blue-400" />
+                                )}
+                                
+                                <span className="max-w-[80px] truncate">{userProfile.email?.split('@')[0]}</span>
+                                <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`} />
+                            </motion.button>
+                            
+                            <AnimatePresence>
+                                {isUserMenuOpen && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute right-0 mt-2 w-56 bg-[#1A1D26] border border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 z-50"
+                                    >
+                                        <div className="px-4 py-3 border-b border-slate-800">
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-1">My Wallet</p>
+                                            <div className="flex justify-between items-center">
+                                                <p className="text-xs font-bold text-white">Token Balance</p>
+                                                <p className="text-sm font-bold text-yellow-400">{userProfile.token_balance || 0} 🪙</p>
+                                            </div>
+                                        </div>
+                                        <Link href="/progress" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-slate-300 hover:text-white transition-colors">
+                                            <BarChart3 className="w-4 h-4 text-blue-400" /> My Progress
+                                        </Link>
+                                        <Link href="/mission" className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-sm text-slate-300 hover:text-white transition-colors">
+                                            <Info className="w-4 h-4 text-blue-400" /> Why Speaking?
+                                        </Link>
+                                        <div className="h-px bg-slate-800 my-1"></div>
+                                        <button onClick={handleLogoutClick} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-sm text-slate-400 hover:text-red-400 transition-colors text-left">
+                                            <LogOut className="w-4 h-4" /> Logout
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </>
+                ) : (
+                    <Link href="/auth">
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-colors text-xs font-bold">Login</motion.button>
+                    </Link>
+                )}
             </div>
         </header>
 
-        {/* HERO SECTION */}
+        {/* --- MOBILE DRAWER MENU (OVERLAY) --- */}
+        <AnimatePresence>
+            {isMobileMenuOpen && (
+                <>
+                    {/* Backdrop */}
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+                    />
+                    
+                    {/* Drawer */}
+                    <motion.div
+                        initial={{ x: "-100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "-100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        className="fixed inset-y-0 left-0 w-[280px] bg-[#1A1D26] border-r border-slate-800 z-50 p-6 flex flex-col md:hidden"
+                    >
+                        {/* Drawer Header */}
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="relative w-28 h-8">
+                                <Image src="/logo-white.png" alt="Logo" fill className="object-contain object-left" />
+                            </div>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-white bg-white/5 rounded-full">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Drawer Body */}
+                        <div className="flex-1 space-y-6 overflow-y-auto">
+                            {userProfile ? (
+                                <>
+                                    {/* User Info Card */}
+                                    <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            {/* LOGIKA FOTO PROFIL BARU (MOBILE) */}
+                                            {userProfile?.user_metadata?.avatar_url ? (
+                                                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-slate-600">
+                                                    <Image src={userProfile.user_metadata.avatar_url} alt="Profile" fill className="object-cover" />
+                                                </div>
+                                            ) : (
+                                                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                                    {userProfile.email?.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                            
+                                            <div>
+                                                <p className="text-sm font-bold text-white truncate max-w-[140px]">{userProfile.email?.split('@')[0]}</p>
+                                                {/* BADGE PRO SUDAH DIHAPUS DARI SINI */}
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg">
+                                            <span className="text-xs text-slate-400">Balance</span>
+                                            <span className="text-sm font-bold text-yellow-400">{userProfile.token_balance || 0} Tokens</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => { setShowUpgradeModal(true); setIsMobileMenuOpen(false); }}
+                                            className="w-full mt-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2"
+                                        >
+                                            <Plus className="w-3 h-3" /> Top Up Tokens
+                                        </button>
+                                    </div>
+
+                                    {/* Menu Links */}
+                                    <nav className="space-y-2">
+                                        <Link href="/progress" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <BarChart3 className="w-5 h-5 text-blue-400" /> My Progress
+                                        </Link>
+                                        <Link href="/about" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <User className="w-5 h-5 text-blue-400" /> Meet the Creator
+                                        </Link>
+                                        <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <Info className="w-5 h-5 text-blue-400" /> Why Speaking?
+                                        </Link>
+                                        <Link href="/faq" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <BookOpen className="w-5 h-5 text-blue-400" /> FAQ
+                                        </Link>
+                                    </nav>
+                                </>
+                            ) : (
+                                <div className="text-center">
+                                    <p className="text-slate-400 text-sm mb-4">Login to save your progress and access premium features.</p>
+                                    <Link href="/auth">
+                                        <button className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Login / Register</button>
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Drawer Footer */}
+                        {userProfile && (
+                            <div className="pt-6 border-t border-slate-800">
+                                <button onClick={handleLogoutClick} className="w-full flex items-center justify-center gap-2 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors font-medium">
+                                    <LogOut className="w-5 h-5" /> Sign Out
+                                </button>
+                            </div>
+                        )}
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+
+        {/* ... (SISANYA TETAP SAMA) ... */}
+        {/* HERO, UI TAB, CONTENT, FOOTER - TIDAK BERUBAH */}
+        
         <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
             <Link href="/mission">
             <motion.div
@@ -472,7 +600,6 @@ export default function Home() {
             </p>
         </div>
 
-        {/* UI TAB SWITCHER (Clean Solid) */}
         <div className="max-w-md mx-auto mb-12 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
             <button onClick={() => handleModeSwitch("cue-card")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "cue-card" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
                 <Mic2 className="w-3.5 h-3.5" /> Cue Card
@@ -485,23 +612,15 @@ export default function Home() {
             </button>
         </div>
 
-        {/* CONTENT AREA */}
         <div className="max-w-4xl mx-auto space-y-12">
             <motion.div initial={{ scale: 0.99, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
             
-            {/* --- DISPLAY BASED ON MODE --- */}
-            
-            {/* 1. FULL SIMULATION HERO */}
             {practiceMode === "full-simulation" && <PremiumHeroCard />}
-
-            {/* 2. QUICK TEST HERO */}
             {practiceMode === "mock-interview" && <QuickTestHeroCard />}
 
-            {/* 3. CUE CARD RECORDER (EXISTING LOGIC) */}
             {practiceMode === "cue-card" && (
                 <div className="relative bg-[#1A1D26] border border-slate-800 rounded-3xl p-8 md:p-12 overflow-hidden min-h-[500px] flex flex-col justify-center shadow-xl">
                 
-                {/* MODE 1: CUE CARD */}
                 {!analysisResult && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                         <div className="flex justify-between items-start mb-8 border-b border-slate-800 pb-6">
@@ -540,7 +659,6 @@ export default function Home() {
                     </motion.div>
                 )}
 
-                {/* RESULT AREA FOR CUE CARD */}
                 {analysisResult && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <div className="flex justify-between items-center mb-6">
