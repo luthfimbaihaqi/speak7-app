@@ -168,7 +168,7 @@ export default function AuthPage() {
                         <>
                             <button 
                                 onClick={handleGoogleLogin}
-                                className="w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition-all mb-6 group shadow-lg"
+                                className="w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition-all mb-3 group shadow-lg"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -178,6 +178,11 @@ export default function AuthPage() {
                                 </svg>
                                 {mode === "register" ? "Sign up with Google" : "Continue with Google"}
                             </button>
+
+                            {/* 🔥 MARKETING TEXT TAMBAHAN */}
+                            <p className="text-center text-[10px] text-slate-400 mb-6">
+                                New here? Sign up and get <span className="text-yellow-400 font-bold">2 FREE tokens</span> instantly.
+                            </p>
 
                             <div className="relative flex py-2 items-center mb-6">
                                 <div className="flex-grow border-t border-white/10"></div>
