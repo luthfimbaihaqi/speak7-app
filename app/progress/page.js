@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2, Trash2, 
-  Filter, Flame, Sparkles, Zap, Trophy, Star, Target, Plus 
+  Filter, Flame, Sparkles, Zap, Trophy, Star, Target, Plus, LogIn 
 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
 import ScoreCard from "@/components/ScoreCard";
@@ -48,6 +48,7 @@ export default function ProgressPage() {
                 setIsPremium(isStillValid); 
             }
         }
+        // Panggil fetchHistory dengan userId (bisa null jika guest)
         fetchHistory(userId);
     }
     checkUserStatus();
@@ -72,36 +73,79 @@ export default function ProgressPage() {
     }
   }, [filterType, history]);
 
+  // --- 🔥 UPDATED: FETCH LOGIC (NO LOCAL STORAGE FOR LOGGED IN USERS) ---
   const fetchHistory = async (userId) => {
     try {
         let combinedData = [];
 
-        // A. DATA CLOUD
         if (userId) {
-            const { data, error } = await supabase
+            // --- SKENARIO 1: USER LOGIN (CLOUD ONLY) ---
+            // Kita sengaja TIDAK mengambil localStorage di sini agar data bersih.
+            
+            // 1. Fetch Table Lama (Cue Cards)
+            const practicePromise = supabase
                 .from('practice_history')
                 .select('*')
                 .eq('user_id', userId);
 
-            if (!error && data) combinedData = [...data];
-        }
+            // 2. Fetch Table Baru (Quick/Full Tests)
+            const sessionPromise = supabase
+                .from('exam_sessions')
+                .select('*')
+                .eq('user_id', userId)
+                .not('score_data', 'is', null);
 
-        // B. DATA LOKAL
-        const localRaw = localStorage.getItem("ielts4our_history");
-        if (localRaw) {
-            const localData = JSON.parse(localRaw);
-            const normalizedLocal = localData.map(item => ({
-                id: item.id, 
-                user_id: 'local_device',
-                topic: item.topic,
-                overall_score: item.overall, 
-                created_at: new Date(item.id).toISOString(), 
-                full_feedback: item, 
-                is_local: true 
+            const [practiceRes, sessionRes] = await Promise.all([practicePromise, sessionPromise]);
+
+            // Normalisasi Data Practice History
+            const practiceData = (practiceRes.data || []).map(item => ({
+                ...item,
+                source_table: 'practice_history'
             }));
-            combinedData = [...combinedData, ...normalizedLocal];
+
+            // Normalisasi Data Exam Sessions
+            const sessionData = (sessionRes.data || []).map(session => {
+                const scores = session.score_data || {};
+                let topicLabel = "Mock Interview";
+                if (session.mode === 'full') topicLabel = "FULL EXAM: Complete Simulation";
+                else if (session.mode === 'quick') topicLabel = "QUICK TEST: Part 3 Mock";
+
+                return {
+                    id: session.id,
+                    user_id: session.user_id,
+                    topic: topicLabel,
+                    overall_score: scores.overallBand || scores.overall || 0,
+                    full_feedback: {
+                        ...scores,
+                        overall: scores.overallBand || scores.overall,
+                        transcript: session.transcript_data ? JSON.stringify(session.transcript_data) : null
+                    },
+                    created_at: session.created_at,
+                    source_table: 'exam_sessions'
+                };
+            });
+
+            combinedData = [...practiceData, ...sessionData];
+
+        } else {
+            // --- SKENARIO 2: GUEST (LOCAL STORAGE ONLY) ---
+            const localRaw = localStorage.getItem("ielts4our_history");
+            if (localRaw) {
+                const localData = JSON.parse(localRaw);
+                const normalizedLocal = localData.map(item => ({
+                    id: item.id, 
+                    user_id: 'local_device',
+                    topic: item.topic,
+                    overall_score: item.overall, 
+                    created_at: new Date(item.id).toISOString(), 
+                    full_feedback: item, 
+                    is_local: true 
+                }));
+                combinedData = [...normalizedLocal];
+            }
         }
 
+        // Sort: Terbaru di atas
         combinedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         setHistory(combinedData);
     } catch (err) {
@@ -129,10 +173,17 @@ export default function ProgressPage() {
                 localStorage.setItem("ielts4our_history", JSON.stringify(newData));
             }
         } else {
+            // Cek hapus dari tabel mana
+            let tableName = 'practice_history'; // Default
+            if (item.source_table === 'exam_sessions') {
+                tableName = 'exam_sessions';
+            }
+
             const { error } = await supabase
-                .from('practice_history')
+                .from(tableName)
                 .delete()
                 .eq('id', item.id);
+            
             if (error) throw error;
         }
         setHistory(prev => prev.filter(h => h.id !== item.id));
@@ -155,7 +206,6 @@ export default function ProgressPage() {
 
   // --- HELPER VISUAL ---
   const getCleanTitle = (topic) => {
-      // Menghapus prefix untuk mendapatkan Judul Topik Asli
       return topic
         .replace("Mock Interview: ", "")
         .replace("FULL EXAM: ", "")
@@ -218,10 +268,31 @@ export default function ProgressPage() {
                 <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                     <BarChart3 className="w-8 h-8 text-slate-500" />
                 </div>
-                <p className="text-slate-400 mb-6">Belum ada riwayat latihan. Yuk mulai sekarang!</p>
-                <Link href="/" className="px-8 py-3 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-full transition-all shadow-lg hover:shadow-teal-500/20">
-                    Start Practice
-                </Link>
+                
+                {/* --- EMPTY STATE LOGIC --- */}
+                {userProfile ? (
+                    <>
+                        <p className="text-slate-400 mb-6">Belum ada riwayat latihan di Cloud. Yuk mulai sekarang!</p>
+                        <Link href="/" className="px-8 py-3 bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-full transition-all shadow-lg hover:shadow-teal-500/20">
+                            Start Practice
+                        </Link>
+                    </>
+                ) : (
+                    <>
+                        <p className="text-slate-400 mb-6">
+                            Belum ada riwayat latihan di perangkat ini.<br/>
+                            <span className="text-yellow-400 text-sm">Login untuk menyimpan & melihat history kamu di semua device.</span>
+                        </p>
+                        <div className="flex justify-center gap-4">
+                            <Link href="/" className="px-6 py-3 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-full transition-all">
+                                Try as Guest
+                            </Link>
+                            <Link href="/auth" className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all flex items-center gap-2 shadow-lg">
+                                <LogIn className="w-4 h-4" /> Login Now
+                            </Link>
+                        </div>
+                    </>
+                )}
              </div>
         ) : (
             <>
@@ -345,7 +416,7 @@ export default function ProgressPage() {
         )}
       </div>
 
-      {/* DETAIL MODAL (No Change needed, reusing logic) */}
+      {/* DETAIL MODAL (REUSED) */}
       <AnimatePresence>
         {selectedItem && (
             <motion.div 

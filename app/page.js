@@ -175,6 +175,8 @@ export default function Home() {
   };
 
   const handleAnalysisComplete = async (data) => {
+    // --- STREAK LOGIC (CLIENT SIDE ONLY) ---
+    // Streak logic masih aman pakai local storage karena hanya kosmetik UI
     const todayStr = new Date().toDateString();
     const lastPracticeDate = localStorage.getItem("ielts4our_last_date");
     let currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
@@ -193,6 +195,7 @@ export default function Home() {
             const { audioUrl, audioPlaylist, ...dataToSave } = finalResult;
 
             if (userProfile) {
+                // --- 🔥 UPDATED: USER LOGIN -> SIMPAN KE DB ONLY ---
                 await supabase.from('practice_history').insert({
                     user_id: userProfile.id,
                     topic: dataToSave.topic,
@@ -203,7 +206,9 @@ export default function Home() {
                     pronunciation: dataToSave.pronunciation,
                     full_feedback: dataToSave 
                 });
+                console.log("Saved to DB");
             } else {
+                // --- 🔥 UPDATED: GUEST -> SIMPAN KE LOCAL ONLY ---
                 const historyItem = {
                     id: Date.now(),
                     date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
@@ -212,6 +217,7 @@ export default function Home() {
                 const existingHistory = JSON.parse(localStorage.getItem("ielts4our_history") || "[]");
                 const updatedHistory = [...existingHistory, historyItem].slice(-30); 
                 localStorage.setItem("ielts4our_history", JSON.stringify(updatedHistory));
+                console.log("Saved to LocalStorage (Guest)");
             }
         } catch (err) {
             console.error("Save Error:", err);
