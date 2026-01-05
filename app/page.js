@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, Suspense } from "react"; // TAMBAHAN: Import Suspense
+import React, { useState, useEffect, useRef, Suspense } from "react"; 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation"; 
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,19 +34,16 @@ function WelcomeListener({ setShowWelcomeModal }) {
     }
   }, [searchParams, setShowWelcomeModal]);
 
-  return null; // Komponen ini tidak menampilkan visual apa-apa
+  return null;
 }
 
 // --- KOMPONEN UTAMA ---
 export default function Home() {
   const router = useRouter(); 
-  // const searchParams = useSearchParams(); // HAPUS INI DARI SINI (Pindah ke WelcomeListener)
   const heroRef = useRef(null); 
   const userMenuRef = useRef(null);
 
   const [dailyCue, setDailyCue] = useState(CUE_CARDS[0]);
-  
-  // Masih disimpan untuk kebutuhan internal state, meski UI-nya pindah
   const [part3Topic, setPart3Topic] = useState(PART3_TOPICS[0]);
   const [difficultyFilter, setDifficultyFilter] = useState("any");
 
@@ -66,8 +63,8 @@ export default function Home() {
   const [dailyCueQuotaStatus, setDailyCueQuotaStatus] = useState('allowed'); 
 
   // MENU STATES
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // Desktop Dropdown
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Drawer
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
   const [practiceMode, setPracticeMode] = useState("cue-card"); 
   
@@ -79,8 +76,6 @@ export default function Home() {
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false, type: "success", title: "", message: "", actionLabel: "", onAction: null
   });
-
-  // (LOGIKA DETEKSI WELCOME BONUS SUDAH PINDAH KE WelcomeListener DI BAWAH)
 
   // --- 1. CEK STATUS USER ---
   useEffect(() => {
@@ -96,9 +91,7 @@ export default function Home() {
                 .single();
             
             if (profile) {
-                // Merge token info ke userProfile state untuk UI
                 setUserProfile(prev => ({ ...prev, ...profile }));
-
                 const isStillValid = profile.is_premium && (profile.premium_expiry > Date.now());
                 setIsPremium(isStillValid);
 
@@ -140,7 +133,6 @@ export default function Home() {
         const randomIndex = Math.floor(Math.random() * maxIndex);
         setDailyCue(CUE_CARDS[randomIndex]);
     } 
-    // Logic randomize untuk Quick Test sudah dipindah ke backend/simulation
     setTimeout(() => setIsRotating(false), 500);
   };
 
@@ -180,7 +172,6 @@ export default function Home() {
             setDailyCueQuotaStatus('guest_limit');
         }
     } 
-    // Logic konsumsi token Quick/Full Test sekarang ditangani di /app/simulation
   };
 
   const handleAnalysisComplete = async (data) => {
@@ -238,7 +229,7 @@ export default function Home() {
 
   const handleLogoutClick = () => {
     setIsUserMenuOpen(false);
-    setIsMobileMenuOpen(false); // Close mobile menu too
+    setIsMobileMenuOpen(false); 
     setGuiltMessage(GUILT_MESSAGES[Math.floor(Math.random() * GUILT_MESSAGES.length)]);
     setShowLogoutModal(true);
   };
@@ -257,31 +248,27 @@ export default function Home() {
     if (mode === 'full-simulation') {
         handleModeSwitch('full-simulation');
     } else if (mode === 'mock-interview' || mode === 'quick-test') {
-        handleModeSwitch('mock-interview'); // Maps to Quick Test UI
+        handleModeSwitch('mock-interview'); 
     } else {
         handleModeSwitch(mode);
     }
     if (heroRef.current) heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // --- NEW: QUICK TEST HERO CARD ---
+  // --- COMPONENT RENDERERS ---
   const QuickTestHeroCard = () => (
     <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 min-h-[450px] flex flex-col justify-center items-center text-center border border-purple-500/30 shadow-lg bg-[#1A1D26]">
         <div className="relative z-10 space-y-6 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-bold uppercase tracking-widest mb-2">
                 <Users className="w-3 h-3" /> Popular Feature
             </div>
-            
             <h2 className="text-4xl md:text-5xl font-bold text-[#E6E8EE] tracking-tight leading-tight">
-                Interactive <br/> 
-                <span className="text-purple-400">Quick Test</span>
+                Interactive <br/> <span className="text-purple-400">Quick Test</span>
             </h2>
-            
             <p className="text-slate-400 text-lg leading-relaxed">
                 Short on time? Jump straight to <strong>Part 3 (Discussion)</strong>. <br/>
                 Experience a realistic dialogue with AI Examiner in just 5 minutes.
             </p>
-
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left my-8">
                 {[
                     { val: "3-5m", lbl: "Duration", col: "text-purple-400" },
@@ -295,36 +282,29 @@ export default function Home() {
                     </div>
                 ))}
             </div>
-
             <Link href="/simulation?mode=quick">
                 <button className="group relative inline-flex items-center gap-3 px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-purple-500/20 hover:-translate-y-1">
                     <span>Start Quick Test</span>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
             </Link>
-            
             <p className="text-xs text-slate-500 mt-4">Requires 1 Token per session.</p>
         </div>
     </div>
   );
 
-  // --- PREMIUM HERO CARD (Full Test) ---
   const PremiumHeroCard = () => (
     <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 min-h-[450px] flex flex-col justify-center items-center text-center border border-slate-700/50 shadow-lg bg-[#1A1D26]">
         <div className="relative z-10 space-y-6 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-widest mb-2">
                 <Sparkles className="w-3 h-3" /> Premium Feature
             </div>
-            
             <h2 className="text-4xl md:text-5xl font-bold text-[#E6E8EE] tracking-tight leading-tight">
-                Full IELTS Speaking <br/> 
-                <span className="text-blue-400">Simulation Test</span>
+                Full IELTS Speaking <br/> <span className="text-blue-400">Simulation Test</span>
             </h2>
-            
             <p className="text-slate-400 text-lg leading-relaxed">
                 Experience the real exam format. Complete Part 1, 2, and 3 in one go with our AI Examiner. Get a comprehensive Band 8.0 analysis.
             </p>
-
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left my-8">
                 {[
                     { val: "15m", lbl: "Duration", col: "text-blue-400" },
@@ -338,14 +318,12 @@ export default function Home() {
                     </div>
                 ))}
             </div>
-
             <Link href="/simulation?mode=full">
                 <button className="group relative inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-blue-500/20 hover:-translate-y-1">
                     <span>Enter Exam Room</span>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
             </Link>
-            
             <p className="text-xs text-slate-500 mt-4">Requires 3 Tokens per session.</p>
         </div>
     </div>
@@ -362,7 +340,6 @@ export default function Home() {
         <p className="text-slate-400 text-sm mb-6 max-w-xs leading-relaxed">
             {type === 'guest_limit' ? "You've used your 1x free guest trial." : "You've used your 2x free daily limit."}
         </p>
-        
         {type === 'guest_limit' ? (
             <Link href="/auth">
                 <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all flex items-center gap-2">
@@ -370,10 +347,7 @@ export default function Home() {
                 </button>
             </Link>
         ) : (
-            <button 
-                onClick={() => setShowUpgradeModal(true)}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all flex items-center gap-2 shadow-lg"
-            >
+            <button onClick={() => setShowUpgradeModal(true)} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all flex items-center gap-2 shadow-lg">
                 <Crown className="w-4 h-4" /> Upgrade Unlimited
             </button>
         )}
@@ -386,7 +360,7 @@ export default function Home() {
       {/* Content Wrapper */}
       <div className="relative z-10">
 
-        {/* --- 🔥 FIX: SUSPENSE BOUNDARY UNTUK URL PARAMS --- */}
+        {/* --- SUSPENSE BOUNDARY UNTUK URL PARAMS --- */}
         <Suspense fallback={null}>
             <WelcomeListener setShowWelcomeModal={setShowWelcomeModal} />
         </Suspense>
@@ -395,22 +369,13 @@ export default function Home() {
         <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4 relative">
             {/* LOGO & DESKTOP NAV */}
             <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
-                {/* HAMBURGER BUTTON (Mobile Only) */}
-                <button 
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="md:hidden p-2 text-slate-300 hover:text-white rounded-lg hover:bg-white/10"
-                >
+                <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 text-slate-300 hover:text-white rounded-lg hover:bg-white/10">
                     <Menu className="w-6 h-6" />
                 </button>
-
                 <div className="relative w-32 h-10 md:w-40 md:h-12">
                     <Image src="/logo-white.png" alt="IELTS4our Logo" fill className="object-contain object-center md:object-left" priority />
                 </div>
-                
-                {/* Desktop Link */}
                 <Link href="/about" className="hidden md:block ml-2 text-sm font-medium text-slate-400 hover:text-white transition-colors tracking-wide">Meet the Creator</Link>
-                
-                {/* Spacer untuk centering logo di mobile */}
                 <div className="w-8 md:hidden"></div> 
             </div>
 
@@ -418,15 +383,10 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-3">
                 {userProfile ? (
                     <>
-                        {/* TOKEN BADGE */}
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-full mr-1">
                             <span className="text-yellow-400 text-sm">🪙</span>
-                            <span className="text-slate-200 text-xs font-bold tabular-nums">
-                                {userProfile.token_balance || 0}
-                            </span>
+                            <span className="text-slate-200 text-xs font-bold tabular-nums">{userProfile.token_balance || 0}</span>
                         </div>
-
-                        {/* TOMBOL TOP UP */}
                         <motion.button 
                             whileHover={{ scale: 1.05 }} 
                             whileTap={{ scale: 0.95 }} 
@@ -435,8 +395,6 @@ export default function Home() {
                         >
                             <Plus className="w-4 h-4" /> Top Up
                         </motion.button>
-
-                        {/* USER DROPDOWN (Desktop) */}
                         <div className="relative" ref={userMenuRef}>
                             <motion.button 
                                 whileHover={{ scale: 1.02 }}
@@ -444,7 +402,6 @@ export default function Home() {
                                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                                 className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-200 transition-all text-sm font-medium flex items-center gap-2"
                             >
-                                {/* LOGIKA FOTO PROFIL BARU */}
                                 {userProfile?.user_metadata?.avatar_url ? (
                                     <div className="relative w-5 h-5 rounded-full overflow-hidden border border-slate-600">
                                         <Image src={userProfile.user_metadata.avatar_url} alt="Profile" fill className="object-cover" />
@@ -452,11 +409,9 @@ export default function Home() {
                                 ) : (
                                     <User className="w-4 h-4 text-blue-400" />
                                 )}
-                                
                                 <span className="max-w-[80px] truncate">{userProfile.email?.split('@')[0]}</span>
                                 <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`} />
                             </motion.button>
-                            
                             <AnimatePresence>
                                 {isUserMenuOpen && (
                                     <motion.div 
@@ -499,7 +454,6 @@ export default function Home() {
         <AnimatePresence>
             {isMobileMenuOpen && (
                 <>
-                    {/* Backdrop */}
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -508,7 +462,6 @@ export default function Home() {
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
                     />
                     
-                    {/* Drawer */}
                     <motion.div
                         initial={{ x: "-100%" }}
                         animate={{ x: 0 }}
@@ -516,7 +469,6 @@ export default function Home() {
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
                         className="fixed inset-y-0 left-0 w-[280px] bg-[#1A1D26] border-r border-slate-800 z-50 p-6 flex flex-col md:hidden"
                     >
-                        {/* Drawer Header */}
                         <div className="flex items-center justify-between mb-8">
                             <div className="relative w-28 h-8">
                                 <Image src="/logo-white.png" alt="Logo" fill className="object-contain object-left" />
@@ -526,14 +478,12 @@ export default function Home() {
                             </button>
                         </div>
 
-                        {/* Drawer Body */}
                         <div className="flex-1 space-y-6 overflow-y-auto">
                             {userProfile ? (
                                 <>
-                                    {/* User Info Card */}
+                                    {/* LOGGED IN USER VIEW */}
                                     <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
                                         <div className="flex items-center gap-3 mb-3">
-                                            {/* LOGIKA FOTO PROFIL BARU (MOBILE) */}
                                             {userProfile?.user_metadata?.avatar_url ? (
                                                 <div className="relative w-10 h-10 rounded-full overflow-hidden border border-slate-600">
                                                     <Image src={userProfile.user_metadata.avatar_url} alt="Profile" fill className="object-cover" />
@@ -543,10 +493,8 @@ export default function Home() {
                                                     {userProfile.email?.charAt(0).toUpperCase()}
                                                 </div>
                                             )}
-                                            
                                             <div>
                                                 <p className="text-sm font-bold text-white truncate max-w-[140px]">{userProfile.email?.split('@')[0]}</p>
-                                                {/* BADGE PRO SUDAH DIHAPUS DARI SINI */}
                                             </div>
                                         </div>
                                         <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg">
@@ -561,7 +509,6 @@ export default function Home() {
                                         </button>
                                     </div>
 
-                                    {/* Menu Links */}
                                     <nav className="space-y-2">
                                         <Link href="/progress" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <BarChart3 className="w-5 h-5 text-blue-400" /> My Progress
@@ -578,16 +525,44 @@ export default function Home() {
                                     </nav>
                                 </>
                             ) : (
-                                <div className="text-center">
-                                    <p className="text-slate-400 text-sm mb-4">Login to save your progress and access premium features.</p>
-                                    <Link href="/auth">
-                                        <button className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Login / Register</button>
-                                    </Link>
+                                /* GUEST VIEW - REVISED */
+                                <div className="flex flex-col h-full">
+                                    <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50 text-center mb-6">
+                                        <div className="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <LogIn className="w-6 h-6" />
+                                        </div>
+                                        <h3 className="text-white font-bold mb-1">Guest User</h3>
+                                        <p className="text-slate-400 text-xs mb-4">Login to save progress & get 2 free tokens.</p>
+                                        
+                                        <Link href="/auth">
+                                            <button className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-all shadow-lg shadow-blue-500/20">
+                                                Login / Register
+                                            </button>
+                                        </Link>
+                                        <p className="text-[10px] text-slate-500 mt-2">
+                                            New? Get <span className="text-yellow-400 font-bold">2 Free Tokens</span>
+                                        </p>
+                                    </div>
+
+                                    {/* Divider */}
+                                    <div className="h-px bg-slate-800 mb-6"></div>
+
+                                    {/* Public Menu */}
+                                    <nav className="space-y-2">
+                                        <Link href="/about" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <User className="w-5 h-5 text-blue-400" /> Meet the Creator
+                                        </Link>
+                                        <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <Info className="w-5 h-5 text-blue-400" /> Why Speaking?
+                                        </Link>
+                                        <Link href="/faq" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <BookOpen className="w-5 h-5 text-blue-400" /> FAQ
+                                        </Link>
+                                    </nav>
                                 </div>
                             )}
                         </div>
 
-                        {/* Drawer Footer */}
                         {userProfile && (
                             <div className="pt-6 border-t border-slate-800">
                                 <button onClick={handleLogoutClick} className="w-full flex items-center justify-center gap-2 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors font-medium">
@@ -600,7 +575,6 @@ export default function Home() {
             )}
         </AnimatePresence>
 
-        {/* ... (SISANYA TETAP SAMA SEPERTI KODE SEBELUMNYA) ... */}
         {/* HERO, UI TAB, CONTENT, FOOTER - TIDAK BERUBAH */}
         
         <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
