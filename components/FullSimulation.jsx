@@ -204,7 +204,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const TOKEN_COST = mode === "quick" ? 1 : 3;
   const TITLE = mode === "quick" ? "Quick Test Simulation" : "Full Speaking Simulation";
   const SUBTITLE = mode === "quick" ? "Interactive Part 3 Discussion" : "Complete IELTS Speaking Test";
-  const DURATION_TEXT = mode === "quick" ? "3-5 Mins" : "15-20 Mins";
+  const DURATION_TEXT = mode === "quick" ? "3-5 Mins" : "10-15 Mins";
 
   // --- STATE UTAMA ---
   const [status, setStatus] = useState("idle"); 
