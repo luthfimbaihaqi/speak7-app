@@ -381,7 +381,7 @@ export default function Home() {
                 <div className="relative w-32 h-10 md:w-40 md:h-12">
                     <Image src="/logo-white.png" alt="IELTS4our Logo" fill className="object-contain object-center md:object-left" priority />
                 </div>
-                <Link href="/about" className="hidden md:block ml-2 text-sm font-medium text-slate-400 hover:text-white transition-colors tracking-wide">Meet the Creator</Link>
+                {/* REMOVED MEET THE CREATOR LINK */}
                 <div className="w-8 md:hidden"></div> 
             </div>
 
@@ -519,9 +519,6 @@ export default function Home() {
                                         <Link href="/progress" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <BarChart3 className="w-5 h-5 text-blue-400" /> My Progress
                                         </Link>
-                                        <Link href="/about" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <User className="w-5 h-5 text-blue-400" /> Meet the Creator
-                                        </Link>
                                         <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <Info className="w-5 h-5 text-blue-400" /> Why Speaking?
                                         </Link>
@@ -555,9 +552,6 @@ export default function Home() {
 
                                     {/* Public Menu */}
                                     <nav className="space-y-2">
-                                        <Link href="/about" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <User className="w-5 h-5 text-blue-400" /> Meet the Creator
-                                        </Link>
                                         <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <Info className="w-5 h-5 text-blue-400" /> Why Speaking?
                                         </Link>
@@ -746,7 +740,7 @@ export default function Home() {
         <FAQSection isTeaser={true} />
 
         <footer className="text-center mt-24 pb-10 text-slate-500 text-xs md:text-sm border-t border-slate-800 pt-8">
-            <p className="mb-4">&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-blue-400 transition-colors">Luthfi Baihaqi</Link>.</p>
+            <p className="mb-4">&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-blue-400 transition-colors">IELTS 4our</Link>.</p>
             <p><Link href="/terms" className="underline decoration-slate-700 hover:decoration-blue-400 hover:text-blue-400 transition-all">Terms & Conditions</Link></p>
         </footer>
       </div>
