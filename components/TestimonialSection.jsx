@@ -51,7 +51,7 @@ export default function TestimonialSection() {
       if (scrollContainer && !isInteracting && !isDragging) {
         
         // Kecepatan adaptif: Lebih lambat di HP (0.3) agar mudah dibaca, normal di Desktop (0.5)
-        const speed = window.innerWidth < 768 ? 0.3 : 0.5;
+        const speed = window.innerWidth < 768 ? 1.0 : 1.0;
         scrollAccumulator.current += speed; 
         
         if (scrollAccumulator.current >= 1) {
