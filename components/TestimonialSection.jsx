@@ -11,12 +11,14 @@ export default function TestimonialSection() {
   
   // Referensi dan state untuk interaksi gulir
   const scrollRef = useRef(null);
-  const scrollAccumulator = useRef(0); // "Celengan" untuk menyimpan nilai desimal (Sub-pixel rendering)
+  const scrollAccumulator = useRef(0); 
   
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  
+  // State tunggal untuk mendeteksi kursor (desktop) dan sentuhan jari (mobile)
+  const [isInteracting, setIsInteracting] = useState(false); 
 
   useEffect(() => {
     async function fetchTestimonials() {
@@ -39,26 +41,26 @@ export default function TestimonialSection() {
     fetchTestimonials();
   }, []);
 
-  // Logika putaran otomatis (Auto-scroll Marquee)
+  // Logika putaran otomatis (Auto-scroll Marquee) untuk Desktop & Mobile
   useEffect(() => {
     let animationFrameId;
     const scrollContainer = scrollRef.current;
 
     const scroll = () => {
-      // Hanya berjalan jika tidak sedang di-hover, tidak di-drag, dan pada layar desktop
-      if (scrollContainer && !isHovered && !isDragging && window.innerWidth >= 768) {
+      // Berjalan terus asalkan tidak sedang disentuh, di-hover, atau di-drag
+      if (scrollContainer && !isInteracting && !isDragging) {
         
-        // Tambahkan kecepatan ke dalam "celengan"
-        scrollAccumulator.current += 0.5; // Kecepatan gulir
+        // Kecepatan adaptif: Lebih lambat di HP (0.3) agar mudah dibaca, normal di Desktop (0.5)
+        const speed = window.innerWidth < 768 ? 0.3 : 0.5;
+        scrollAccumulator.current += speed; 
         
-        // Jika celengan sudah mencapai angka bulat 1 piksel atau lebih
         if (scrollAccumulator.current >= 1) {
           const scrollAmount = Math.floor(scrollAccumulator.current);
-          scrollContainer.scrollLeft += scrollAmount; // Geser layar
-          scrollAccumulator.current -= scrollAmount; // Kurangi celengan
+          scrollContainer.scrollLeft += scrollAmount; 
+          scrollAccumulator.current -= scrollAmount; 
         }
         
-        // Reset posisi ke 0 saat mencapai persis setengah jalan untuk ilusi putaran tanpa batas
+        // Reset posisi ke 0 saat mencapai setengah jalan
         if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) {
           scrollContainer.scrollLeft -= scrollContainer.scrollWidth / 2;
         }
@@ -69,9 +71,9 @@ export default function TestimonialSection() {
     animationFrameId = requestAnimationFrame(scroll);
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isHovered, isDragging, testimonials]);
+  }, [isInteracting, isDragging, testimonials]);
 
-  // Logika interaksi seret (Drag-to-scroll)
+  // Logika interaksi Mouse (Desktop Drag-to-scroll)
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setStartX(e.pageX - scrollRef.current.offsetLeft);
@@ -80,7 +82,7 @@ export default function TestimonialSection() {
 
   const handleMouseLeave = () => {
     setIsDragging(false);
-    setIsHovered(false);
+    setIsInteracting(false);
   };
 
   const handleMouseUp = () => {
@@ -91,7 +93,7 @@ export default function TestimonialSection() {
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // Sensitivitas tarikan
+    const walk = (x - startX) * 1.5; 
     scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
@@ -110,9 +112,6 @@ export default function TestimonialSection() {
     return null;
   }
 
-  // --- LOGIKA PENGGANDAAN DATA DINAMIS ---
-  // Pastikan minimal ada 6 kartu agar bisa memicu scroll, lalu digandakan 2x lipat 
-  // agar titik reset (scrollWidth / 2) benar-benar simetris sempurna.
   let baseData = [...testimonials];
   if (baseData.length > 0) {
     while (baseData.length < 6) {
@@ -134,18 +133,23 @@ export default function TestimonialSection() {
         </p>
       </div>
 
-      {/* Kontainer Gulir */}
       <div 
         className="w-full overflow-hidden"
-        onMouseEnter={() => setIsHovered(true)}
+        // Sensor Desktop (Kursor)
+        onMouseEnter={() => setIsInteracting(true)}
         onMouseLeave={handleMouseLeave}
+        // Sensor Mobile (Jari)
+        onTouchStart={() => setIsInteracting(true)}
+        onTouchEnd={() => setIsInteracting(false)}
+        onTouchCancel={() => setIsInteracting(false)}
       >
         <div
           ref={scrollRef}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
-          className={`flex gap-6 px-4 md:px-8 overflow-x-auto snap-x snap-mandatory md:snap-none select-none transition-cursor duration-200 ${
+          // Magnet CSS (snap) dihapus agar JS bisa leluasa mendorong di HP
+          className={`flex gap-6 px-4 md:px-8 overflow-x-auto select-none transition-cursor duration-200 ${
             isDragging ? "cursor-grabbing" : "cursor-grab"
           }`}
           style={{ 
@@ -161,7 +165,7 @@ export default function TestimonialSection() {
           {displayData.map((item, index) => (
             <div 
               key={`${item.id}-${index}`} 
-              className="bg-[#1A1D26]/60 backdrop-blur-md border border-slate-800/60 rounded-2xl p-8 hover:border-blue-500/30 transition-colors duration-300 relative group flex-none w-[85vw] md:w-[420px] snap-center"
+              className="bg-[#1A1D26]/60 backdrop-blur-md border border-slate-800/60 rounded-2xl p-8 hover:border-blue-500/30 transition-colors duration-300 relative group flex-none w-[85vw] md:w-[420px]"
             >
               <Quote className="absolute top-6 right-6 w-10 h-10 text-slate-700/50 rotate-180 group-hover:text-blue-500/20 transition-colors duration-300" />
               
