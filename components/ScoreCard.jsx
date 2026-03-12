@@ -2,11 +2,10 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, AlertOctagon, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight, XCircle, PlayCircle, ListMusic } from "lucide-react";
+import { CheckCircle2, AlertOctagon, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight, XCircle, PlayCircle, ListMusic, Quote } from "lucide-react";
 import Confetti from "react-confetti";
 
-// Prop isPremiumExternal & onOpenUpgradeModal dihapus karena sudah tidak dipakai (Auto-unlocked)
-export default function ScoreCard({ result, cue }) {
+export default function ScoreCard({ result, cue, onOpenTestimonial, isLoggedIn }) {
   const [showTranscript, setShowTranscript] = useState(false); 
 
   // Ambil data audio (Single URL atau Playlist Array)
@@ -161,7 +160,6 @@ export default function ScoreCard({ result, cue }) {
           </div>
           
           <div className="divide-y divide-white/5">
-            {/* Tampilkan SEMUA koreksi (Tanpa Lock) */}
             {result.grammarCorrection.map((item, i) => (
               <div key={i} className={`p-5 hover:bg-white/5 transition-colors relative`}>
                 <div className="flex flex-col md:flex-row gap-4 md:items-center text-sm mb-2">
@@ -199,15 +197,57 @@ export default function ScoreCard({ result, cue }) {
         </div>
       </motion.div>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={shareToWA}
-        className="w-full flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all"
-      >
-        <Share2 className="w-5 h-5" />
-        Challenge Friend via WhatsApp
-      </motion.button>
+      {/* --- ACTION BUTTONS (TESTIMONIAL & WHATSAPP) --- */}
+      <div className="pt-4 flex flex-col gap-4">
+        
+        {/* Tombol Testimonial (Hanya muncul jika user sudah login) */}
+        {isLoggedIn && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }} // Muncul sedikit terlambat untuk efek dramatis
+              className="w-full bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 p-6 rounded-2xl text-center space-y-4 shadow-lg"
+            >
+              <div>
+                <h4 className="text-white font-bold text-lg mb-1">Inspire Other Learners</h4>
+                <p className="text-slate-400 text-sm">Help the community by sharing your IELTS journey and goals.</p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onOpenTestimonial}
+                className="group relative inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-blue-500/20 w-full md:w-auto"
+              >
+                <motion.div
+                    variants={{
+                        hover: { rotate: 180, x: -2 },
+                        idle: { rotate: 0, x: 0 }
+                    }}
+                    initial="idle"
+                    whileHover="hover"
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="text-white/80 transition-colors group-hover:text-white"
+                >
+                    <Quote className="w-5 h-5" />
+                </motion.div>
+                <span>Share Your Experience</span>
+              </motion.button>
+            </motion.div>
+        )}
+
+        {/* Tombol Challenge WhatsApp */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={shareToWA}
+          className="w-full flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all"
+        >
+          <Share2 className="w-5 h-5" />
+          Challenge Friend via WhatsApp
+        </motion.button>
+        
+      </div>
+
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, 
   BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock, 
-  Filter, AlertTriangle, LogIn, ChevronDown, LogOut, User, Info, Zap, Clock, Plus, Menu, X, Gift 
+  Filter, AlertTriangle, LogIn, ChevronDown, LogOut, User, Info, Zap, Clock, Plus, Menu, X, Gift, Quote 
 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
@@ -385,7 +385,6 @@ export default function Home() {
                 <div className="relative w-32 h-10 md:w-40 md:h-12">
                     <Image src="/logo-white.png" alt="IELTS4our Logo" fill className="object-contain object-center md:object-left" priority />
                 </div>
-                {/* REMOVED MEET THE CREATOR LINK */}
                 <div className="w-8 md:hidden"></div> 
             </div>
 
@@ -678,6 +677,9 @@ export default function Home() {
                             cue={analysisResult.topic || dailyCue.topic} 
                             isPremiumExternal={isPremium}
                             onOpenUpgradeModal={() => setShowUpgradeModal(true)}
+                            // 🔥 BARU: Kirim prop trigger Testimoni & status Login
+                            onOpenTestimonial={() => setShowTestimonialModal(true)}
+                            isLoggedIn={!!userProfile}
                         />
                     </motion.div>
                 )}
@@ -691,18 +693,11 @@ export default function Home() {
         <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} userProfile={userProfile} onUpgradeSuccess={() => { setIsPremium(true); setShowUpgradeModal(false); randomizeCue(); }} />
         <AlertModal isOpen={alertConfig.isOpen} onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))} {...alertConfig} />
         
-           
         <TestimonialModal 
             isOpen={showTestimonialModal} 
             onClose={() => setShowTestimonialModal(false)} 
             userProfile={userProfile} 
         />
-        <div className="flex justify-center my-8 relative z-50">
-            <button onClick={() => setShowTestimonialModal(true)} className="px-6 py-2 bg-pink-500 text-white font-bold rounded-full">
-                Test Buka Testimonial Modal
-            </button>
-        </div>
-       
 
         {/* --- WELCOME MODAL (CONFETTI) --- */}
         {showWelcomeModal && (
@@ -755,6 +750,37 @@ export default function Home() {
 
         <UniversityBanner />
         <TestimonialSection />
+
+        {/* --- 🔥 BARU: Tombol Share Your Story Manual di Bawah Marquee (Hanya untuk User Login) --- */}
+        {userProfile && (
+            <div className="flex justify-center -mt-8 mb-20 relative z-20">
+                <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    // 👇 BARU: Tambahkan state untuk animasi ikon di hover
+                    onMouseEnter={() => setIsUserMenuOpen(false)} // Matikan trigger menu lain jika ada
+                    onClick={() => setShowTestimonialModal(true)} 
+                    // 👇 BARU: Tambahkan shadow/glow biru lembut, border tipis, dan transisi halus
+                    className="group px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 border border-blue-400/30 transition-all flex items-center gap-2.5"
+                >
+                    {/* 👇 BARU: Gunakan ikon Quote & tambahkan motion untuk animasi halus ikon di hover */}
+                    <motion.div
+                      variants={{
+                        hover: { rotate: 180, x: -2 },
+                        idle: { rotate: 0, x: 0 }
+                      }}
+                      initial="idle"
+                      whileHover="hover"
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className="text-white/80 transition-colors group-hover:text-white flex items-center"
+                    >
+                      <Quote className="w-5 h-5 flex-shrink-0" />
+                    </motion.div>
+                    
+                    <span>Share Your Story</span>
+                </motion.button>
+            </div>
+        )}
 
         
         <MarketingSection onSelectMode={handleMarketingCardClick} />
