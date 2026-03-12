@@ -12,10 +12,13 @@ import {
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
 import { CUE_CARDS, PART3_TOPICS, GUILT_MESSAGES } from "@/utils/constants";
+import UniversityBanner from "@/components/UniversityBanner";
+import TestimonialSection from "@/components/TestimonialSection";
 import MarketingSection from "@/components/MarketingSection";
 import UpgradeModal from "@/components/UpgradeModal";
 import AlertModal from "@/components/AlertModal"; 
 import FAQSection from "@/components/FAQSection"; 
+import TestimonialModal from "@/components/TestimonialModal";
 import Confetti from "react-confetti"; 
 
 import Recorder from "@/components/Recorder";
@@ -71,6 +74,7 @@ export default function Home() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false); 
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false);
   const [guiltMessage, setGuiltMessage] = useState(GUILT_MESSAGES[0]);
   
   const [alertConfig, setAlertConfig] = useState({
@@ -687,6 +691,19 @@ export default function Home() {
         <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} userProfile={userProfile} onUpgradeSuccess={() => { setIsPremium(true); setShowUpgradeModal(false); randomizeCue(); }} />
         <AlertModal isOpen={alertConfig.isOpen} onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))} {...alertConfig} />
         
+           
+        <TestimonialModal 
+            isOpen={showTestimonialModal} 
+            onClose={() => setShowTestimonialModal(false)} 
+            userProfile={userProfile} 
+        />
+        <div className="flex justify-center my-8 relative z-50">
+            <button onClick={() => setShowTestimonialModal(true)} className="px-6 py-2 bg-pink-500 text-white font-bold rounded-full">
+                Test Buka Testimonial Modal
+            </button>
+        </div>
+       
+
         {/* --- WELCOME MODAL (CONFETTI) --- */}
         {showWelcomeModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -736,6 +753,10 @@ export default function Home() {
             </div>
         )}
 
+        <UniversityBanner />
+        <TestimonialSection />
+
+        
         <MarketingSection onSelectMode={handleMarketingCardClick} />
         <FAQSection isTeaser={true} />
 

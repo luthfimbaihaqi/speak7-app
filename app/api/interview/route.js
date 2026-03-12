@@ -169,21 +169,17 @@ function getTopicSet(sessionId) {
     return TOPIC_SETS[hash % TOPIC_SETS.length];
 }
 
-// --- SCORING HELPER (UPDATED: EVIDENCE-BASED FEEDBACK) ---
+// --- SCORING HELPER (UPDATED: GPT-4o & FAIL-SAFE) ---
 async function generateScore(fullTranscript, topicContext) {
-    // 🔥 CHECK: Is this a Full Test (Has Part 2) or Quick Test?
     const hasPart2 = fullTranscript.some(t => t.part === 2);
 
     let modelAnswerInstruction = "";
     if (hasPart2) {
-        // FULL TEST: Generate a Monologue for Part 2
         modelAnswerInstruction = "4. Provide a 'Model Answer' for the Part 2 section (The Long Turn). Write a natural, Band 9.0 storytelling monologue based on the topic.";
     } else {
-        // QUICK TEST: Rewrite User's Part 3 Answers
         modelAnswerInstruction = "4. **IMPROVED ANSWERS**: Identify the user's answers to the Part 3 questions. Rewrite them into Band 9.0 standard English (Natural & Sophisticated). Format strictly as:\n'Q1 (Context): [Improved Answer]'\n\n'Q2 (Context): [Improved Answer]'...";
     }
 
-    // 🔥🔥 NEW PROMPT WITH EVIDENCE-BASED FEEDBACK INSTRUCTIONS 🔥🔥
     const prompt = `
         You are a strict IELTS Examiner. Evaluate the following Full Speaking Test Transcript.
         
@@ -193,7 +189,14 @@ async function generateScore(fullTranscript, topicContext) {
 
         TASK:
         1. Ignore the Examiner's lines for scoring. Focus ONLY on the User's answers.
-        2. Assign Band Scores (0-9) for: Fluency, Lexical Resource, Grammatical Range, Pronunciation.
+        2. Assign Band Scores (0-9) strictly based on IELTS public band descriptors:
+           - FLUENCY: Is there hesitation? Is the answer painfully short (Band 4.0-5.0) or well-elaborated (Band 7.0+)?
+           - LEXICAL: Do they use basic words (Band 5.0) or less common idiomatic vocabulary (Band 7.0+)?
+           - GRAMMAR: Are there frequent errors in simple sentences (Band 4.0)? Do they use complex structures accurately (Band 7.0+)?
+           - PRONUNCIATION: Estimate based on transcription accuracy and word complexity.
+        
+        🚨 CRITICAL FAIL-SAFE:
+        If the transcript contains mostly non-English words, gibberish, or the user is consistently silent/refuses to answer, you MUST give a Band 1.0 or 2.0 overall and skip detailed feedback.
         
         3. **EVIDENCE-BASED FEEDBACK** (CRITICAL):
            - **Strengths**: DO NOT use generic phrases like "Good fluency". Instead, explicitly mention the **TOPICS** the user discussed. 
@@ -216,7 +219,7 @@ async function generateScore(fullTranscript, topicContext) {
     `;
 
     const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini", 
+        model: "gpt-4o", // 🔥 UPGRADED TO GPT-4o
         messages: [{ role: "system", content: prompt }],
         response_format: { type: "json_object" },
         temperature: 0.3
@@ -234,19 +237,19 @@ async function generateScore(fullTranscript, topicContext) {
     return { ...result, overall };
 }
 
-// --- HELPER: INSTRUKSI (PERSONA V3: STANDARD IELTS) ---
+// --- HELPER: INSTRUKSI (PERSONA V4: REAL IELTS EXAMINER) ---
 function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false) {
   const nickname = contextData?.nickname || "Candidate";
   const userContent = isSilent ? "(User remained silent)" : `"${userLastText}"`;
 
   let basePrompt = `
-    You are Mr. Paul, a professional IELTS Examiner. 
-    TONE: Friendly, polite, but professional and objective.
+    You are Mr. Paul, an official IELTS Speaking Examiner. 
+    TONE: Professional, neutral, and encouraging.
     
-    🚨 CRITICAL RULES:
-    1. **NO REPETITION**: Avoid repeating "I see what you mean" constantly. Use varied acknowledgments (e.g., "That's an interesting perspective," "I understand," or just "Right.").
-    2. **LISTEN & PIVOT**: Briefly acknowledge the user's point, then smoothly transition to the next question.
-    3. **KEEP IT BRIEF**: Ask one clear question at a time.
+    🚨 STRICT RULES:
+    1. NO ROBOTIC TRANSITIONS: Do NOT use phrases like "That's an interesting perspective," "I see what you mean," or "Moving on."
+    2. BE NATURAL: If the user gives a good answer, just say "Right," or "Okay," and immediately ask the next question. Sometimes, ask the next question with NO transition word at all.
+    3. KEEP IT BRIEF: Ask only ONE short question. Do NOT over-explain.
   `;
 
   if (isExamFinished) {
@@ -261,7 +264,7 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
       case 2: return `${basePrompt} SITUATION: User nickname: ${userContent}. TASK: Address by nickname. Ask: "Where are you from?"`;
       case 3: return `${basePrompt} SITUATION: From ${userContent}. TASK: Acknowledge. Pivot to Work/Study. Ask: "Do you work or are you a student?"`;
       case 4: return `${basePrompt} SITUATION: Job/Study: ${userContent}. TASK: Acknowledge. Ask ONE simple follow-up (e.g. "Do you enjoy it?").`;
-      case 5: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Acknowledge. Transition to ${topicSet.p1_topic}. Ask: "${topicSet.p1_intro}"`;
+      case 5: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Transition to ${topicSet.p1_topic}. Ask: "${topicSet.p1_intro}"`;
       case 6: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: React naturally. Ask: "${topicSet.p1_follow}"`;
       case 7: return `${basePrompt} SITUATION: End of Part 1. TASK: Say "Thank you. That is the end of Part 1. Now let's move on to Part 2."`;
       default: return `${basePrompt} TASK: Move to Part 2.`;
@@ -293,20 +296,19 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
       }
 
       if (step === 3) {
-         return `${basePrompt} SITUATION: Answered rounding. TASK: Say "Thank you." TRANSITION: "Now let's move on to Part 3."`;
+         return `${basePrompt} SITUATION: Answered rounding. TASK: Say "Thank you." TRANSITION: "We have been talking about ${topicSet.p2_topic}, and now I'd like to discuss one or two more general questions related to this."`;
       }
   }
   
-  // PART 3 (DISCUSSION) - 🔥 TWEAK: STANDARD IELTS (EXPLORATORY)
+  // PART 3 (DISCUSSION) - 🔥 HYBRID: SEMI-DYNAMIC
   if (part === 3) {
       const part3Base = `
         ${basePrompt}
-        MODE: PART 3 DISCUSSION (Two-way discussion).
-        STRATEGY: 
-        - DO NOT be aggressive. Do NOT use phrases like "Isn't it true that...".
-        - BE CURIOUS: Ask "Why" or "How" to encourage the user to elaborate.
-        - EXPLORE: If the user gives a personal opinion, ask about the wider society or future implications.
-        - Style: "Why do you think that is?", "Do you think this will change in the future?", "What about people who disagree?"
+        MODE: PART 3 DISCUSSION (Abstract and analytical).
+        STRATEGY:
+        - You are evaluating the candidate's ability to express and justify opinions.
+        - ROLE: You are an objective evaluator, not a debater. Do NOT contradict the candidate.
+        - EXPLORE: Use the candidate's previous answer as a stepping stone.
       `;
 
       if (step === 0) {
@@ -321,9 +323,18 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
           return `${part3Base} SITUATION: Start Part 3 (Topic: ${topicSet.p3_context}). TASK: Ask: "${topicSet.p3_q1}".`;
       }
       
-      if (step === 1) return `${part3Base} SITUATION: Answered: ${userContent}. TASK: Acknowledge briefly (e.g. "That's a valid point"), then Ask: "${topicSet.p3_q2}".`;
+      if (step === 1) {
+          return `${part3Base} 
+          SITUATION: The candidate just answered: ${userContent}. 
+          TASK: Acknowledge their point briefly (e.g. "Right"), then ask a NEW follow-up question related to the overarching theme of "${topicSet.p3_context}". 
+          The question must explore their idea further or ask for wider societal/future implications. DO NOT repeat previous questions.`;
+      }
       
-      if (step === 2) return `${part3Base} SITUATION: Answered: ${userContent}. TASK: Acknowledge briefly, then Ask: "${topicSet.p3_q3}".`;
+      if (step === 2) {
+          return `${part3Base} 
+          SITUATION: The candidate answered: ${userContent}. 
+          TASK: Ask one final, deep, abstract question about "${topicSet.p3_context}" related to a different perspective or global impact. Keep it brief.`;
+      }
   }
   
   return `${basePrompt} TASK: Say "Thank you, exam finished."`;
@@ -448,7 +459,7 @@ export async function POST(request) {
     const instruction = getInstruction(nextPart, nextStep, extracted_data, userText, topicSet, isSilent, isShortAnswer, isExamFinished, isQuickStart);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o", // 🔥 UPGRADED TO GPT-4o
       messages: [
         { role: "system", content: "You are Mr. Paul. Speak natural English. Follow instructions EXACTLY." },
         { role: "user", content: instruction }
@@ -488,9 +499,11 @@ export async function POST(request) {
 
     await supabase.from("exam_sessions").update(updateData).eq("id", sessionId);
 
-    // TTS
+    // 🔥 UPGRADED TTS: HD Quality & Onyx Voice
     const mp3 = await openai.audio.speech.create({ 
-        model: "tts-1", voice: "alloy", input: aiResponseText 
+        model: "tts-1-hd", 
+        voice: "onyx", 
+        input: aiResponseText 
     });
     const audioBase64 = Buffer.from(await mp3.arrayBuffer()).toString("base64");
 

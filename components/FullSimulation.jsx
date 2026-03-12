@@ -7,6 +7,7 @@ import {
   Wifi, Headphones, XCircle, Zap, Clock, Volume2, PlayCircle, BellOff
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabaseClient"; // Pastikan import supabase ada
 import ScoreCard from "@/components/ScoreCard"; 
 
 // 🔥 COMPONENT 1: REAL-TIME MIC VISUALIZER
@@ -341,7 +342,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       }
   };
 
-  // 4. START SIMULATION (Called AFTER Tutorial)
+  // 4. START SIMULATION (UPDATED WITH SAFETY PATCH)
   const startSimulation = async () => {
     // Hide Tutorial
     setShowTutorial(false);
@@ -361,6 +362,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     setStatus("checking_token");
 
     try {
+        // 1. Request Start ke API
         const res = await fetch("/api/interview/start", {
             method: "POST",
             body: JSON.stringify({ 
@@ -380,8 +382,21 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
             throw new Error(data.error || "Failed to start session");
         }
         
-        setSessionId(data.session_id);
+        const newSessionId = data.session_id;
+        setSessionId(newSessionId);
+
+        // 🔥 SAFETY PATCH: UPDATE MODE SECARA PAKSA KE SUPABASE
+        // Ini memastikan 'mode' tercatat di exam_sessions meskipun API backend lupa menyimpannya.
+        if (newSessionId) {
+            const { error: updateError } = await supabase
+                .from('exam_sessions')
+                .update({ mode: mode }) // Paksa simpan 'full' atau 'quick'
+                .eq('id', newSessionId);
+            
+            if (updateError) console.error("Failed to patch session mode:", updateError);
+        }
         
+        // Setup Status Awal
         if (mode === 'quick') {
             setStatus("part3");
         } else {
@@ -390,9 +405,10 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
         setIsExamActive(true);
         setGlobalTimer(0);
-        triggerIntro(data.session_id);
+        triggerIntro(newSessionId);
 
     } catch (err) {
+        console.error("Start Error:", err);
         alert("Error: " + err.message);
         setStatus("idle");
     }
@@ -458,11 +474,11 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
           handleExamFinished();
           if (data.text) {
-             setMessages(prev => [...prev, { role: "assistant", content: data.text }]);
-             if (data.audio) {
-                 const audio = new Audio(data.audio);
-                 audio.play();
-             }
+              setMessages(prev => [...prev, { role: "assistant", content: data.text }]);
+              if (data.audio) {
+                  const audio = new Audio(data.audio);
+                  audio.play();
+              }
           }
           return; 
       }
@@ -681,9 +697,9 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
             {/* Bagian Active Exam tetap sama */}
             <div className="flex justify-between items-center p-6 border-b border-white/5 z-10 bg-slate-900/50 backdrop-blur-md">
                 {mode === 'quick' ? (
-                     <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-blue-400">
+                      <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-blue-400">
                         <Zap className="w-4 h-4" /> Quick Test Mode
-                     </div>
+                      </div>
                 ) : (
                     <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
                         <span className={status === 'part1' ? "text-blue-400" : "text-slate-600"}>Part 1</span>
@@ -788,7 +804,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                                 </div>
                             )}
                             <div className="mt-8 text-center">
-                                <button onClick={() => router.push('/dashboard')} className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all border border-white/10">Back to Dashboard</button>
+                                <button onClick={() => router.push('/progress')} className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all border border-white/10">Back to Progress</button>
                             </div>
                         </div>
                     </div>
