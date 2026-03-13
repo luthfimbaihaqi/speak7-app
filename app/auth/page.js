@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/utils/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Mail, Lock, Eye, EyeOff, Check, X, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, Lock, Eye, EyeOff, Check, X, AlertCircle, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AuthPage() {
@@ -179,10 +179,20 @@ export default function AuthPage() {
                                 {mode === "register" ? "Sign up with Google" : "Continue with Google"}
                             </button>
 
-                            {/* 🔥 MARKETING TEXT TAMBAHAN */}
-                            <p className="text-center text-[10px] text-slate-400 mb-6">
-                                New here? Sign up and get <span className="text-yellow-400 font-bold">2 FREE tokens</span> instantly.
-                            </p>
+                            {/* 🔥 MARKETING TEXT DIREVISI: Launch Promo 5 Tokens */}
+                            {mode === "register" ? (
+                                <div className="text-center bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 mb-6">
+                                    <p className="text-[11px] text-slate-300 font-medium flex items-center justify-center gap-1.5">
+                                        <Zap className="w-3.5 h-3.5 text-yellow-400" />
+                                        <strong className="text-yellow-400 uppercase tracking-wide">Launch Promo:</strong> 
+                                        Sign up this week for <span className="text-white font-bold">5 FREE tokens</span> (Usually 2).
+                                    </p>
+                                </div>
+                            ) : (
+                                <p className="text-center text-[10px] text-slate-400 mb-6">
+                                    Don't have an account? <button onClick={() => switchMode("register")} className="text-teal-400 hover:underline font-bold">Sign up here</button>
+                                </p>
+                            )}
 
                             <div className="relative flex py-2 items-center mb-6">
                                 <div className="flex-grow border-t border-white/10"></div>
