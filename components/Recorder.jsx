@@ -9,46 +9,54 @@ const ReactMic = dynamic(() => import("react-mic").then((mod) => mod.ReactMic), 
   ssr: false,
 });
 
-export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60, mode = "cue-card", difficulty = "medium" }) {
+export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 120, mode = "cue-card", difficulty = "medium" }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  const [timeLeft, setTimeLeft] = useState(maxDuration);
+  // State tunggal untuk melacak waktu yang berjalan (dalam detik)
+  const [recordingTime, setRecordingTime] = useState(0);
   const [errorMessage, setErrorMessage] = useState(null); 
 
   const timerRef = useRef(null);
   const cueCardRef = useRef(cueCard);
   const modeRef = useRef(mode);
-  // 🔥 NEW: Ref untuk Difficulty
   const difficultyRef = useRef(difficulty);
+
+  // Status penentu mode waktu
+  const isCountUp = mode === "mock-interview" || mode === "full-simulation";
 
   useEffect(() => {
     cueCardRef.current = cueCard;
     modeRef.current = mode; 
-    difficultyRef.current = difficulty; // Update ref saat props berubah
+    difficultyRef.current = difficulty; 
   }, [cueCard, mode, difficulty]);
 
+  // Reset waktu saat parameter berubah
   useEffect(() => {
-    setTimeLeft(maxDuration);
-  }, [maxDuration]);
+    setRecordingTime(0);
+  }, [maxDuration, mode]);
 
   // Timer logic
   useEffect(() => {
     if (isRecording) {
       timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
+        setRecordingTime((prev) => {
+          // Batas aman untuk Mock Interview adalah 3 menit (180 detik)
+          // Untuk Cue Card, batasnya sesuai maxDuration (biasanya 120 detik)
+          const limit = isCountUp ? 180 : maxDuration;
+          
+          if (prev + 1 >= limit) {
             stopRecording(); 
-            return 0;
+            return limit;
           }
-          return prev - 1;
+          return prev + 1;
         });
       }, 1000);
     } else {
       clearInterval(timerRef.current);
     }
     return () => clearInterval(timerRef.current);
-  }, [isRecording]);
+  }, [isRecording, isCountUp, maxDuration]);
 
   // Hilangkan error message otomatis setelah 3 detik
   useEffect(() => {
@@ -59,7 +67,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
   }, [errorMessage]);
 
   const startRecording = () => {
-    setTimeLeft(maxDuration); 
+    setRecordingTime(0); 
     setErrorMessage(null); 
     setIsRecording(true);
   };
@@ -71,7 +79,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
 
   const onStop = async (recordedBlob) => {
     const durationSec = (recordedBlob.stopTime - recordedBlob.startTime) / 1000;
-    const minDuration = mode === "mock-interview" ? 5 : 10; 
+    const minDuration = isCountUp ? 5 : 10; 
 
     if (durationSec < minDuration) {
       setErrorMessage(`⚠️ Too short! Keep speaking for at least ${minDuration}s.`);
@@ -92,7 +100,6 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
     formData.append("audio", recordedBlob.blob, `recording.${extension}`);
     formData.append("cue_card", cueCardRef.current);
     formData.append("mode", modeRef.current); 
-    // 🔥 NEW: Kirim data difficulty ke Backend
     formData.append("difficulty", difficultyRef.current); 
 
     try {
@@ -127,13 +134,21 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
     }
   };
 
+  // Kalkulasi tampilan waktu (Hitung Maju vs Hitung Mundur)
+  const displaySeconds = isCountUp ? recordingTime : Math.max(0, maxDuration - recordingTime);
+  
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
-  const progressPercent = ((maxDuration - timeLeft) / maxDuration) * 100;
+  // Kalkulasi persentase bar (relatif terhadap batas maksimal masing-masing mode)
+  const limit = isCountUp ? 180 : maxDuration;
+  const progressPercent = (recordingTime / limit) * 100;
+
+  // Kondisi apakah timer harus berwarna merah/berkedip (Hanya untuk mode hitung mundur < 10 detik)
+  const isTimeWarning = !isCountUp && displaySeconds < 10;
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto mt-8 relative">
@@ -154,8 +169,8 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
           {isRecording && (
             <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full backdrop-blur-md border border-white/10 shadow-lg">
                <Clock className="w-3.5 h-3.5 text-teal-400" />
-               <span className={`text-sm font-mono font-bold ${timeLeft < 10 ? "text-rose-400 animate-pulse" : "text-white"}`}>
-                 {formatTime(timeLeft)}
+               <span className={`text-sm font-mono font-bold ${isTimeWarning ? "text-rose-400 animate-pulse" : "text-white"}`}>
+                 {formatTime(displaySeconds)}
                </span>
             </div>
           )}
@@ -164,7 +179,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
             {isRecording ? (
               <span className="flex items-center text-rose-500 animate-pulse">● REC</span>
             ) : isLoading ? (
-              <span className="text-yellow-400 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin"/> AI THINKING...</span>
+              <span className="text-yellow-400 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin"/> AI LISENTING...</span>
             ) : (
               <span className="text-slate-400">READY</span>
             )}
@@ -179,7 +194,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute -top-12 left-0 right-0 mx-auto text-center"
+                className="absolute -top-12 left-0 right-0 mx-auto text-center z-10"
             >
                 <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-full backdrop-blur-md shadow-lg">
                     <AlertCircle className="w-3 h-3" /> {errorMessage}
@@ -207,7 +222,7 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
             ) : (
               <>
                 <Mic className="w-5 h-5" />
-                {mode === "mock-interview" ? "Answer (60s max)" : "Start Recording"}
+                {isCountUp ? "Answer Question" : "Start Recording"}
               </>
             )}
           </motion.button>
@@ -235,8 +250,8 @@ export default function Recorder({ cueCard, onAnalysisComplete, maxDuration = 60
       {!isRecording && !isLoading && !errorMessage && (
         <p className="mt-6 text-xs text-slate-500 text-center flex items-center justify-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
           <Info className="w-3.5 h-3.5" />
-          {mode === "mock-interview" 
-             ? "Mock Interview: Speak naturally like a conversation."
+          {isCountUp 
+             ? "Discussion Mode: Speak naturally and freely."
              : "Duration: Max 2 mins."}
         </p>
       )}

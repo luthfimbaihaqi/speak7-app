@@ -266,7 +266,7 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
       case 4: return `${basePrompt} SITUATION: Job/Study: ${userContent}. TASK: Acknowledge. Ask ONE simple follow-up (e.g. "Do you enjoy it?").`;
       case 5: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Transition to ${topicSet.p1_topic}. Ask: "${topicSet.p1_intro}"`;
       case 6: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: React naturally. Ask: "${topicSet.p1_follow}"`;
-      case 7: return `${basePrompt} SITUATION: End of Part 1. TASK: Say "Thank you. That is the end of Part 1. Now let's move on to Part 2."`;
+      // 🔥 REVISI: Step 7 Dihapus. Part 1 selesai di Step 6.
       default: return `${basePrompt} TASK: Move to Part 2.`;
     }
   }
@@ -274,10 +274,10 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
   // PART 2
   if (part === 2) {
       if (step === 0) {
+          // 🔥 REVISI: Menggabungkan transisi Part 1 -> Part 2 secara mulus di sini
           return `${basePrompt}
             SITUATION: Starting Part 2.
-            TASK: State the topic: "${topicSet.p2_topic}"
-            INSTRUCTION: Say "I will give you a topic... You have one minute to prepare."`;
+            TASK: Say "Thank you. That is the end of Part 1. Now let's move on to Part 2. I will give you a topic: ${topicSet.p2_topic}. You have one minute to prepare."`;
       }
       
       if (step === 1) {
@@ -402,11 +402,8 @@ export async function POST(request) {
         isQuickStart = true; 
     }
     else if (action === 'auto_next') {
-        if (current_part === 1 && current_step === 7) {
-            nextPart = 2; nextStep = 0;
-            metaTopic = topicSet.p2_topic; 
-        }
-        else if (current_part === 2 && current_step === 3) {
+        // 🔥 REVISI: Logika Part 1 Step 7 dibuang. Tinggal Part 2 -> Part 3
+        if (current_part === 2 && current_step === 3) {
             nextPart = 3; nextStep = 0;
         }
     }
@@ -431,7 +428,9 @@ export async function POST(request) {
     else { // ACTION: ANSWER
         if (current_part === 1) {
             if (!isSilent && current_step < 3) { /* Extraction logic */ }
-            if (current_step < 7) nextStep = current_step + 1;
+            // 🔥 REVISI: Jika baru selesai step 5, maju ke 6. 
+            // Jika selesai step 6, LANGSUNG lempar ke Part 2 Step 0.
+            if (current_step < 6) nextStep = current_step + 1;
             else { 
                 nextPart = 2; nextStep = 0; 
                 metaTopic = topicSet.p2_topic;
@@ -469,8 +468,9 @@ export async function POST(request) {
     const aiResponseText = completion.choices[0].message.content;
 
     // --- DB UPDATE & SCORING ---
-    const newTranscriptEntry = { part: current_part, step: current_step, user: userText, ai: aiResponseText, timestamp: new Date().toISOString() };
-    const fullTranscript = [...(transcript || []), newTranscriptEntry]; // Gabungkan untuk scoring
+    // 🔥 REVISI: Menggunakan nextPart & nextStep agar transkrip sejajar dengan UI.
+    const newTranscriptEntry = { part: nextPart, step: nextStep, user: userText, ai: aiResponseText, timestamp: new Date().toISOString() };
+    const fullTranscript = [...(transcript || []), newTranscriptEntry]; 
 
     const updateData = {
           current_part: nextPart,

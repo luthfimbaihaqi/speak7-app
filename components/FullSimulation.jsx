@@ -434,10 +434,17 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         }
 
         if (data.audio) {
-            setAiSpeaking(true);
-            const audio = new Audio(data.audio);
-            audio.onended = () => { setAiSpeaking(false); setIsStarting(false); };
-            audio.play();
+        setAiSpeaking(true);
+        const audio = new Audio(data.audio);
+        audio.onended = () => {
+          setAiSpeaking(false);
+          if (data.meta) {
+              // 🔥 REVISI: Trigger auto_next Part 1->2 dihapus karena Backend sekarang mengirimkannya secara otomatis dalam satu tarikan napas.
+              // Kita HANYA menyisakan auto_next untuk transisi dari Part 2 ke Part 3.
+              if (data.meta.part === 2 && data.meta.step === 3) handleSendAudio(null, "auto_next");
+          }
+        };
+        audio.play();
         } else {
             setIsStarting(false);
         }

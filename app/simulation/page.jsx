@@ -16,7 +16,7 @@ function SimulationWrapper() {
     const modeParam = searchParams.get('mode');
     
     // Validasi: Jika 'quick' maka 'quick', selain itu default 'full'
-    const mode = modeParam === 'quick' ? 'quick' : 'full';
+    const mode = modeParam === 'quick' ? 'mock-interview' : 'full-simulation';
 
     useEffect(() => {
         const fetchUser = async () => {
