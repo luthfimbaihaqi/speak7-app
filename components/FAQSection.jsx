@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link"; // Import Link
+import Link from "next/link"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle, Mic, ShieldCheck, Smartphone, ArrowRight } from "lucide-react";
 
@@ -17,11 +17,11 @@ const FAQ_DATA = [
       },
       {
         q: "Apakah AI bisa mendeteksi aksen saya?",
-        a: "Tentu. AI kami fokus pada 'Intelligibility' (keterpahaman), bukan aksen. Selama pengucapan Kamu jelas dan artikulasinya tegas (standar Native Speaker), Kamu akan mendapatkan skor Pronunciation yang baik, apapun aksen daerah Kamu."
+        a: "Tentu. AI kami fokus pada 'Intelligibility' (keterpahaman), bukan aksen. Selama pengucapan Kamu jelas, pelafalannya benar, dan mudah dipahami, Kamu akan mendapatkan skor Pronunciation yang baik, apapun aksen daerah Kamu."
       },
       {
-        q: "Kenapa skor saya kadang rendah?",
-        a: "Kami mendesain AI dengan mode 'Strict Examiner'. Lebih baik Kamu mendapat nilai ketat saat latihan agar terlatih mental dan siap menghadapi tes asli, daripada mendapat nilai palsu yang terlalu tinggi."
+        q: "Apa yang harus saya lakukan jika skor awal saya masih rendah?",
+        a: "Jangan khawatir! Gunakan fitur 'Grammar Clinic' dan pelajari 'Model Answer' yang diberikan AI di setiap akhir simulasi. Dengan rutin berlatih minimal 15 menit sehari menggunakan struktur kalimat tersebut, kelancaran dan skor Kamu akan meningkat secara bertahap."
       }
     ]
   },
@@ -31,7 +31,7 @@ const FAQ_DATA = [
     items: [
       {
         q: "Apa bedanya 'Daily Cue Card' dan 'Quick/Full Test'?",
-        a: "Daily Cue Card (Part 2) adalah mode monolog 2 menit untuk melatih kelancaran berbicara. Quick & Full Test adalah simulasi ujian interaktif (Part 1-3) di mana AI berperan sebagai penguji yang memberikan pertanyaan dan merespon jawaban Kamu."
+        a: "Daily Cue Card fokus pada monolog (Part 2). Quick Test adalah simulasi diskusi interaktif langsung ke Part 3 (cocok untuk latihan cepat). Sedangkan Full Test adalah simulasi ujian lengkap dari Part 1 hingga Part 3."
       },
       {
         q: "Apakah topik Daily Cue Card selalu berubah?",
