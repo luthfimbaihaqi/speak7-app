@@ -179,13 +179,13 @@ export default function AuthPage() {
                                 {mode === "register" ? "Sign up with Google" : "Continue with Google"}
                             </button>
 
-                            {/* 🔥 MARKETING TEXT DIREVISI: Launch Promo 5 Tokens */}
+                            {/* 🔥 MARKETING TEXT DIREVISI: Launch Promo 4 Tokens */}
                             {mode === "register" ? (
                                 <div className="text-center bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 mb-6">
                                     <p className="text-[11px] text-slate-300 font-medium flex items-center justify-center gap-1.5">
                                         <Zap className="w-3.5 h-3.5 text-yellow-400" />
                                         <strong className="text-yellow-400 uppercase tracking-wide">Launch Promo:</strong> 
-                                        Sign up this week for <span className="text-white font-bold">5 FREE tokens</span> (Usually 2).
+                                        Sign up now to claim <span className="text-white font-bold">4 FREE tokens</span>.
                                     </p>
                                 </div>
                             ) : (
