@@ -12,16 +12,16 @@ const FAQ_DATA = [
     icon: <ShieldCheck className="w-5 h-5 text-teal-400" />,
     items: [
       {
-        q: "Seberapa akurat penilaian AI di sini?",
-        a: "Sangat mendekati penguji asli. Kami menggunakan teknologi Speech-to-Text tercanggih (Whisper) untuk 'mendengar' ucapan Kamu, dan AI yang dilatih dengan ribuan transkrip IELTS untuk memberikan skor objektif berdasarkan rubrik resmi: Fluency, Lexical, Grammar, dan Pronunciation."
+        q: "Seberapa akurat penilaian IELTS4our?",
+        a: "Sangat mendekati penguji asli. Kami menggunakan teknologi Speech-to-Text tercanggih (Whisper) untuk 'mendengar' ucapan Kamu, dan IELTS4our dilatih dengan ribuan transkrip IELTS untuk memberikan skor objektif berdasarkan rubrik resmi: Fluency, Lexical, Grammar, dan Pronunciation."
       },
       {
-        q: "Apakah AI bisa mendeteksi aksen saya?",
-        a: "Tentu. AI kami fokus pada 'Intelligibility' (keterpahaman), bukan aksen. Selama pengucapan Kamu jelas, pelafalannya benar, dan mudah dipahami, Kamu akan mendapatkan skor Pronunciation yang baik, apapun aksen daerah Kamu."
+        q: "Apakah IELTS4our bisa mendeteksi aksen saya?",
+        a: "Tentu. kami fokus pada 'Intelligibility' (keterpahaman), bukan aksen. Selama pengucapan Kamu jelas, pelafalannya benar, dan mudah dipahami, Kamu akan mendapatkan skor Pronunciation yang baik, apapun aksen daerah Kamu."
       },
       {
         q: "Apa yang harus saya lakukan jika skor awal saya masih rendah?",
-        a: "Jangan khawatir! Gunakan fitur 'Grammar Clinic' dan pelajari 'Model Answer' yang diberikan AI di setiap akhir simulasi. Dengan rutin berlatih minimal 15 menit sehari menggunakan struktur kalimat tersebut, kelancaran dan skor Kamu akan meningkat secara bertahap."
+        a: "Jangan khawatir! Gunakan fitur 'Grammar Clinic' dan pelajari 'Model Answer' yang diberikan ielts4our di setiap akhir simulasi. Dengan rutin berlatih minimal 15 menit sehari menggunakan struktur kalimat tersebut, kelancaran dan skor Kamu akan meningkat secara bertahap."
       }
     ]
   },
