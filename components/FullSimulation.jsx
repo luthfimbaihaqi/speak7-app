@@ -724,13 +724,25 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                             <User className="w-24 h-24 text-slate-500" />
                         </div>
                         
-                        <div className="mt-8 text-center h-6">
-                            {/* 🔥 7. REVISI: TEXT INDIKATOR SAAT PREP */}
-                            {status === "part2_prep" ? <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">PREPARATION TIME...</p>
-                            : aiSpeaking ? <p className="text-blue-400 text-sm font-medium animate-pulse tracking-wider">MR. PAUL IS SPEAKING...</p>
-                            : isRecording ? <p className="text-red-500 text-sm font-medium animate-pulse tracking-wider">LISTENING...</p>
-                            : isProcessing ? <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">THINKING...</p>
-                            : <p className="text-slate-600 text-sm font-medium">YOUR TURN</p>}
+                        <div className="mt-8 text-center h-10 flex flex-col items-center justify-start">
+                            {/* 🔥 REVISI UX: Penambahan Micro-copy instruksi */}
+                            {status === "part2_prep" ? (
+                                <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">PREPARATION TIME...</p>
+                            ) : aiSpeaking ? (
+                                <p className="text-blue-400 text-sm font-medium animate-pulse tracking-wider">MR. PAUL IS SPEAKING...</p>
+                            ) : isRecording ? (
+                                <>
+                                    <p className="text-red-500 text-sm font-medium animate-pulse tracking-wider">LISTENING...</p>
+                                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-semibold">Tap square to stop</p>
+                                </>
+                            ) : isProcessing ? (
+                                <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">MR. PAUL IS THINKING...</p>
+                            ) : (
+                                <>
+                                    <p className="text-slate-200 text-sm font-bold tracking-wider">YOUR TURN</p>
+                                    <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Tap the mic to speak</p>
+                                </>
+                            )}
                         </div>
 
                         {mode === 'quick' && cueCardTopic && (
