@@ -7,7 +7,7 @@ import {
   Wifi, Headphones, XCircle, Zap, Clock, Volume2, PlayCircle, BellOff
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/utils/supabaseClient"; // Pastikan import supabase ada
+import { supabase } from "@/utils/supabaseClient"; 
 import ScoreCard from "@/components/ScoreCard"; 
 
 // 🔥 COMPONENT 1: REAL-TIME MIC VISUALIZER
@@ -40,7 +40,6 @@ const MicCheckVisualizer = ({ stream }) => {
 
             for (let i = 0; i < bufferLength; i++) {
                 barHeight = dataArray[i] / 2;
-                // Bar styling (Blue to Teal gradient look)
                 ctx.fillStyle = `rgb(${50}, ${150 + barHeight}, ${255})`;
                 ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
                 x += barWidth + 2;
@@ -65,31 +64,25 @@ const MicCheckVisualizer = ({ stream }) => {
     );
 };
 
-// 🔥 COMPONENT 2: TUTORIAL OVERLAY (Dipisah agar State Audio aman)
+// 🔥 COMPONENT 2: TUTORIAL OVERLAY
 const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
     const [isPlayingSound, setIsPlayingSound] = useState(false);
 
-    // LOGIKA AUDIO YANG AMAN (Stop-Lock-Clean)
     const handleTestSound = () => {
-        if (isPlayingSound) return; // Cegah spam klik
+        if (isPlayingSound) return; 
 
-        // 1. Stop antrian sebelumnya (PENTING)
         window.speechSynthesis.cancel();
-
-        // 2. Lock UI
         setIsPlayingSound(true);
 
         const text = "This is a sound check. If you can hear this, your speaker is working perfectly.";
         const utterance = new SpeechSynthesisUtterance(text);
 
-        // 3. Unlock saat selesai
         utterance.onend = () => setIsPlayingSound(false);
         utterance.onerror = () => setIsPlayingSound(false);
 
         window.speechSynthesis.speak(utterance);
     };
 
-    // 4. Cleanup saat komponen ditutup/unmount (PENTING)
     useEffect(() => {
         return () => {
             window.speechSynthesis.cancel();
@@ -119,9 +112,7 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
                     <p className="text-slate-400 text-sm">Follow these instructions before we begin.</p>
                 </div>
 
-                {/* Mic & Speaker Check Section */}
                 <div className="bg-black/30 rounded-xl p-4 mb-6 border border-white/5 space-y-4">
-                    {/* 1. MIC CHECK */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className={`w-3 h-3 rounded-full ${audioStream ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500 animate-pulse'}`}></div>
@@ -130,7 +121,6 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
                         <MicCheckVisualizer stream={audioStream} />
                     </div>
 
-                    {/* 2. SPEAKER CHECK (FIXED) */}
                     <div className="flex items-center justify-between border-t border-white/5 pt-4">
                         <div className="flex items-center gap-3">
                              <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
@@ -151,7 +141,6 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
                     </div>
                 </div>
 
-                {/* Steps */}
                 <div className="space-y-4 mb-8">
                     <div className="flex gap-4 items-start">
                         <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Volume2 className="w-4 h-4 text-teal-400" /></div>
@@ -176,7 +165,6 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
                     </div>
                 </div>
 
-                {/* Start Button */}
                 <button 
                     onClick={onStart}
                     className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group"
@@ -197,32 +185,25 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
 };
 
 
-// 🔥 PROP: mode ("full" | "quick")
+// 🔥 MAIN EXAM COMPONENT
 export default function FullSimulation({ userProfile, mode = "full" }) {
   const router = useRouter();
 
-  // --- CONFIG BASED ON MODE ---
   const TOKEN_COST = mode === "quick" ? 1 : 3;
   const TITLE = mode === "quick" ? "Quick Test Simulation" : "Full Speaking Simulation";
-  const SUBTITLE = mode === "quick" ? "Interactive Part 3 Discussion" : "Complete IELTS Speaking Test";
   const DURATION_TEXT = mode === "quick" ? "3-5 Mins" : "10-15 Mins";
 
-  // --- STATE UTAMA ---
   const [status, setStatus] = useState("idle"); 
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]); 
-  
-  // --- STATE TUTORIAL ---
   const [showTutorial, setShowTutorial] = useState(false); 
 
-  // --- STATE AUDIO & UI ---
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStarting, setIsStarting] = useState(false); 
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [transcript, setTranscript] = useState(""); 
   
-  // STATE CUE CARD & SCORE
   const [cueCardTopic, setCueCardTopic] = useState(""); 
   const [examResult, setExamResult] = useState(null); 
   
@@ -231,10 +212,8 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const audioChunksRef = useRef([]);
   const stopReasonRef = useRef("answer"); 
   
-  // Stream Ref untuk Mic Check
   const [audioStream, setAudioStream] = useState(null);
 
-  // --- TIMERS ---
   const [partTimer, setPartTimer] = useState(0); 
   const [showPartTimer, setShowPartTimer] = useState(false);
   const [globalTimer, setGlobalTimer] = useState(0); 
@@ -245,7 +224,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     if (typeof window !== "undefined" && navigator.mediaDevices) {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then((stream) => {
-          setAudioStream(stream); // Simpan stream untuk visualizer mic check
+          setAudioStream(stream); 
           mediaRecorderRef.current = new MediaRecorder(stream);
           mediaRecorderRef.current.ondataavailable = (e) => {
             if (e.data.size > 0) audioChunksRef.current.push(e.data);
@@ -264,7 +243,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     }
   }, [sessionId]); 
 
-  // 2. GLOBAL TIMER (COUNT UP)
+  // 2. GLOBAL TIMER
   useEffect(() => {
     let interval;
     if (isExamActive) {
@@ -284,7 +263,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     return () => clearInterval(interval);
   }, [partTimer, showPartTimer]);
 
-  // LOGIC SAAT TIMER LOKAL HABIS
+  // 🔥 4. REVISI: LOGIC SAAT TIMER LOKAL HABIS (AUTO-TRANSITION)
   const handlePartTimerFinished = () => {
     if (status !== "part2_prep" && status !== "part2_speak") {
         setShowPartTimer(false);
@@ -292,14 +271,21 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     }
 
     if (status === "part2_prep") {
+      // 1 Menit Prep Habis. Langsung paksa lanjut tanpa tunggu klik user.
       setShowPartTimer(false);
-      setStatus("part2_speak");
-      setPartTimer(120); 
-      setShowPartTimer(true);
-      playSystemVoice("Time is up. Please start speaking.");
-      setTimeout(() => { if (!isRecording) toggleRecording(); }, 1000);
+      setStatus("part2_speak"); 
+      setIsProcessing(true); // Gembok mic sejenak selama AI ngomong
+      
+      playSystemVoice("Alright, your one minute preparation time is up. Please start speaking for 1 to 2 minutes.", () => {
+          setIsProcessing(false);
+          setPartTimer(120); 
+          setShowPartTimer(true);
+          // Paksa tombol record langsung aktif!
+          if (!isRecording) toggleRecording(); 
+      });
     } 
     else if (status === "part2_speak") {
+      // 2 Menit Speaking Habis
       setShowPartTimer(false);
       if (isRecording && mediaRecorderRef.current) {
         stopReasonRef.current = "timeout";
@@ -317,7 +303,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       setShowPartTimer(false);
   };
 
-  // --- SAVE TO HISTORY FUNCTION ---
   const saveToHistory = async (finalScore, topicName) => {
       if (!userProfile || hasSavedRef.current) return;
       hasSavedRef.current = true; 
@@ -336,15 +321,12 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
           const { error } = await supabase.from('practice_history').insert(payload);
           if (error) throw error;
-          console.log("Exam saved to history!");
       } catch (err) {
           console.error("Failed to save history:", err);
       }
   };
 
-  // 4. START SIMULATION (UPDATED WITH SAFETY PATCH)
   const startSimulation = async () => {
-    // Hide Tutorial
     setShowTutorial(false);
 
     if (!userProfile) return router.push('/auth');
@@ -362,13 +344,9 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     setStatus("checking_token");
 
     try {
-        // 1. Request Start ke API
         const res = await fetch("/api/interview/start", {
             method: "POST",
-            body: JSON.stringify({ 
-                userId: userProfile.id,
-                mode: mode 
-            })
+            body: JSON.stringify({ userId: userProfile.id, mode: mode })
         });
         
         const data = await res.json();
@@ -385,18 +363,10 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         const newSessionId = data.session_id;
         setSessionId(newSessionId);
 
-        // 🔥 SAFETY PATCH: UPDATE MODE SECARA PAKSA KE SUPABASE
-        // Ini memastikan 'mode' tercatat di exam_sessions meskipun API backend lupa menyimpannya.
         if (newSessionId) {
-            const { error: updateError } = await supabase
-                .from('exam_sessions')
-                .update({ mode: mode }) // Paksa simpan 'full' atau 'quick'
-                .eq('id', newSessionId);
-            
-            if (updateError) console.error("Failed to patch session mode:", updateError);
+            await supabase.from('exam_sessions').update({ mode: mode }).eq('id', newSessionId);
         }
         
-        // Setup Status Awal
         if (mode === 'quick') {
             setStatus("part3");
         } else {
@@ -414,7 +384,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     }
   };
 
-  // 5. TRIGGER INTRO (DUAL MODE)
   const triggerIntro = async (id) => {
     setIsStarting(true); 
     setIsProcessing(true);
@@ -434,19 +403,15 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         }
 
         if (data.audio) {
-        setAiSpeaking(true);
-        const audio = new Audio(data.audio);
-        audio.onended = () => {
-          setAiSpeaking(false);
-          if (data.meta) {
-              // 🔥 REVISI: Trigger auto_next Part 1->2 dihapus karena Backend sekarang mengirimkannya secara otomatis dalam satu tarikan napas.
-              // Kita HANYA menyisakan auto_next untuk transisi dari Part 2 ke Part 3.
-              if (data.meta.part === 2 && data.meta.step === 3) handleSendAudio(null, "auto_next");
-          }
-        };
-        audio.play();
+          setAiSpeaking(true);
+          const audio = new Audio(data.audio);
+          audio.onended = () => {
+            setAiSpeaking(false);
+            setIsStarting(false); 
+          };
+          audio.play();
         } else {
-            setIsStarting(false);
+          setIsStarting(false);
         }
     } catch(e) {
         console.error(e);
@@ -456,7 +421,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     }
   };
 
-  // 6. CORE: SEND AUDIO & HANDLE RESPONSE
   const handleSendAudio = async (audioBlob, actionType = "answer") => {
     if (!sessionId) { alert("Session lost. Please restart."); return; }
 
@@ -506,7 +470,8 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           
           if (isFinished) handleExamFinished();
           
-          if (part === 2 && step === 0 && status === "part1") {
+          // 🔥 REVISI 1: Syarat status dihapus. Jika API mengirim Part 2 Step 0, maka PASTI Prep.
+          if (part === 2 && step === 0) {
               setStatus("part2_prep");
               setPartTimer(60); 
               setShowPartTimer(true);
@@ -523,10 +488,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         const audio = new Audio(data.audio);
         audio.onended = () => {
           setAiSpeaking(false);
-          if (data.meta) {
-              if (data.meta.part === 1 && data.meta.step === 7) handleSendAudio(null, "auto_next");
-              if (data.meta.part === 2 && data.meta.step === 3) handleSendAudio(null, "auto_next");
-          }
+          // 🔥 REVISI 2: Blok auto_next Part 2 Step 3 dihilangkan sepenuhnya agar tidak otomatis terskip
         };
         audio.play();
       }
@@ -538,10 +500,41 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     }
   };
 
-  // UI Helpers
+  // 🔥 5. REVISI: UI HELPERS (DENGAN CALLBACK & SATPAM DURASI)
+  const playSystemVoice = (text, callback = null) => {
+     window.speechSynthesis.cancel(); // Bersihkan antrian lama
+     const utterance = new SpeechSynthesisUtterance(text);
+     if (callback) {
+         utterance.onend = callback;
+         // Handle error just in case, biar gak nyangkut
+         utterance.onerror = callback; 
+     }
+     window.speechSynthesis.speak(utterance);
+  };
+
   const toggleRecording = () => {
     if (!mediaRecorderRef.current) return;
+    
     if (isRecording) {
+      // 🔥 SATPAM DURASI PART 2: Cegat kalau user ngomong di bawah 1 menit (Timer 120 -> sisa > 60)
+      if (status === "part2_speak" && partTimer > 60) {
+          // Pause mic biar suara sistem ga bocor terekam
+          if (mediaRecorderRef.current.state === "recording") {
+              mediaRecorderRef.current.pause();
+          }
+          setIsProcessing(true); // Gembok tombol sejenak
+          
+          playSystemVoice("You still have time. Please tell me more about it.", () => {
+              setIsProcessing(false);
+              // Lanjut rekam paksa!
+              if (mediaRecorderRef.current.state === "paused") {
+                  mediaRecorderRef.current.resume();
+              }
+          });
+          return; // Batalkan proses Stop
+      }
+
+      // Normal Stop Process
       stopReasonRef.current = "answer"; 
       mediaRecorderRef.current.stop(); 
       setIsRecording(false);
@@ -551,11 +544,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       setIsRecording(true);
       setTranscript("");
     }
-  };
-
-  const playSystemVoice = (text) => {
-     const utterance = new SpeechSynthesisUtterance(text);
-     window.speechSynthesis.speak(utterance);
   };
   
   const formatTime = (s) => {
@@ -577,7 +565,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     </div>
   );
 
-  // --- START SCREEN (DYNAMIC) ---
   const StartScreen = () => (
     <div className="absolute inset-0 bg-slate-950 z-30 flex flex-col overflow-y-auto">
         <div className="w-full max-w-5xl mx-auto p-6 flex justify-between items-center">
@@ -586,12 +573,10 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         </div>
 
         <div className="flex-1 w-full max-w-5xl mx-auto p-6 pb-24 flex flex-col justify-center">
-            
             <div className="text-center mb-12">
                 <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
                     {TITLE}
                 </h1>
-                {/* DURATION INDICATOR */}
                 <div className="flex items-center justify-center gap-2 text-slate-400 text-lg mb-8">
                     <Clock className="w-5 h-5 text-blue-400" />
                     <span>Est. Duration: <strong className="text-white">{DURATION_TEXT}</strong></span>
@@ -621,9 +606,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                 )}
             </div>
 
-            {/* Info Grid (System Check & Tips) */}
             <div className="grid md:grid-cols-2 gap-6 mb-12">
-                {/* System Check Card */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                           System Check
@@ -653,7 +636,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                     </ul>
                 </div>
 
-                {/* Exam Tips Card */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                           Exam Tips
@@ -695,13 +677,15 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     </div>
   );
 
+  // 🔥 6. REVISI: GEMBOK MIC DI RENDER UI
+  const isMicLocked = aiSpeaking || isProcessing || isStarting || status === "part2_prep";
+
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-white overflow-hidden relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-950/20 via-slate-950 to-slate-950 pointer-events-none" />
 
       {status === "idle" ? <StartScreen /> : (
         <>
-            {/* Bagian Active Exam tetap sama */}
             <div className="flex justify-between items-center p-6 border-b border-white/5 z-10 bg-slate-900/50 backdrop-blur-md">
                 {mode === 'quick' ? (
                       <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-blue-400">
@@ -741,7 +725,9 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                         </div>
                         
                         <div className="mt-8 text-center h-6">
-                            {aiSpeaking ? <p className="text-blue-400 text-sm font-medium animate-pulse tracking-wider">MR. PAUL IS SPEAKING...</p>
+                            {/* 🔥 7. REVISI: TEXT INDIKATOR SAAT PREP */}
+                            {status === "part2_prep" ? <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">PREPARATION TIME...</p>
+                            : aiSpeaking ? <p className="text-blue-400 text-sm font-medium animate-pulse tracking-wider">MR. PAUL IS SPEAKING...</p>
                             : isRecording ? <p className="text-red-500 text-sm font-medium animate-pulse tracking-wider">LISTENING...</p>
                             : isProcessing ? <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">THINKING...</p>
                             : <p className="text-slate-600 text-sm font-medium">YOUR TURN</p>}
@@ -823,16 +809,17 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                     <div className="h-8 flex items-center justify-center w-full max-w-xs">
                         {isRecording ? <AudioVisualizer /> : isProcessing ? <Loader2 className="w-5 h-5 text-blue-400 animate-spin" /> : null}
                     </div>
-                    {status !== "checking_token" && status !== "part2_prep" && (
+                    {/* 🔥 8. REVISI: TOMBOL TETAP MUNCUL SAAT PREP, TAPI DISABLED */}
+                    {status !== "checking_token" && (
                         <button
                             onClick={toggleRecording}
-                            disabled={aiSpeaking || isProcessing || isStarting}
+                            disabled={isMicLocked}
                             className={`w-24 h-24 rounded-full flex items-center justify-center transition-all shadow-2xl relative group ${
-                                isRecording ? "bg-red-500 scale-110 shadow-red-500/50" : (aiSpeaking || isProcessing || isStarting) ? "bg-slate-800 border border-slate-700 opacity-50 cursor-not-allowed" : "bg-white hover:bg-slate-200 text-slate-900 shadow-blue-500/20"
+                                isRecording ? "bg-red-500 scale-110 shadow-red-500/50" : isMicLocked ? "bg-slate-800 border border-slate-700 opacity-50 cursor-not-allowed" : "bg-white hover:bg-slate-200 text-slate-900 shadow-blue-500/20"
                             }`}
                         >
                             {isRecording ? <Square className="w-8 h-8 text-white fill-current" /> : <Mic className="w-10 h-10 group-hover:scale-110 transition-transform" />}
-                            {!isRecording && !aiSpeaking && !isProcessing && (
+                            {!isRecording && !isMicLocked && (
                                 <span className="absolute inset-0 rounded-full border border-white/30 animate-ping opacity-20" />
                             )}
                         </button>
@@ -842,7 +829,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         </>
       )}
 
-      {/* RENDER TUTORIAL OVERLAY IF ACTIVE */}
       <AnimatePresence>
           {showTutorial && (
               <TutorialOverlay 
