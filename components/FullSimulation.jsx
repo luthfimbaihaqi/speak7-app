@@ -211,6 +211,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const stopReasonRef = useRef("answer"); 
+  const activeAudioRef = useRef(null); // 🔥 NEW: Referensi untuk membunuh audio AI
   
   const [audioStream, setAudioStream] = useState(null);
 
@@ -263,7 +264,52 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     return () => clearInterval(interval);
   }, [partTimer, showPartTimer]);
 
-  // 🔥 4. REVISI: LOGIC SAAT TIMER LOKAL HABIS (AUTO-TRANSITION)
+  // 🔥 MASTER DEFENSE: Mencegah Back, Refresh, dan Membunuh Suara Hantu
+  useEffect(() => {
+    if (!isExamActive) return;
+
+    // 1. Perlindungan Refresh (F5) & Tutup Tab
+    const handleBeforeUnload = (e) => {
+        e.preventDefault();
+        e.returnValue = ''; // Wajib untuk browser modern
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // 2. Perlindungan Tombol Back Browser (History Hack)
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = (e) => {
+        const confirmLeave = window.confirm("Are you sure you want to leave? Your exam will be cancelled and tokens will be lost.");
+        if (!confirmLeave) {
+            // Jika Batal keluar, pasang lagi jebakan history-nya
+            window.history.pushState(null, '', window.location.href);
+        } else {
+            // Jika Yakin keluar, biarkan kembali
+            window.history.back(); 
+        }
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    // 3. TUKANG SAPU (Cleanup saat komponen benar-benar hancur/keluar)
+    return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('popstate', handlePopState);
+        
+        // BUNUH SEMUA AUDIO & MIC!
+        window.speechSynthesis.cancel(); 
+        if (activeAudioRef.current) {
+            activeAudioRef.current.pause(); 
+            activeAudioRef.current.src = "";
+        }
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            mediaRecorderRef.current.stop(); 
+        }
+        if (audioStream) {
+            audioStream.getTracks().forEach(track => track.stop()); 
+        }
+    };
+  }, [isExamActive, audioStream]);
+
+  // 4. LOGIC SAAT TIMER LOKAL HABIS (AUTO-TRANSITION)
   const handlePartTimerFinished = () => {
     if (status !== "part2_prep" && status !== "part2_speak") {
         setShowPartTimer(false);
@@ -404,12 +450,12 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
         if (data.audio) {
           setAiSpeaking(true);
-          const audio = new Audio(data.audio);
-          audio.onended = () => {
+          activeAudioRef.current = new Audio(data.audio); // 🔥 REVISI: Track audio untuk bisa dibunuh
+          activeAudioRef.current.onended = () => {
             setAiSpeaking(false);
             setIsStarting(false); 
           };
-          audio.play();
+          activeAudioRef.current.play();
         } else {
           setIsStarting(false);
         }
@@ -447,8 +493,8 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           if (data.text) {
               setMessages(prev => [...prev, { role: "assistant", content: data.text }]);
               if (data.audio) {
-                  const audio = new Audio(data.audio);
-                  audio.play();
+                  activeAudioRef.current = new Audio(data.audio); // 🔥 REVISI: Track audio terakhir
+                  activeAudioRef.current.play();
               }
           }
           return; 
@@ -470,7 +516,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           
           if (isFinished) handleExamFinished();
           
-          // 🔥 REVISI 1: Syarat status dihapus. Jika API mengirim Part 2 Step 0, maka PASTI Prep.
           if (part === 2 && step === 0) {
               setStatus("part2_prep");
               setPartTimer(60); 
@@ -485,12 +530,11 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
       if (data.audio) {
         setAiSpeaking(true);
-        const audio = new Audio(data.audio);
-        audio.onended = () => {
+        activeAudioRef.current = new Audio(data.audio); // 🔥 REVISI: Track audio untuk bisa dibunuh
+        activeAudioRef.current.onended = () => {
           setAiSpeaking(false);
-          // 🔥 REVISI 2: Blok auto_next Part 2 Step 3 dihilangkan sepenuhnya agar tidak otomatis terskip
         };
-        audio.play();
+        activeAudioRef.current.play();
       }
 
     } catch (err) {
@@ -500,13 +544,11 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     }
   };
 
-  // 🔥 5. REVISI: UI HELPERS (DENGAN CALLBACK & SATPAM DURASI)
   const playSystemVoice = (text, callback = null) => {
-     window.speechSynthesis.cancel(); // Bersihkan antrian lama
+     window.speechSynthesis.cancel(); 
      const utterance = new SpeechSynthesisUtterance(text);
      if (callback) {
          utterance.onend = callback;
-         // Handle error just in case, biar gak nyangkut
          utterance.onerror = callback; 
      }
      window.speechSynthesis.speak(utterance);
@@ -516,25 +558,21 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     if (!mediaRecorderRef.current) return;
     
     if (isRecording) {
-      // 🔥 SATPAM DURASI PART 2: Cegat kalau user ngomong di bawah 1 menit (Timer 120 -> sisa > 60)
       if (status === "part2_speak" && partTimer > 60) {
-          // Pause mic biar suara sistem ga bocor terekam
           if (mediaRecorderRef.current.state === "recording") {
               mediaRecorderRef.current.pause();
           }
-          setIsProcessing(true); // Gembok tombol sejenak
+          setIsProcessing(true); 
           
           playSystemVoice("You still have time. Please tell me more about it.", () => {
               setIsProcessing(false);
-              // Lanjut rekam paksa!
               if (mediaRecorderRef.current.state === "paused") {
                   mediaRecorderRef.current.resume();
               }
           });
-          return; // Batalkan proses Stop
+          return; 
       }
 
-      // Normal Stop Process
       stopReasonRef.current = "answer"; 
       mediaRecorderRef.current.stop(); 
       setIsRecording(false);
@@ -677,7 +715,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     </div>
   );
 
-  // 🔥 6. REVISI: GEMBOK MIC DI RENDER UI
   const isMicLocked = aiSpeaking || isProcessing || isStarting || status === "part2_prep";
 
   return (
@@ -725,7 +762,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                         </div>
                         
                         <div className="mt-8 text-center h-10 flex flex-col items-center justify-start">
-                            {/* 🔥 REVISI UX: Penambahan Micro-copy instruksi */}
                             {status === "part2_prep" ? (
                                 <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">PREPARATION TIME...</p>
                             ) : aiSpeaking ? (
@@ -821,7 +857,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                     <div className="h-8 flex items-center justify-center w-full max-w-xs">
                         {isRecording ? <AudioVisualizer /> : isProcessing ? <Loader2 className="w-5 h-5 text-blue-400 animate-spin" /> : null}
                     </div>
-                    {/* 🔥 8. REVISI: TOMBOL TETAP MUNCUL SAAT PREP, TAPI DISABLED */}
                     {status !== "checking_token" && (
                         <button
                             onClick={toggleRecording}
