@@ -211,7 +211,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const stopReasonRef = useRef("answer"); 
-  const activeAudioRef = useRef(null); // 🔥 NEW: Referensi untuk membunuh audio AI
+  const activeAudioRef = useRef(null);
   
   const [audioStream, setAudioStream] = useState(null);
 
@@ -219,6 +219,9 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const [showPartTimer, setShowPartTimer] = useState(false);
   const [globalTimer, setGlobalTimer] = useState(0); 
   const [isExamActive, setIsExamActive] = useState(false);
+
+  // 🔥 POIN 3: State untuk menunda transisi Part 2 sampai audio selesai
+  const pendingPart2Ref = useRef(false);
 
   // 1. SETUP MIC
   useEffect(() => {
@@ -268,33 +271,27 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   useEffect(() => {
     if (!isExamActive) return;
 
-    // 1. Perlindungan Refresh (F5) & Tutup Tab
     const handleBeforeUnload = (e) => {
         e.preventDefault();
-        e.returnValue = ''; // Wajib untuk browser modern
+        e.returnValue = '';
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // 2. Perlindungan Tombol Back Browser (History Hack)
     window.history.pushState(null, '', window.location.href);
     const handlePopState = (e) => {
         const confirmLeave = window.confirm("Are you sure you want to leave? Your exam will be cancelled and tokens will be lost.");
         if (!confirmLeave) {
-            // Jika Batal keluar, pasang lagi jebakan history-nya
             window.history.pushState(null, '', window.location.href);
         } else {
-            // Jika Yakin keluar, biarkan kembali
             window.history.back(); 
         }
     };
     window.addEventListener('popstate', handlePopState);
 
-    // 3. TUKANG SAPU (Cleanup saat komponen benar-benar hancur/keluar)
     return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
         window.removeEventListener('popstate', handlePopState);
         
-        // BUNUH SEMUA AUDIO & MIC!
         window.speechSynthesis.cancel(); 
         if (activeAudioRef.current) {
             activeAudioRef.current.pause(); 
@@ -317,21 +314,18 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     }
 
     if (status === "part2_prep") {
-      // 1 Menit Prep Habis. Langsung paksa lanjut tanpa tunggu klik user.
       setShowPartTimer(false);
       setStatus("part2_speak"); 
-      setIsProcessing(true); // Gembok mic sejenak selama AI ngomong
+      setIsProcessing(true);
       
       playSystemVoice("Alright, your one minute preparation time is up. Please start speaking for 1 to 2 minutes.", () => {
           setIsProcessing(false);
           setPartTimer(120); 
           setShowPartTimer(true);
-          // Paksa tombol record langsung aktif!
           if (!isRecording) toggleRecording(); 
       });
     } 
     else if (status === "part2_speak") {
-      // 2 Menit Speaking Habis
       setShowPartTimer(false);
       if (isRecording && mediaRecorderRef.current) {
         stopReasonRef.current = "timeout";
@@ -370,6 +364,14 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       } catch (err) {
           console.error("Failed to save history:", err);
       }
+  };
+
+  // 🔥 POIN 3: Helper untuk trigger Part 2 (dipanggil setelah audio selesai)
+  const activatePart2 = () => {
+      pendingPart2Ref.current = false;
+      setStatus("part2_prep");
+      setPartTimer(60);
+      setShowPartTimer(true);
   };
 
   const startSimulation = async () => {
@@ -446,7 +448,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
         if (data.audio) {
           setAiSpeaking(true);
-          activeAudioRef.current = new Audio(data.audio); // 🔥 REVISI: Track audio untuk bisa dibunuh
+          activeAudioRef.current = new Audio(data.audio);
           activeAudioRef.current.onended = () => {
             setAiSpeaking(false);
             setIsStarting(false); 
@@ -489,7 +491,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           if (data.text) {
               setMessages(prev => [...prev, { role: "assistant", content: data.text }]);
               if (data.audio) {
-                  activeAudioRef.current = new Audio(data.audio); // 🔥 REVISI: Track audio terakhir
+                  activeAudioRef.current = new Audio(data.audio);
                   activeAudioRef.current.play();
               }
           }
@@ -512,10 +514,10 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           
           if (isFinished) handleExamFinished();
           
+          // 🔥 POIN 3: Jika masuk Part 2, TUNDA transisi sampai audio Mr. Paul selesai
           if (part === 2 && step === 0) {
-              setStatus("part2_prep");
-              setPartTimer(60); 
-              setShowPartTimer(true);
+              pendingPart2Ref.current = true;
+              // Jangan setStatus("part2_prep") di sini — akan dipanggil di onended audio
           }
           if (part === 2 && step > 1) setShowPartTimer(false); 
           if (part === 3) {
@@ -526,9 +528,13 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
       if (data.audio) {
         setAiSpeaking(true);
-        activeAudioRef.current = new Audio(data.audio); // 🔥 REVISI: Track audio untuk bisa dibunuh
+        activeAudioRef.current = new Audio(data.audio);
         activeAudioRef.current.onended = () => {
           setAiSpeaking(false);
+          // 🔥 POIN 3: Setelah audio transisi Part 2 selesai, baru tampilkan topic card
+          if (pendingPart2Ref.current) {
+              activatePart2();
+          }
         };
         activeAudioRef.current.play();
       }
@@ -746,7 +752,16 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center relative p-6 overflow-y-auto">
-                {status !== "completed" && (
+                
+                {/* 🔥 POIN 4: Loading state saat checking_token */}
+                {status === "checking_token" && (
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                        <p className="text-slate-300 text-sm font-medium animate-pulse tracking-wider">Connecting to Examiner...</p>
+                    </div>
+                )}
+
+                {status !== "completed" && status !== "checking_token" && (
                     <div className={`relative transition-all duration-700 ${status.includes("part2") ? "opacity-20 scale-75 blur-sm" : "opacity-100 scale-100"}`}>
                         {aiSpeaking && (
                             <div className="absolute inset-0 rounded-full border-4 border-blue-500/30 animate-ping" />
@@ -827,11 +842,12 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                                 <p className="text-slate-400">Great job! Here is your performance analysis.</p>
                             </div>
                             {examResult ? (
+                                // 🔥 POIN 5: Fix ScoreCard props — tambah onOpenTestimonial & isLoggedIn
                                 <ScoreCard 
                                     result={examResult} 
                                     cue={cueCardTopic || "Full Simulation"} 
-                                    isPremiumExternal={true} 
-                                    onOpenUpgradeModal={() => {}} 
+                                    onOpenTestimonial={() => {}}
+                                    isLoggedIn={!!userProfile}
                                 />
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-64 bg-white/5 rounded-2xl border border-white/10 animate-pulse">
