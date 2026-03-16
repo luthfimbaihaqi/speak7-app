@@ -19,6 +19,9 @@ const TOPIC_SETS = [
         p1_topic: 'Hobbies',
         p1_intro: "Let's talk about hobbies. Do you have any hobbies?",
         p1_follow: "Why do you like it?",
+        p1_topic2: 'Weekends',
+        p1_intro2: "Now let's talk about weekends. What do you usually do on weekends?",
+        p1_follow2: "Do you prefer to spend your weekends at home or go out?",
         p2_topic: "Describe a memorable trip you took to a place far from your home.",
         p2_rounding: "Would you recommend that trip to others?",
         p3_context: "Travel & Tourism",
@@ -31,6 +34,9 @@ const TOPIC_SETS = [
         p1_topic: 'Daily Routine',
         p1_intro: "Let's move on to talk about your daily routine. What is your favorite part of the day?",
         p1_follow: "Do you prefer mornings or evenings?",
+        p1_topic2: 'Neighbors',
+        p1_intro2: "Now let's talk about your neighbors. Do you know your neighbors well?",
+        p1_follow2: "Do you think it is important to have a good relationship with neighbors?",
         p2_topic: "Describe a piece of technology (e.g. phone, computer) that is important to you.",
         p2_rounding: "Do you use it every day?",
         p3_context: "Technology & Society",
@@ -43,6 +49,9 @@ const TOPIC_SETS = [
         p1_topic: 'Food',
         p1_intro: "Let's talk about food. What is your favorite type of food?",
         p1_follow: "Do you prefer eating out or cooking at home?",
+        p1_topic2: 'Birthdays',
+        p1_intro2: "Now let's talk about birthdays. How do people usually celebrate birthdays in your country?",
+        p1_follow2: "What was the best birthday you ever had?",
         p2_topic: "Describe a person who has influenced you significantly.",
         p2_rounding: "When did you last see this person?",
         p3_context: "Social Relationships",
@@ -55,6 +64,9 @@ const TOPIC_SETS = [
         p1_topic: 'Home',
         p1_intro: "Let's talk about your home. Do you live in a house or an apartment?",
         p1_follow: "What do you like most about where you live?",
+        p1_topic2: 'Shopping',
+        p1_intro2: "Now let's talk about shopping. Do you enjoy shopping?",
+        p1_follow2: "Do you prefer shopping online or in a store?",
         p2_topic: "Describe a job you would like to have in the future.",
         p2_rounding: "Why does this job appeal to you?",
         p3_context: "Work & Employment",
@@ -67,6 +79,9 @@ const TOPIC_SETS = [
         p1_topic: 'Studies',
         p1_intro: "Let's talk about your studies. What did you study in school?",
         p1_follow: "Did you enjoy that subject?",
+        p1_topic2: 'Reading',
+        p1_intro2: "Now let's talk about reading. Do you enjoy reading books?",
+        p1_follow2: "What kind of books do you prefer?",
         p2_topic: "Describe a teacher who helped you in your education.",
         p2_rounding: "Do you still contact this teacher?",
         p3_context: "Education System",
@@ -79,6 +94,9 @@ const TOPIC_SETS = [
         p1_topic: 'Weather',
         p1_intro: "Let's talk about the weather. What is your favorite type of weather?",
         p1_follow: "Does the weather affect your mood?",
+        p1_topic2: 'Parks',
+        p1_intro2: "Now let's talk about parks and gardens. Do you often visit parks?",
+        p1_follow2: "What do you usually do when you go to a park?",
         p2_topic: "Describe an environmental problem in your country.",
         p2_rounding: "Is the government doing anything about it?",
         p3_context: "Environment & Pollution",
@@ -91,6 +109,9 @@ const TOPIC_SETS = [
         p1_topic: 'Free Time',
         p1_intro: "Let's talk about your free time. What do you usually do when you want to relax?",
         p1_follow: "Do you prefer spending your free time alone or with others?",
+        p1_topic2: 'Social Media',
+        p1_intro2: "Now let's talk about social media. How often do you use social media?",
+        p1_follow2: "Do you think social media is a good way to stay in touch with friends?",
         p2_topic: "Describe a movie or TV show you enjoyed watching.",
         p2_rounding: "Would you watch it again in the future?",
         p3_context: "Media & Entertainment",
@@ -103,6 +124,9 @@ const TOPIC_SETS = [
         p1_topic: 'Health',
         p1_intro: "Let's talk about health. What do you usually do to stay healthy?",
         p1_follow: "Is it easy for you to maintain a healthy lifestyle?",
+        p1_topic2: 'Sports',
+        p1_intro2: "Now let's talk about sports. Do you play any sports?",
+        p1_follow2: "What sport is the most popular in your country?",
         p2_topic: "Describe a healthy habit you try to maintain.",
         p2_rounding: "How long have you had this habit?",
         p3_context: "Health & Lifestyle",
@@ -115,6 +139,9 @@ const TOPIC_SETS = [
         p1_topic: 'Rules',
         p1_intro: "Let's talk about rules. Did you have strict rules at home when you were a child?",
         p1_follow: "Do you think rules are important?",
+        p1_topic2: 'Patience',
+        p1_intro2: "Now let's talk about patience. Are you a patient person?",
+        p1_follow2: "What kind of situations test your patience the most?",
         p2_topic: "Describe a rule or law that you think is good.",
         p2_rounding: "Does everyone follow this rule?",
         p3_context: "Crime & Society",
@@ -127,6 +154,9 @@ const TOPIC_SETS = [
         p1_topic: 'Music',
         p1_intro: "Let's talk about music. What kind of music do you like?",
         p1_follow: "Can you play any musical instruments?",
+        p1_topic2: 'Handwriting',
+        p1_intro2: "Now let's talk about handwriting. Do you prefer writing by hand or typing?",
+        p1_follow2: "Do you think handwriting is still important in the digital age?",
         p2_topic: "Describe a piece of art (painting, statue, etc) that you like.",
         p2_rounding: "Where did you see it?",
         p3_context: "Art & Culture",
@@ -139,6 +169,9 @@ const TOPIC_SETS = [
         p1_topic: 'Transport',
         p1_intro: "Let's talk about transport. How do you usually travel to work or school?",
         p1_follow: "Do you prefer public or private transport?",
+        p1_topic2: 'Maps',
+        p1_intro2: "Now let's talk about maps. How often do you use maps or GPS?",
+        p1_follow2: "Do you think people have become too dependent on GPS navigation?",
         p2_topic: "Describe a city you would like to visit.",
         p2_rounding: "What is this city famous for?",
         p3_context: "Urban Life",
@@ -151,6 +184,9 @@ const TOPIC_SETS = [
         p1_topic: 'Family',
         p1_intro: "Let's talk about family. Do you have a large family?",
         p1_follow: "Who are you closest to in your family?",
+        p1_topic2: 'Childhood Memories',
+        p1_intro2: "Now let's talk about your childhood. What is your happiest childhood memory?",
+        p1_follow2: "Do you think children today have a different childhood compared to your generation?",
         p2_topic: "Describe a family celebration you attended.",
         p2_rounding: "Did you enjoy it?",
         p3_context: "Family & Society",
@@ -219,7 +255,7 @@ async function generateScore(fullTranscript, topicContext) {
     `;
 
     const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // 🔥 UPGRADED TO GPT-4o
+        model: "gpt-4o",
         messages: [{ role: "system", content: prompt }],
         response_format: { type: "json_object" },
         temperature: 0.3
@@ -237,8 +273,8 @@ async function generateScore(fullTranscript, topicContext) {
     return { ...result, overall };
 }
 
-// --- HELPER: INSTRUKSI (PERSONA V4: REAL IELTS EXAMINER) ---
-function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false) {
+// --- HELPER: INSTRUKSI (PERSONA V5: REAL IELTS EXAMINER) ---
+function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false, isQuickMode = false, askedQuestions = []) {
   const nickname = contextData?.nickname || "Candidate";
   const userContent = isSilent ? "(User remained silent)" : `"${userLastText}"`;
 
@@ -250,10 +286,11 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
     1. NO ROBOTIC TRANSITIONS: Do NOT use phrases like "That's an interesting perspective," "I see what you mean," or "Moving on."
     2. BE NATURAL: If the user gives a good answer, just say "Right," or "Okay," and immediately ask the next question. Sometimes, ask the next question with NO transition word at all.
     3. KEEP IT BRIEF: Ask only ONE short question. Do NOT over-explain.
+    4. ADDRESS the candidate as "${nickname}" occasionally to make it personal.
   `;
 
   if (isExamFinished) {
-      return `${basePrompt} SITUATION: Final question answered. TASK: Say "Thank you. That is the end of the speaking test. You have done well. Have a great day."`;
+      return `${basePrompt} SITUATION: Final question answered. TASK: Say "Thank you, ${nickname}. That is the end of the speaking test. You have done well. Have a great day."`;
   }
 
   // PART 1
@@ -266,7 +303,8 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
       case 4: return `${basePrompt} SITUATION: Job/Study: ${userContent}. TASK: Acknowledge. Ask ONE simple follow-up (e.g. "Do you enjoy it?").`;
       case 5: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Transition to ${topicSet.p1_topic}. Ask: "${topicSet.p1_intro}"`;
       case 6: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: React naturally. Ask: "${topicSet.p1_follow}"`;
-      // 🔥 REVISI: Step 7 Dihapus. Part 1 selesai di Step 6.
+      case 7: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Transition to ${topicSet.p1_topic2}. Ask: "${topicSet.p1_intro2}"`;
+      case 8: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: React naturally. Ask: "${topicSet.p1_follow2}"`;
       default: return `${basePrompt} TASK: Move to Part 2.`;
     }
   }
@@ -274,15 +312,14 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
   // PART 2
   if (part === 2) {
       if (step === 0) {
-          // 🔥 REVISI: Menggabungkan transisi Part 1 -> Part 2 secara mulus di sini
           return `${basePrompt}
             SITUATION: Starting Part 2.
-            TASK: Say "Thank you. That is the end of Part 1. Now let's move on to Part 2. I will give you a topic: ${topicSet.p2_topic}. You have one minute to prepare."`;
+            TASK: Say "Thank you, ${nickname}. That is the end of Part 1. Now let's move on to Part 2. I will give you a topic: ${topicSet.p2_topic}. You have one minute to prepare."`;
       }
       
       if (step === 1) {
         if (isShortAnswer) return `${basePrompt} SITUATION: User stopped early. TASK: Say "You still have time. Is there anything else you'd like to add?"`;
-        if (isSilent && !isShortAnswer) return `${basePrompt} SITUATION: Prep over. TASK: Say "Please start speaking. I will stop you after 2 minutes."`;
+        if (isSilent && !isShortAnswer) return `${basePrompt} SITUATION: Prep over. TASK: Say "Please start speaking, ${nickname}. I will stop you after 2 minutes."`;
         return `${basePrompt} SITUATION: Ready to speak. TASK: Say "Please start speaking."`;
       }
 
@@ -300,8 +337,12 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
       }
   }
   
-  // PART 3 (DISCUSSION) - 🔥 HYBRID: SEMI-DYNAMIC
+  // PART 3 (DISCUSSION) - HYBRID: SEMI-DYNAMIC
   if (part === 3) {
+      const previousQuestionsContext = askedQuestions.length > 0 
+          ? `\n\n🚨 QUESTIONS ALREADY ASKED (DO NOT REPEAT OR ASK SIMILAR ONES):\n${askedQuestions.map((q, i) => `${i+1}. "${q}"`).join('\n')}`
+          : '';
+
       const part3Base = `
         ${basePrompt}
         MODE: PART 3 DISCUSSION (Abstract and analytical).
@@ -309,15 +350,53 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
         - You are evaluating the candidate's ability to express and justify opinions.
         - ROLE: You are an objective evaluator, not a debater. Do NOT contradict the candidate.
         - EXPLORE: Use the candidate's previous answer as a stepping stone.
+        ${previousQuestionsContext}
       `;
 
+      // --- QUICK TEST MODE: 5 QUESTIONS (Hybrid) ---
+      if (isQuickMode) {
+          if (step === 0) {
+              return `${part3Base} 
+              SITUATION: STARTING QUICK TEST MODE (Part 3 Only).
+              TOPIC: ${topicSet.p3_context}
+              TASK: 
+              1. Say "Hello, ${nickname}! Welcome to the Quick Test. In this session, we will jump straight to Part 3 and discuss ${topicSet.p3_context}."
+              2. IMMEDIATELY Ask Question 1: "${topicSet.p3_q1}".`;
+          }
+          if (step === 1) {
+              return `${part3Base} 
+              SITUATION: The candidate just answered: ${userContent}. 
+              TOPIC: ${topicSet.p3_context}
+              TASK: Dig deeper into the candidate's answer. Ask a follow-up that explores the WHY or HOW behind their specific point. Reference something they actually said. Keep the question short and natural.`;
+          }
+          if (step === 2) {
+              return `${part3Base} 
+              SITUATION: The candidate answered: ${userContent}. 
+              TOPIC: ${topicSet.p3_context}
+              TASK: Shift to a new angle. Ask: "${topicSet.p3_q2}".`;
+          }
+          if (step === 3) {
+              return `${part3Base} 
+              SITUATION: The candidate answered: ${userContent}. 
+              TOPIC: ${topicSet.p3_context}
+              TASK: Dig deeper into the candidate's answer. Ask a follow-up that challenges them to consider the OPPOSITE viewpoint or a DIFFERENT group of people's perspective. Reference something they actually said. Keep the question short.`;
+          }
+          if (step === 4) {
+              return `${part3Base} 
+              SITUATION: The candidate answered: ${userContent}. 
+              TOPIC: ${topicSet.p3_context}
+              TASK: This is the FINAL question. Ask: "${topicSet.p3_q3}".`;
+          }
+      }
+
+      // --- FULL TEST MODE: 3 QUESTIONS ---
       if (step === 0) {
           if (isQuickStart) {
               return `${part3Base} 
               SITUATION: STARTING QUICK TEST MODE (Part 3 Only).
               TOPIC: ${topicSet.p3_context}
               TASK: 
-              1. Say "Hello! Welcome to the Quick Test. In this session, we will jump straight to Part 3 and discuss ${topicSet.p3_context}."
+              1. Say "Hello, ${nickname}! Welcome to the Quick Test. In this session, we will jump straight to Part 3 and discuss ${topicSet.p3_context}."
               2. IMMEDIATELY Ask Question 1: "${topicSet.p3_q1}".`;
           }
           return `${part3Base} SITUATION: Start Part 3 (Topic: ${topicSet.p3_context}). TASK: Ask: "${topicSet.p3_q1}".`;
@@ -326,14 +405,15 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
       if (step === 1) {
           return `${part3Base} 
           SITUATION: The candidate just answered: ${userContent}. 
-          TASK: Acknowledge their point briefly (e.g. "Right"), then ask a NEW follow-up question related to the overarching theme of "${topicSet.p3_context}". 
-          The question must explore their idea further or ask for wider societal/future implications. DO NOT repeat previous questions.`;
+          TOPIC: ${topicSet.p3_context}
+          TASK: Dig deeper into the candidate's answer. Ask a follow-up that explores the WHY or HOW behind their specific point. Reference something they actually said. Keep the question short and natural.`;
       }
       
       if (step === 2) {
           return `${part3Base} 
           SITUATION: The candidate answered: ${userContent}. 
-          TASK: Ask one final, deep, abstract question about "${topicSet.p3_context}" related to a different perspective or global impact. Keep it brief.`;
+          TOPIC: ${topicSet.p3_context}
+          TASK: Shift perspective. Ask one final, deep, abstract question about "${topicSet.p3_context}" that considers a different angle or global impact. Keep it brief.`;
       }
   }
   
@@ -362,6 +442,7 @@ export async function POST(request) {
 
     const topicSet = getTopicSet(sessionId);
     let { current_part, current_step, extracted_data, transcript } = session;
+    const isQuickMode = session.mode === 'quick';
     let userText = "";
     let isSilent = true;
 
@@ -380,7 +461,7 @@ export async function POST(request) {
         }
     }
 
-    console.log(`[P${current_part}/S${current_step}] Action: ${action} | Topic: ${topicSet.id} | Words: ${userText.split(/\s+/).length}`);
+    console.log(`[P${current_part}/S${current_step}] Action: ${action} | Topic: ${topicSet.id} | Mode: ${session.mode} | Words: ${userText.split(/\s+/).length}`);
 
     // --- LOGIC CORE ---
     let nextStep = current_step;
@@ -388,13 +469,30 @@ export async function POST(request) {
     let isShortAnswer = false; 
     let metaTopic = null;
     let isExamFinished = false; 
-    let isQuickStart = false; // Flag for Quick Test Intro
+    let isQuickStart = false;
+    let updatedExtractedData = extracted_data || {};
+
+    // 🔥 SARAN 4: Extract nickname from user answers in Part 1
+    if (current_part === 1 && !isSilent) {
+        if (current_step === 0) {
+            // Step 0: User menjawab nama lengkap
+            updatedExtractedData.fullName = userText;
+        }
+        if (current_step === 1) {
+            // Step 1: User menjawab nickname
+            updatedExtractedData.nickname = userText.replace(/[^a-zA-Z\s]/g, '').trim().split(/\s+/)[0];
+        }
+    }
+
+    // Build list of already-asked Part 3 questions for anti-repeat
+    const askedQuestions = (transcript || [])
+        .filter(t => t.part === 3 && t.ai)
+        .map(t => t.ai);
 
     // ACTION LOGIC
     if (action === 'start') {
         nextPart = 1; nextStep = 0;
     }
-    // QUICK TEST LOGIC
     else if (action === 'start_quick') {
         nextPart = 3; 
         nextStep = 0;
@@ -402,7 +500,6 @@ export async function POST(request) {
         isQuickStart = true; 
     }
     else if (action === 'auto_next') {
-        // 🔥 REVISI: Logika Part 1 Step 7 dibuang. Tinggal Part 2 -> Part 3
         if (current_part === 2 && current_step === 3) {
             nextPart = 3; nextStep = 0;
         }
@@ -421,16 +518,15 @@ export async function POST(request) {
             else if (current_step === 1) nextStep = 2; 
         }
         else if (current_part === 3) { 
-             if (current_step < 2) nextStep = current_step + 1;
-             else isExamFinished = true;
+            const maxStep = isQuickMode ? 4 : 2;
+            if (current_step < maxStep) nextStep = current_step + 1;
+            else isExamFinished = true;
         }
     } 
     else { // ACTION: ANSWER
         if (current_part === 1) {
-            if (!isSilent && current_step < 3) { /* Extraction logic */ }
-            // 🔥 REVISI: Jika baru selesai step 5, maju ke 6. 
-            // Jika selesai step 6, LANGSUNG lempar ke Part 2 Step 0.
-            if (current_step < 6) nextStep = current_step + 1;
+            // 🔥 SARAN 1: Part 1 sekarang sampai step 8, lalu masuk Part 2
+            if (current_step < 8) nextStep = current_step + 1;
             else { 
                 nextPart = 2; nextStep = 0; 
                 metaTopic = topicSet.p2_topic;
@@ -450,15 +546,17 @@ export async function POST(request) {
              else if (current_step === 3) { nextPart = 3; nextStep = 0; }
         }
         else if (current_part === 3) {
-             if (current_step < 2) nextStep = current_step + 1;
-             else isExamFinished = true;
+            // 🔥 SARAN 2: Quick Test = 5 pertanyaan (step 0-4), Full Test = 3 (step 0-2)
+            const maxStep = isQuickMode ? 4 : 2;
+            if (current_step < maxStep) nextStep = current_step + 1;
+            else isExamFinished = true;
         }
     }
 
-    const instruction = getInstruction(nextPart, nextStep, extracted_data, userText, topicSet, isSilent, isShortAnswer, isExamFinished, isQuickStart);
+    const instruction = getInstruction(nextPart, nextStep, updatedExtractedData, userText, topicSet, isSilent, isShortAnswer, isExamFinished, isQuickStart, isQuickMode, askedQuestions);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // 🔥 UPGRADED TO GPT-4o
+      model: "gpt-4o",
       messages: [
         { role: "system", content: "You are Mr. Paul. Speak natural English. Follow instructions EXACTLY." },
         { role: "user", content: instruction }
@@ -468,7 +566,6 @@ export async function POST(request) {
     const aiResponseText = completion.choices[0].message.content;
 
     // --- DB UPDATE & SCORING ---
-    // 🔥 REVISI: Menggunakan nextPart & nextStep agar transkrip sejajar dengan UI.
     const newTranscriptEntry = { part: nextPart, step: nextStep, user: userText, ai: aiResponseText, timestamp: new Date().toISOString() };
     const fullTranscript = [...(transcript || []), newTranscriptEntry]; 
 
@@ -476,22 +573,24 @@ export async function POST(request) {
           current_part: nextPart,
           current_step: nextStep,
           transcript: fullTranscript,
+          extracted_data: updatedExtractedData,
           updated_at: new Date().toISOString()
     };
     
     let finalScore = null;
     if (isExamFinished) {
         updateData.status = 'COMPLETED';
-        // 1. Generate Score
-        finalScore = await generateScore(fullTranscript, topicSet.p2_topic);
         
-        // 2. Format Transcript String untuk UI (Fixed Chronological Order)
+        // 🔥 SARAN 5: Kirim topicContext yang tepat berdasarkan mode
+        const topicContext = isQuickMode ? topicSet.p3_context : topicSet.p2_topic;
+        finalScore = await generateScore(fullTranscript, topicContext);
+        
+        // Format Transcript String untuk UI
         const formattedTranscript = fullTranscript.map((t, index) => {
             if (index === 0) return `🧑‍🏫 ${t.ai}`;
             return `👤 ${t.user || "(Silent)"}\n\n🧑‍🏫 ${t.ai}`;
         }).join('\n\n──────────────────────────────\n\n');
         
-        // 3. Masukkan formatted transcript ke objek skor
         finalScore.transcript = formattedTranscript; 
 
         updateData.score_data = finalScore;
@@ -499,7 +598,7 @@ export async function POST(request) {
 
     await supabase.from("exam_sessions").update(updateData).eq("id", sessionId);
 
-    // 🔥 UPGRADED TTS: HD Quality & Onyx Voice
+    // TTS: HD Quality & Onyx Voice
     const mp3 = await openai.audio.speech.create({ 
         model: "tts-1-hd", 
         voice: "onyx", 

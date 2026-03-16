@@ -62,10 +62,12 @@ export async function POST(request) {
       .insert([
         { 
           user_id: userId, 
-          current_part: startPart, // 🔥 Penting: Set part sesuai mode
+          current_part: startPart,
           current_step: 0,
           status: 'ONGOING',
-          transcript: [] 
+          mode: mode,
+          transcript: [],
+          extracted_data: {}
         }
       ])
       .select('id')

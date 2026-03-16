@@ -408,10 +408,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         
         const newSessionId = data.session_id;
         setSessionId(newSessionId);
-
-        if (newSessionId) {
-            await supabase.from('exam_sessions').update({ mode: mode }).eq('id', newSessionId);
-        }
         
         if (mode === 'quick') {
             setStatus("part3");

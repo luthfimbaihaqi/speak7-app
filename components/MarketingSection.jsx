@@ -133,11 +133,11 @@ export default function MarketingSection({ onSelectMode }) {
             </div>
           </motion.div>
 
-          {/* Card 2: MOCK INTERVIEW */}
+          {/* Card 2: QUICK TEST */}
           <motion.div 
             whileHover={{ y: -5, scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onSelectMode && onSelectMode('mock-interview')}
+            onClick={() => onSelectMode && onSelectMode('quick')}
             className="p-8 rounded-3xl bg-[#1A1D26] border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-purple-500/30 transition-colors flex flex-col shadow-lg"
           >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -175,11 +175,11 @@ export default function MarketingSection({ onSelectMode }) {
             </div>
           </motion.div>
 
-          {/* Card 3: FULL SIMULATION (NEW) */}
+          {/* Card 3: FULL SIMULATION */}
           <motion.div 
             whileHover={{ y: -5, scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onSelectMode && onSelectMode('full-simulation')}
+            onClick={() => onSelectMode && onSelectMode('full')}
             className="p-8 rounded-3xl bg-[#1A1D26] border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-indigo-400 transition-colors shadow-lg flex flex-col"
           >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">

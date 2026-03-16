@@ -255,10 +255,10 @@ export default function Home() {
   };
 
   const handleMarketingCardClick = (mode) => {
-    if (mode === 'full-simulation') {
-        handleModeSwitch('full-simulation');
-    } else if (mode === 'mock-interview' || mode === 'quick-test') {
-        handleModeSwitch('mock-interview'); 
+    if (mode === 'full') {
+        handleModeSwitch('full');
+    } else if (mode === 'quick' || mode === 'quick-test') {
+        handleModeSwitch('quick'); 
     } else {
         handleModeSwitch(mode);
     }
@@ -538,7 +538,7 @@ export default function Home() {
                                             <LogIn className="w-6 h-6" />
                                         </div>
                                         <h3 className="text-white font-bold mb-1">Guest User</h3>
-                                        <p className="text-slate-400 text-xs mb-4">Login to save progress & get 2 free tokens.</p>
+                                        <p className="text-slate-400 text-xs mb-4">Login to save progress & get 4 free tokens.</p>
                                         
                                         <Link href="/auth">
                                             <button className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-all shadow-lg shadow-blue-500/20">
@@ -546,7 +546,7 @@ export default function Home() {
                                             </button>
                                         </Link>
                                         <p className="text-[10px] text-slate-500 mt-2">
-                                            New? Get <span className="text-yellow-400 font-bold">2 Free Tokens</span>
+                                            New? Get <span className="text-yellow-400 font-bold">4 Free Tokens</span>
                                         </p>
                                     </div>
 
@@ -606,10 +606,10 @@ export default function Home() {
             <button onClick={() => handleModeSwitch("cue-card")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "cue-card" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
                 <Mic2 className="w-3.5 h-3.5" /> Cue Card
             </button>
-            <button onClick={() => handleModeSwitch("mock-interview")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "mock-interview" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
+            <button onClick={() => handleModeSwitch("quick")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "quick" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
                 <Users className="w-3.5 h-3.5" /> Quick Test
             </button>
-            <button onClick={() => handleModeSwitch("full-simulation")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "full-simulation" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
+            <button onClick={() => handleModeSwitch("full")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "full" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
                 <Sparkles className="w-3.5 h-3.5" /> Full Test
             </button>
         </div>
@@ -617,8 +617,8 @@ export default function Home() {
         <div className="max-w-4xl mx-auto space-y-12">
             <motion.div initial={{ scale: 0.99, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
             
-            {practiceMode === "full-simulation" && <PremiumHeroCard />}
-            {practiceMode === "mock-interview" && <QuickTestHeroCard />}
+            {practiceMode === "full" && <PremiumHeroCard />}
+            {practiceMode === "quick" && <QuickTestHeroCard />}
 
             {practiceMode === "cue-card" && (
                 <div className="relative bg-[#1A1D26] border border-slate-800 rounded-3xl p-8 md:p-12 overflow-hidden min-h-[500px] flex flex-col justify-center shadow-xl">
@@ -720,7 +720,7 @@ export default function Home() {
                     <h3 className="text-2xl font-black text-white mb-2">Welcome Gift!</h3>
                     <p className="text-slate-300 mb-8 leading-relaxed text-sm">
                         Account created successfully.<br/>
-                        We've added <strong className="text-yellow-400">2 Free Tokens</strong> to your wallet to start your journey.
+                        We've added <strong className="text-yellow-400">4 Free Tokens</strong> to your wallet to start your journey.
                     </p>
                     
                     <button 
