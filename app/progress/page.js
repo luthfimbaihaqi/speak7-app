@@ -5,11 +5,12 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2, Trash2, 
-  Filter, Flame, Sparkles, Zap, Trophy, Star, Target, Plus, LogIn 
+  Filter, Flame, Sparkles, Zap, Trophy, Star, Target, Plus, LogIn, TrendingUp, TrendingDown, Minus, ArrowRight
 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
 import ScoreCard from "@/components/ScoreCard";
 import UpgradeModal from "@/components/UpgradeModal"; 
+import TestimonialModal from "@/components/TestimonialModal";
 
 export default function ProgressPage() {
   const [history, setHistory] = useState([]);
@@ -26,6 +27,7 @@ export default function ProgressPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false);
 
   useEffect(() => {
     async function checkUserStatus() {
@@ -37,18 +39,16 @@ export default function ProgressPage() {
             userId = user.id;
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('is_premium, premium_expiry, token_balance') // Ambil token_balance
+                .select('is_premium, premium_expiry, token_balance')
                 .eq('id', user.id)
                 .single();
             
             if (profile) {
-                // Merge token info
                 setUserProfile(prev => ({ ...prev, ...profile }));
                 const isStillValid = profile.is_premium && (profile.premium_expiry > Date.now());
                 setIsPremium(isStillValid); 
             }
         }
-        // Panggil fetchHistory dengan userId (bisa null jika guest)
         fetchHistory(userId);
     }
     checkUserStatus();
@@ -73,22 +73,16 @@ export default function ProgressPage() {
     }
   }, [filterType, history]);
 
-  // --- 🔥 UPDATED: FETCH LOGIC (NO LOCAL STORAGE FOR LOGGED IN USERS) ---
   const fetchHistory = async (userId) => {
     try {
         let combinedData = [];
 
         if (userId) {
-            // --- SKENARIO 1: USER LOGIN (CLOUD ONLY) ---
-            // Kita sengaja TIDAK mengambil localStorage di sini agar data bersih.
-            
-            // 1. Fetch Table Lama (Cue Cards)
             const practicePromise = supabase
                 .from('practice_history')
                 .select('*')
                 .eq('user_id', userId);
 
-            // 2. Fetch Table Baru (Quick/Full Tests)
             const sessionPromise = supabase
                 .from('exam_sessions')
                 .select('*')
@@ -97,13 +91,11 @@ export default function ProgressPage() {
 
             const [practiceRes, sessionRes] = await Promise.all([practicePromise, sessionPromise]);
 
-            // Normalisasi Data Practice History
             const practiceData = (practiceRes.data || []).map(item => ({
                 ...item,
                 source_table: 'practice_history'
             }));
 
-            // Normalisasi Data Exam Sessions
             const sessionData = (sessionRes.data || []).map(session => {
                 const scores = session.score_data || {};
                 let topicLabel = "Mock Interview";
@@ -128,7 +120,6 @@ export default function ProgressPage() {
             combinedData = [...practiceData, ...sessionData];
 
         } else {
-            // --- SKENARIO 2: GUEST (LOCAL STORAGE ONLY) ---
             const localRaw = localStorage.getItem("ielts4our_history");
             if (localRaw) {
                 const localData = JSON.parse(localRaw);
@@ -145,7 +136,6 @@ export default function ProgressPage() {
             }
         }
 
-        // Sort: Terbaru di atas
         combinedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         setHistory(combinedData);
     } catch (err) {
@@ -173,8 +163,7 @@ export default function ProgressPage() {
                 localStorage.setItem("ielts4our_history", JSON.stringify(newData));
             }
         } else {
-            // Cek hapus dari tabel mana
-            let tableName = 'practice_history'; // Default
+            let tableName = 'practice_history';
             if (item.source_table === 'exam_sessions') {
                 tableName = 'exam_sessions';
             }
@@ -199,10 +188,43 @@ export default function ProgressPage() {
   const rawAvg = history.length > 0 ? rawSum / history.length : 0;
   const averageScore = history.length > 0 ? (Math.round(rawAvg * 2) / 2).toFixed(1) : "0.0";
   
-  // Highest Score Logic
   const highestScore = history.length > 0 
     ? Math.max(...history.map(item => item.overall_score || 0)) 
     : 0;
+
+  // 🔥 Trend indicator — bandingkan 5 latihan terakhir vs 5 sebelumnya
+  const getTrend = () => {
+      if (history.length < 4) return { direction: "neutral", diff: 0 };
+      
+      const splitPoint = Math.min(5, Math.floor(history.length / 2));
+      const recent = history.slice(0, splitPoint);
+      const older = history.slice(splitPoint, splitPoint * 2);
+      
+      if (older.length === 0) return { direction: "neutral", diff: 0 };
+      
+      const recentAvg = recent.reduce((sum, item) => sum + (item.overall_score || 0), 0) / recent.length;
+      const olderAvg = older.reduce((sum, item) => sum + (item.overall_score || 0), 0) / older.length;
+      const diff = recentAvg - olderAvg;
+      
+      if (diff > 0.3) return { direction: "up", diff: diff.toFixed(1) };
+      if (diff < -0.3) return { direction: "down", diff: Math.abs(diff).toFixed(1) };
+      return { direction: "neutral", diff: 0 };
+  };
+
+  const trend = getTrend();
+
+  // --- HELPER: Practice Again URL berdasarkan tipe latihan ---
+  const getPracticeAgainUrl = (topic) => {
+      if (topic.includes("FULL EXAM")) return "/simulation?mode=full";
+      if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) return "/simulation?mode=quick";
+      return "/";
+  };
+
+  const getPracticeAgainLabel = (topic) => {
+      if (topic.includes("FULL EXAM")) return "Start Full Exam";
+      if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) return "Start Quick Test";
+      return "Practice Cue Card";
+  };
 
   // --- HELPER VISUAL ---
   const getCleanTitle = (topic) => {
@@ -237,7 +259,6 @@ export default function ProgressPage() {
             Back to Practice
         </Link>
         
-        {/* REPLACED PRO BADGE WITH TOKEN BALANCE */}
         {userProfile && (
             <button 
                 onClick={() => setShowUpgradeModal(true)}
@@ -269,7 +290,6 @@ export default function ProgressPage() {
                     <BarChart3 className="w-8 h-8 text-slate-500" />
                 </div>
                 
-                {/* --- EMPTY STATE LOGIC --- */}
                 {userProfile ? (
                     <>
                         <p className="text-slate-400 mb-6">Belum ada riwayat latihan di Cloud. Yuk mulai sekarang!</p>
@@ -296,7 +316,7 @@ export default function ProgressPage() {
              </div>
         ) : (
             <>
-                {/* NEW STATS CARDS (3 Columns) */}
+                {/* STATS CARDS */}
                 <div className="grid grid-cols-3 gap-3 md:gap-4 mb-10">
                     {/* Card 1: Total */}
                     <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl border border-white/10 relative overflow-hidden group">
@@ -308,17 +328,34 @@ export default function ProgressPage() {
                         <p className="text-[10px] text-slate-500 mt-1">Practices</p>
                     </div>
 
-                    {/* Card 2: Average */}
+                    {/* Card 2: Average + Trend */}
                     <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl border border-white/10 relative overflow-hidden group">
                         <div className="absolute right-2 top-2 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
                             <BarChart3 className="w-16 h-16 text-blue-400" />
                         </div>
                         <p className="text-[10px] md:text-xs text-blue-400 font-bold uppercase tracking-widest mb-1">Average</p>
-                        <p className="text-2xl md:text-4xl font-black text-white">{averageScore}</p>
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-2xl md:text-4xl font-black text-white">{averageScore}</p>
+                            {trend.direction === "up" && (
+                                <span className="flex items-center gap-0.5 text-emerald-400 text-[10px] font-bold">
+                                    <TrendingUp className="w-3 h-3" /> +{trend.diff}
+                                </span>
+                            )}
+                            {trend.direction === "down" && (
+                                <span className="flex items-center gap-0.5 text-rose-400 text-[10px] font-bold">
+                                    <TrendingDown className="w-3 h-3" /> -{trend.diff}
+                                </span>
+                            )}
+                            {trend.direction === "neutral" && history.length >= 4 && (
+                                <span className="flex items-center gap-0.5 text-slate-500 text-[10px] font-bold">
+                                    <Minus className="w-3 h-3" /> Stable
+                                </span>
+                            )}
+                        </div>
                         <p className="text-[10px] text-slate-500 mt-1">Band Score</p>
                     </div>
 
-                    {/* Card 3: Best (New) */}
+                    {/* Card 3: Best */}
                     <div className="bg-gradient-to-br from-amber-900/20 to-slate-900 p-5 rounded-2xl border border-amber-500/20 relative overflow-hidden group">
                         <div className="absolute right-2 top-2 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
                             <Trophy className="w-16 h-16 text-amber-500" />
@@ -351,7 +388,7 @@ export default function ProgressPage() {
                     ))}
                 </div>
 
-                {/* HISTORY LIST (REDESIGNED) */}
+                {/* HISTORY LIST */}
                 <div className="space-y-3">
                     {filteredHistory.length === 0 ? (
                         <div className="text-center py-10 text-slate-500 text-sm italic bg-white/5 rounded-2xl border border-dashed border-slate-800">
@@ -371,7 +408,6 @@ export default function ProgressPage() {
                                 className={`bg-[#1A1D26] hover:bg-[#20242e] border p-4 md:p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all group relative ${item.topic.includes("FULL EXAM") ? "border-indigo-500/20" : "border-slate-800 hover:border-slate-700"}`}
                             >
                                 <div className="flex-1 min-w-0 pr-4">
-                                    {/* Type Badge & Date */}
                                     <div className="flex items-center gap-2 mb-2">
                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border ${typeInfo.color}`}>
                                             {typeInfo.icon} {typeInfo.label}
@@ -381,20 +417,17 @@ export default function ProgressPage() {
                                         </span>
                                     </div>
                                     
-                                    {/* Main Title */}
                                     <h3 className="text-white font-bold truncate max-w-[200px] md:max-w-md text-base md:text-lg group-hover:text-blue-400 transition-colors">
                                         {cleanTitle}
                                     </h3>
                                 </div>
                                 
                                 <div className="flex items-center gap-4 md:gap-6">
-                                    {/* Band Score Circle */}
                                     <div className={`w-12 h-12 rounded-full flex flex-col items-center justify-center ${getScoreColor(item.overall_score)}`}>
                                         <span className="text-xs font-bold opacity-80 uppercase leading-none">Band</span>
                                         <span className="text-lg font-black leading-none">{item.overall_score}</span>
                                     </div>
                                     
-                                    {/* Action Buttons */}
                                     <div className="flex items-center gap-2">
                                         <button 
                                             onClick={(e) => promptDelete(e, item)}
@@ -416,7 +449,7 @@ export default function ProgressPage() {
         )}
       </div>
 
-      {/* DETAIL MODAL (REUSED) */}
+      {/* DETAIL MODAL */}
       <AnimatePresence>
         {selectedItem && (
             <motion.div 
@@ -445,9 +478,19 @@ export default function ProgressPage() {
                         <ScoreCard 
                             result={selectedItem.full_feedback} 
                             cue={selectedItem.topic}
-                            isPremiumExternal={isPremium}
-                            onOpenUpgradeModal={() => setShowUpgradeModal(true)}
+                            onOpenTestimonial={() => setShowTestimonialModal(true)}
+                            isLoggedIn={!!userProfile}
                         />
+
+                        {/* Tombol Practice Again */}
+                        <div className="mt-8 text-center">
+                            <Link href={getPracticeAgainUrl(selectedItem.topic)}>
+                                <button className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2 mx-auto">
+                                    <span>{getPracticeAgainLabel(selectedItem.topic)}</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </motion.div>
@@ -508,6 +551,12 @@ export default function ProgressPage() {
             setIsPremium(true);
             setShowUpgradeModal(false);
         }}
+      />
+
+      <TestimonialModal 
+        isOpen={showTestimonialModal} 
+        onClose={() => setShowTestimonialModal(false)} 
+        userProfile={userProfile} 
       />
 
     </main>
