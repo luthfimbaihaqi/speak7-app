@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation"; 
 import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
 import { 
   BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, 
   BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock, 
@@ -12,15 +13,18 @@ import {
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
 import { CUE_CARDS, PART3_TOPICS, GUILT_MESSAGES } from "@/utils/constants";
-import UniversityBanner from "@/components/UniversityBanner";
-import TestimonialSection from "@/components/TestimonialSection";
-import MarketingSection from "@/components/MarketingSection";
-import UpgradeModal from "@/components/UpgradeModal";
-import AlertModal from "@/components/AlertModal"; 
-import FAQSection from "@/components/FAQSection"; 
-import TestimonialModal from "@/components/TestimonialModal";
-import Confetti from "react-confetti"; 
 
+// 🔥 LAZY LOAD: Komponen berat yang tidak langsung terlihat saat halaman pertama muncul
+const UniversityBanner = dynamic(() => import("@/components/UniversityBanner"), { ssr: false });
+const TestimonialSection = dynamic(() => import("@/components/TestimonialSection"), { ssr: false });
+const MarketingSection = dynamic(() => import("@/components/MarketingSection"), { ssr: false });
+const UpgradeModal = dynamic(() => import("@/components/UpgradeModal"), { ssr: false });
+const AlertModal = dynamic(() => import("@/components/AlertModal"), { ssr: false });
+const FAQSection = dynamic(() => import("@/components/FAQSection"), { ssr: false });
+const TestimonialModal = dynamic(() => import("@/components/TestimonialModal"), { ssr: false });
+const Confetti = dynamic(() => import("react-confetti"), { ssr: false });
+
+// DIRECT IMPORT: Komponen yang langsung terlihat di hero area
 import Recorder from "@/components/Recorder";
 import ScoreCard from "@/components/ScoreCard";
 
@@ -763,13 +767,10 @@ export default function Home() {
                 <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    // 👇 BARU: Tambahkan state untuk animasi ikon di hover
-                    onMouseEnter={() => setIsUserMenuOpen(false)} // Matikan trigger menu lain jika ada
+                    onMouseEnter={() => setIsUserMenuOpen(false)}
                     onClick={() => setShowTestimonialModal(true)} 
-                    // 👇 BARU: Tambahkan shadow/glow biru lembut, border tipis, dan transisi halus
                     className="group px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 border border-blue-400/30 transition-all flex items-center gap-2.5"
                 >
-                    {/* 👇 BARU: Gunakan ikon Quote & tambahkan motion untuk animasi halus ikon di hover */}
                     <motion.div
                       variants={{
                         hover: { rotate: 180, x: -2 },
