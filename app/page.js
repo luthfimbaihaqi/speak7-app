@@ -31,7 +31,6 @@ function WelcomeListener({ setShowWelcomeModal }) {
   useEffect(() => {
     if (searchParams.get('welcome') === 'true') {
         setShowWelcomeModal(true);
-        // Bersihkan URL agar popup tidak muncul lagi saat refresh
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
     }
@@ -62,10 +61,8 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState(null); 
   const [isPremium, setIsPremium] = useState(false);
   
-  // State quota daily cue card
   const [dailyCueQuotaStatus, setDailyCueQuotaStatus] = useState('allowed'); 
 
-  // MENU STATES
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
@@ -81,7 +78,6 @@ export default function Home() {
     isOpen: false, type: "success", title: "", message: "", actionLabel: "", onAction: null
   });
 
-  // --- 1. CEK STATUS USER ---
   useEffect(() => {
     async function checkUserStatus() {
         const { data: { user } } = await supabase.auth.getUser();
@@ -179,8 +175,6 @@ export default function Home() {
   };
 
   const handleAnalysisComplete = async (data) => {
-    // --- STREAK LOGIC (CLIENT SIDE ONLY) ---
-    // Streak logic masih aman pakai local storage karena hanya kosmetik UI
     const todayStr = new Date().toDateString();
     const lastPracticeDate = localStorage.getItem("ielts4our_last_date");
     let currentStreak = parseInt(localStorage.getItem("ielts4our_streak") || "0");
@@ -199,7 +193,6 @@ export default function Home() {
             const { audioUrl, audioPlaylist, ...dataToSave } = finalResult;
 
             if (userProfile) {
-                // --- 🔥 UPDATED: USER LOGIN -> SIMPAN KE DB ONLY ---
                 await supabase.from('practice_history').insert({
                     user_id: userProfile.id,
                     topic: dataToSave.topic,
@@ -212,7 +205,6 @@ export default function Home() {
                 });
                 console.log("Saved to DB");
             } else {
-                // --- 🔥 UPDATED: GUEST -> SIMPAN KE LOCAL ONLY ---
                 const historyItem = {
                     id: Date.now(),
                     date: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }), 
@@ -377,7 +369,6 @@ export default function Home() {
 
         {/* --- HEADER --- */}
         <header className="flex flex-col md:flex-row justify-between items-center py-8 max-w-5xl mx-auto gap-4 relative">
-            {/* LOGO & DESKTOP NAV */}
             <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
                 <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 text-slate-300 hover:text-white rounded-lg hover:bg-white/10">
                     <Menu className="w-6 h-6" />
@@ -388,7 +379,6 @@ export default function Home() {
                 <div className="w-8 md:hidden"></div> 
             </div>
 
-            {/* DESKTOP RIGHT ACTIONS */}
             <div className="hidden md:flex items-center gap-3">
                 {userProfile ? (
                     <>
@@ -490,7 +480,6 @@ export default function Home() {
                         <div className="flex-1 space-y-6 overflow-y-auto">
                             {userProfile ? (
                                 <>
-                                    {/* LOGGED IN USER VIEW */}
                                     <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
                                         <div className="flex items-center gap-3 mb-3">
                                             {userProfile?.user_metadata?.avatar_url ? (
@@ -531,14 +520,13 @@ export default function Home() {
                                     </nav>
                                 </>
                             ) : (
-                                /* GUEST VIEW - REVISED */
                                 <div className="flex flex-col h-full">
                                     <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50 text-center mb-6">
                                         <div className="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-3">
                                             <LogIn className="w-6 h-6" />
                                         </div>
                                         <h3 className="text-white font-bold mb-1">Guest User</h3>
-                                        <p className="text-slate-400 text-xs mb-4">Login to save progress & get 2 free tokens.</p>
+                                        <p className="text-slate-400 text-xs mb-4">Login to save progress & get 4 free tokens.</p>
                                         
                                         <Link href="/auth">
                                             <button className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-all shadow-lg shadow-blue-500/20">
@@ -546,14 +534,12 @@ export default function Home() {
                                             </button>
                                         </Link>
                                         <p className="text-[10px] text-slate-500 mt-2">
-                                            New? Get <span className="text-yellow-400 font-bold">2 Free Tokens</span>
+                                            New? Get <span className="text-yellow-400 font-bold">4 Free Tokens</span>
                                         </p>
                                     </div>
 
-                                    {/* Divider */}
                                     <div className="h-px bg-slate-800 mb-6"></div>
 
-                                    {/* Public Menu */}
                                     <nav className="space-y-2">
                                         <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <BookOpen className="w-5 h-5 text-teal-400" /> Speaking Guide
@@ -578,8 +564,7 @@ export default function Home() {
             )}
         </AnimatePresence>
 
-        {/* HERO, UI TAB, CONTENT, FOOTER - TIDAK BERUBAH */}
-        
+        {/* HERO */}
         <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
             <Link href="/mission">
             <motion.div
@@ -608,7 +593,7 @@ export default function Home() {
             </p>
         </div>
 
-        <div className="max-w-md mx-auto mb-12 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
+        <div className="max-w-md mx-auto mb-8 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
             <button onClick={() => handleModeSwitch("cue-card")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "cue-card" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
                 <Mic2 className="w-3.5 h-3.5" /> Cue Card
             </button>
@@ -619,6 +604,40 @@ export default function Home() {
                 <Sparkles className="w-3.5 h-3.5" /> Full Test
             </button>
         </div>
+
+        {/* 🔥 GUEST CTA BANNER — hanya muncul untuk guest user */}
+        {!userProfile && (
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="max-w-2xl mx-auto mb-10"
+            >
+                <Link href="/auth">
+                    <div className="relative bg-gradient-to-r from-[#1A1D26] to-[#1E2330] border border-yellow-500/20 rounded-2xl p-4 md:p-5 flex items-center gap-4 hover:border-yellow-500/40 transition-all cursor-pointer group overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+                        
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center border border-yellow-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                            <Gift className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm md:text-base font-bold text-white leading-snug">
+                                Buat akun gratis, dapatkan <span className="text-yellow-400">4 Tokens</span>
+                            </p>
+                            <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">
+                                Cukup untuk 1x Full Simulation + 1x Quick Test
+                            </p>
+                        </div>
+                        
+                        <div className="shrink-0 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-xs font-bold group-hover:bg-yellow-500/20 transition-colors hidden md:block">
+                            Claim Now
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-yellow-400 group-hover:translate-x-0.5 transition-all shrink-0 md:hidden" />
+                    </div>
+                </Link>
+            </motion.div>
+        )}
 
         <div className="max-w-4xl mx-auto space-y-12">
             <motion.div initial={{ scale: 0.99, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
@@ -683,7 +702,6 @@ export default function Home() {
                             cue={analysisResult.topic || dailyCue.topic} 
                             isPremiumExternal={isPremium}
                             onOpenUpgradeModal={() => setShowUpgradeModal(true)}
-                            // 🔥 BARU: Kirim prop trigger Testimoni & status Login
                             onOpenTestimonial={() => setShowTestimonialModal(true)}
                             isLoggedIn={!!userProfile}
                         />
@@ -705,7 +723,6 @@ export default function Home() {
             userProfile={userProfile} 
         />
 
-        {/* --- WELCOME MODAL (CONFETTI) --- */}
         {showWelcomeModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                 <Confetti recycle={false} numberOfPieces={500} colors={['#2dd4bf', '#a855f7', '#fbbf24', '#ffffff']} />
@@ -726,7 +743,7 @@ export default function Home() {
                     <h3 className="text-2xl font-black text-white mb-2">Welcome Gift!</h3>
                     <p className="text-slate-300 mb-8 leading-relaxed text-sm">
                         Account created successfully.<br/>
-                        We've added <strong className="text-yellow-400">2 Free Tokens</strong> to your wallet to start your journey.
+                        We've added <strong className="text-yellow-400">4 Free Tokens</strong> to your wallet to start your journey.
                     </p>
                     
                     <button 
@@ -757,7 +774,6 @@ export default function Home() {
         <UniversityBanner />
         <TestimonialSection />
 
-        {/* --- 🔥 BARU: Tombol Share Your Story Manual di Bawah Marquee (Hanya untuk User Login) --- */}
         {userProfile && (
             <div className="flex justify-center -mt-8 mb-20 relative z-20">
                 <motion.button 
