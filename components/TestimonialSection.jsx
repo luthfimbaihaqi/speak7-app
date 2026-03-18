@@ -8,8 +8,8 @@ import { supabase } from "@/utils/supabaseClient";
 export default function TestimonialSection() {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   
-  // Referensi dan state untuk interaksi gulir
   const scrollRef = useRef(null);
   const scrollAccumulator = useRef(0); 
   
@@ -17,40 +17,60 @@ export default function TestimonialSection() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   
-  // State tunggal untuk mendeteksi kursor (desktop) dan sentuhan jari (mobile)
   const [isInteracting, setIsInteracting] = useState(false); 
 
+  // 🔥 POIN 1: Fetch dengan timeout 8 detik
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId;
+
     async function fetchTestimonials() {
       try {
+        // Timeout: jika fetch tidak selesai dalam 8 detik, paksa stop loading
+        timeoutId = setTimeout(() => {
+          if (isMounted && loading) {
+            setLoading(false);
+            setFetchError(true);
+          }
+        }, 8000);
+
         const { data, error } = await supabase
           .from("testimonials")
           .select("*")
           .eq("is_published", true)
           .order("created_at", { ascending: false });
 
+        if (!isMounted) return;
+
         if (error) throw error;
         setTestimonials(data || []);
       } catch (error) {
         console.error("Error fetching testimonials:", error.message);
+        if (isMounted) setFetchError(true);
       } finally {
-        setLoading(false);
+        clearTimeout(timeoutId);
+        if (isMounted) setLoading(false);
       }
     }
 
     fetchTestimonials();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
-  // Logika putaran otomatis (Auto-scroll Marquee) untuk Desktop & Mobile
+  // 🔥 POIN 2: Auto-scroll HANYA berjalan setelah data ready
   useEffect(() => {
+    // Guard: jangan jalankan auto-scroll jika belum ada data
+    if (testimonials.length === 0) return;
+
     let animationFrameId;
     const scrollContainer = scrollRef.current;
 
     const scroll = () => {
-      // Berjalan terus asalkan tidak sedang disentuh, di-hover, atau di-drag
       if (scrollContainer && !isInteracting && !isDragging) {
-        
-        // Kecepatan adaptif: Lebih lambat di HP (0.3) agar mudah dibaca, normal di Desktop (0.5)
         const speed = window.innerWidth < 768 ? 1.0 : 1.0;
         scrollAccumulator.current += speed; 
         
@@ -60,7 +80,6 @@ export default function TestimonialSection() {
           scrollAccumulator.current -= scrollAmount; 
         }
         
-        // Reset posisi ke 0 saat mencapai setengah jalan
         if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) {
           scrollContainer.scrollLeft -= scrollContainer.scrollWidth / 2;
         }
@@ -73,7 +92,6 @@ export default function TestimonialSection() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [isInteracting, isDragging, testimonials]);
 
-  // Logika interaksi Mouse (Desktop Drag-to-scroll)
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setStartX(e.pageX - scrollRef.current.offsetLeft);
@@ -97,6 +115,7 @@ export default function TestimonialSection() {
     scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
+  // Loading state
   if (loading) {
     return (
       <section className="py-24 relative overflow-hidden bg-[#0B0D14]">
@@ -108,7 +127,8 @@ export default function TestimonialSection() {
     );
   }
 
-  if (testimonials.length === 0) {
+  // 🔥 POIN 3: Error state atau tidak ada data — render nothing gracefully
+  if (fetchError || testimonials.length === 0) {
     return null;
   }
 
@@ -135,10 +155,8 @@ export default function TestimonialSection() {
 
       <div 
         className="w-full overflow-hidden"
-        // Sensor Desktop (Kursor)
         onMouseEnter={() => setIsInteracting(true)}
         onMouseLeave={handleMouseLeave}
-        // Sensor Mobile (Jari)
         onTouchStart={() => setIsInteracting(true)}
         onTouchEnd={() => setIsInteracting(false)}
         onTouchCancel={() => setIsInteracting(false)}
@@ -148,7 +166,6 @@ export default function TestimonialSection() {
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
-          // Magnet CSS (snap) dihapus agar JS bisa leluasa mendorong di HP
           className={`flex gap-6 px-4 md:px-8 overflow-x-auto select-none transition-cursor duration-200 ${
             isDragging ? "cursor-grabbing" : "cursor-grab"
           }`}
