@@ -1,5 +1,5 @@
 import { Analytics } from "@vercel/analytics/react";
-import { Geist, Geist_Mono, Caveat } from "next/font/google"; // Import Caveat
+import { Geist, Geist_Mono, Caveat } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,10 +19,38 @@ const caveat = Caveat({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://www.ielts4our.net"),
   title: "IELTS4our | Your Speaking Partner to Band 8.0",
-  description: "Master IELTS Speaking with real-time AI feedback, mock interviews, and band 8.0 model answers.",
+  description: "Master IELTS Speaking with real-time AI feedback, mock interviews, and band 8.0 model answers. Practice daily with instant scoring and grammar correction.",
+  keywords: ["IELTS Speaking", "IELTS practice", "IELTS AI", "speaking test", "band 8.0", "IELTS simulation", "IELTS mock test"],
+  authors: [{ name: "IELTS4our" }],
   icons: {
-    icon: '/icon.png', // Pastikan file favicon.ico sudah ada di folder public
+    icon: [
+      { url: "/icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon.ico", sizes: "48x48" },
+    ],
+    apple: "/icon.png",
+  },
+  openGraph: {
+    type: "website",
+    url: "https://www.ielts4our.net",
+    title: "IELTS4our | Your Speaking Partner to Band 8.0",
+    description: "Master IELTS Speaking with real-time AI feedback, mock interviews, and band 8.0 model answers.",
+    siteName: "IELTS4our",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "IELTS4our - Your Speaking Partner to Band 8.0",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "IELTS4our | Your Speaking Partner to Band 8.0",
+    description: "Master IELTS Speaking with real-time AI feedback, mock interviews, and band 8.0 model answers.",
+    images: ["/og-image.png"],
   },
 };
 
