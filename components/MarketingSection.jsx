@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom"; // Import createPortal
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Mic2, Users, Zap, Crown, 
@@ -69,7 +69,6 @@ export default function MarketingSection({ onSelectMode }) {
   const [selectedCriteria, setSelectedCriteria] = useState(null);
   const [mounted, setMounted] = useState(false);
 
-  // Efek untuk menandai bahwa komponen sudah di-mount di client (syarat Portal)
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -98,13 +97,9 @@ export default function MarketingSection({ onSelectMode }) {
             onClick={() => onSelectMode && onSelectMode('cue-card')}
             className="p-8 rounded-3xl bg-[#1A1D26] border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-blue-500/30 transition-colors flex flex-col shadow-lg"
           >
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Mic2 className="w-32 h-32 text-blue-500" />
-            </div>
-            
             <div className="relative z-10 flex-1 flex flex-col">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-widest mb-6 border border-blue-500/20 w-fit">
-                <Zap className="w-3 h-3" /> Free Feature
+                Free Feature
               </div>
               
               <h3 className="text-2xl font-bold text-[#E6E8EE] mb-2 group-hover:text-blue-400 transition-colors">Daily Cue Card</h3>
@@ -140,13 +135,9 @@ export default function MarketingSection({ onSelectMode }) {
             onClick={() => onSelectMode && onSelectMode('quick')}
             className="p-8 rounded-3xl bg-[#1A1D26] border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-purple-500/30 transition-colors flex flex-col shadow-lg"
           >
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Users className="w-32 h-32 text-purple-500" />
-            </div>
-            
             <div className="relative z-10 flex-1 flex flex-col">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-bold uppercase tracking-widest mb-6 border border-purple-500/20 w-fit">
-                <Crown className="w-3 h-3" /> Pro Feature
+                Pro Feature
               </div>
               
               <h3 className="text-2xl font-bold text-[#E6E8EE] mb-2 group-hover:text-purple-400 transition-colors">Quick Test</h3>
@@ -182,13 +173,9 @@ export default function MarketingSection({ onSelectMode }) {
             onClick={() => onSelectMode && onSelectMode('full')}
             className="p-8 rounded-3xl bg-[#1A1D26] border border-slate-800 relative overflow-hidden group cursor-pointer hover:border-indigo-400 transition-colors shadow-lg flex flex-col"
           >
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Sparkles className="w-32 h-32 text-indigo-400" />
-            </div>
-            
             <div className="relative z-10 flex-1 flex flex-col">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-6 border border-indigo-500/20 w-fit">
-                <Sparkles className="w-3 h-3" /> Ultimate Mode
+                Ultimate Mode
               </div>
               
               <h3 className="text-2xl font-bold text-[#E6E8EE] mb-2 group-hover:text-indigo-300 transition-colors">Full Simulation</h3>
@@ -244,7 +231,6 @@ export default function MarketingSection({ onSelectMode }) {
       </section>
 
       {/* --- EDUCATION MODAL (MOVED TO PORTAL) --- */}
-      {/* Ini memastikan Modal dirender di document.body, di luar stacking context section di atas */}
       {mounted && createPortal(
         <AnimatePresence>
             {selectedCriteria && (
