@@ -262,7 +262,7 @@ export default function Home() {
     <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 min-h-[450px] flex flex-col justify-center items-center text-center border border-purple-500/30 shadow-lg bg-[#1A1D26]">
         <div className="relative z-10 space-y-6 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-bold uppercase tracking-widest mb-2">
-                <Users className="w-3 h-3" /> Popular Feature
+                 Quick Test
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-[#E6E8EE] tracking-tight leading-tight">
                 Interactive <br/> <span className="text-purple-400">Quick Test</span>
@@ -299,7 +299,7 @@ export default function Home() {
     <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 min-h-[450px] flex flex-col justify-center items-center text-center border border-slate-700/50 shadow-lg bg-[#1A1D26]">
         <div className="relative z-10 space-y-6 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-widest mb-2">
-                <Sparkles className="w-3 h-3" /> Premium Feature
+                 Full Test
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-[#E6E8EE] tracking-tight leading-tight">
                 Full IELTS Speaking <br/> <span className="text-blue-400">Simulation Test</span>
@@ -595,13 +595,13 @@ export default function Home() {
 
         <div className="max-w-md mx-auto mb-8 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
             <button onClick={() => handleModeSwitch("cue-card")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "cue-card" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
-                <Mic2 className="w-3.5 h-3.5" /> Cue Card
+                 Cue Card
             </button>
             <button onClick={() => handleModeSwitch("quick")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "quick" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
-                <Users className="w-3.5 h-3.5" /> Quick Test
+                 Quick Test
             </button>
             <button onClick={() => handleModeSwitch("full")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "full" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
-                <Sparkles className="w-3.5 h-3.5" /> Full Test
+                 Full Test
             </button>
         </div>
 

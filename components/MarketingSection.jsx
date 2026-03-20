@@ -137,7 +137,7 @@ export default function MarketingSection({ onSelectMode }) {
           >
             <div className="relative z-10 flex-1 flex flex-col">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-bold uppercase tracking-widest mb-6 border border-purple-500/20 w-fit">
-                Pro Feature
+                1 Token
               </div>
               
               <h3 className="text-2xl font-bold text-[#E6E8EE] mb-2 group-hover:text-purple-400 transition-colors">Quick Test</h3>
@@ -175,7 +175,7 @@ export default function MarketingSection({ onSelectMode }) {
           >
             <div className="relative z-10 flex-1 flex flex-col">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-6 border border-indigo-500/20 w-fit">
-                Ultimate Mode
+                3 Tokens
               </div>
               
               <h3 className="text-2xl font-bold text-[#E6E8EE] mb-2 group-hover:text-indigo-300 transition-colors">Full Simulation</h3>
