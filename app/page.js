@@ -573,14 +573,11 @@ export default function Home() {
                 whileHover={{ scale: 1.02 }}
                 className="inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-[#1A1D26] border border-slate-800 hover:border-teal-500/30 text-slate-300 text-xs font-medium mb-6 cursor-pointer transition-all group"
             >
-                <div className="p-1.5 bg-teal-500/10 rounded-lg group-hover:bg-teal-500/20 transition-colors">
-                    <BookOpen className="w-3.5 h-3.5 text-teal-400" />
-                </div>
                 <div className="flex flex-col items-start">
                     <span className="font-bold text-slate-200 text-xs">Speaking Guide</span>
                     <span className="text-[10px] text-slate-500 hidden md:block">Strategi per Part + contoh jawaban Band 7+</span>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-teal-400 group-hover:translate-x-0.5 transition-all" />
+                <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-teal-400 group-hover:translate-x-1.5 transition-all" />
             </motion.div>
             </Link>
             
