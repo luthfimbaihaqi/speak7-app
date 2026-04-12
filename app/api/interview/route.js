@@ -217,7 +217,7 @@ async function generateScore(fullTranscript, topicContext) {
     }
 
     const prompt = `
-        You are a strict IELTS Examiner. Evaluate the following Full Speaking Test Transcript.
+        You are an experienced IELTS Examiner. Evaluate the following Full Speaking Test Transcript holistically.
         
         TOPIC CONTEXT: ${topicContext}
         TRANSCRIPT:
@@ -225,11 +225,13 @@ async function generateScore(fullTranscript, topicContext) {
 
         TASK:
         1. Ignore the Examiner's lines for scoring. Focus ONLY on the User's answers.
-        2. Assign Band Scores (0-9) strictly based on IELTS public band descriptors:
-           - FLUENCY: Is there hesitation? Is the answer painfully short (Band 4.0-5.0) or well-elaborated (Band 7.0+)?
-           - LEXICAL: Do they use basic words (Band 5.0) or less common idiomatic vocabulary (Band 7.0+)?
-           - GRAMMAR: Are there frequent errors in simple sentences (Band 4.0)? Do they use complex structures accurately (Band 7.0+)?
-           - PRONUNCIATION: Estimate based on transcription accuracy and word complexity.
+        2. Assign Band Scores (0-9) based on IELTS public band descriptors. Score each criterion INDEPENDENTLY — grammar errors must NOT drag down fluency or lexical scores.
+           - FLUENCY: Focus on flow and elaboration. If the candidate speaks at length, develops ideas with examples, and maintains coherence WITHOUT long pauses — that is Band 7.0+. Minor hesitations and self-corrections are normal even at Band 7-8.
+           - LEXICAL: Focus on vocabulary RANGE and willingness to use less common words. If the candidate uses topic-specific vocabulary and attempts varied expressions — that is Band 7.0+. Occasional repetition is acceptable at Band 7.
+           - GRAMMAR: Focus on whether the candidate ATTEMPTS complex structures (relative clauses, conditionals, passive voice). If they use a mix of simple and complex sentences with some errors that do NOT impede communication — that is Band 6.5-7.0. Only give Band 5.0-5.5 if errors are frequent AND cause confusion.
+           - PRONUNCIATION: If the Whisper transcription is clean and accurate (few misheard words), assume the candidate speaks clearly — that is Band 7.0+. Only lower the score if there are signs of unclear speech (e.g., [Unintelligible] markers, garbled words).
+           
+           IMPORTANT: Be encouraging but fair. A candidate who communicates effectively, elaborates well, and uses examples should NOT receive below Band 6.5 overall. The goal is to motivate learners, not discourage them.
         
         🚨 CRITICAL FAIL-SAFE:
         If the transcript contains mostly non-English words, gibberish, or the user is consistently silent/refuses to answer, you MUST give a Band 1.0 or 2.0 overall and skip detailed feedback.
