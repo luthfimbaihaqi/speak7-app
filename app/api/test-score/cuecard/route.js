@@ -5,66 +5,17 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(request) {
-  console.log("🚀 Menerima request di /api/analyze");
+// Transkrip Cue Card user: "Describe a time when you helped someone"
+const TEST_CUE_CARD = "Describe a time when you helped someone.";
+const TEST_TRANSCRIPT = "I helped my friend see me struggling with her financial back then and she asked me whether can I give some loan to her. Then I asked her politely what kind of situation that she's been going through because money is very sensitive in terms of any relationship so I need to know the clear reason behind it. and she tells me everything about her condition, about her life situations. So after all the things that she told me, I helped her by loaned my money to her every month for about 3 months. I think it feels so good to be able to help my friends because I know how it feels when we need some help but there is no one can help us.";
 
+export async function GET() {
   try {
-    const formData = await request.formData();
-    const audioFile = formData.get("audio");
-    const cueCard = formData.get("cue_card");
-
-    if (!audioFile) {
-      return NextResponse.json({ error: "Audio is required" }, { status: 400 });
-    }
-
-    // 1. TRANSKRIPSI (OpenAI Whisper)
-    const buffer = Buffer.from(await audioFile.arrayBuffer());
-    let transcriptText = "";
-
-    if (buffer.length > 1000) {
-      try {
-        const file = await OpenAI.toFile(buffer, "user_voice.mp3");
-        const trans = await openai.audio.transcriptions.create({
-          file: file,
-          model: "whisper-1",
-          language: "en",
-        });
-        transcriptText = trans.text.trim();
-      } catch (err) {
-        transcriptText = "[Unintelligible]";
-      }
-    }
-
-    const wordCount = transcriptText.trim().split(/\s+/).length;
-    console.log(`🎤 Transcript (${wordCount} words): ${transcriptText}`);
-
-    // FAIL-SAFE: Jawaban terlalu pendek
-    if (wordCount < 5) {
-      return NextResponse.json({
-        topic: cueCard,
-        transcript: transcriptText,
-        overall: 1.0,
-        fluency: 1.0,
-        lexical: 1.0,
-        grammar: 1.0,
-        pronunciation: 1.0,
-        feedback: [
-          "No speech detected or answer too short.",
-          "Please speak clearly for at least 10 seconds.",
-          "IELTS requires lengthy responses to evaluate fluency."
-        ],
-        improvement: "Try to expand your answer. Don't just say 'Yes' or 'No'.",
-        grammarCorrection: [],
-        modelAnswer: "N/A"
-      });
-    }
-
-    // 2. SCORING (GPT-4o)
     const prompt = `
         You are an experienced IELTS Examiner. Evaluate the following Part 2 (Long Turn) response holistically.
         
-        TOPIC: "${cueCard}"
-        USER'S ANSWER: "${transcriptText}"
+        TOPIC: "${TEST_CUE_CARD}"
+        USER'S ANSWER: "${TEST_TRANSCRIPT}"
 
         TASK:
         1. Ignore any filler words for scoring. Focus on the OVERALL quality of the response.
@@ -106,40 +57,42 @@ export async function POST(request) {
       temperature: 0.3,
     });
 
-    const analysisResult = JSON.parse(completion.choices[0].message.content);
+    const result = JSON.parse(completion.choices[0].message.content);
 
-    // 3. PEMBULATAN SKOR OVERALL
-    const f = analysisResult.fluency || 0;
-    const l = analysisResult.lexical || 0;
-    const g = analysisResult.grammar || 0;
-    let p = analysisResult.pronunciation || 0;
+    // Calculate Overall (same logic as production)
+    const f = result.fluency || 0;
+    const l = result.lexical || 0;
+    const g = result.grammar || 0;
+    let p = result.pronunciation || 0;
+    if (p === 0) p = g;
 
-    if (p === 0) {
-      p = g;
-      analysisResult.pronunciation = p;
-    }
-
-    const average = (f + l + g + p) / 4;
-    const decimalPart = average % 1;
-    const integerPart = Math.floor(average);
-
-    let finalOverall;
-    if (decimalPart < 0.25) finalOverall = integerPart;
-    else if (decimalPart < 0.75) finalOverall = integerPart + 0.5;
-    else finalOverall = integerPart + 1.0;
+    const avg = (f + l + g + p) / 4;
+    const decimal = avg % 1;
+    let overall = Math.floor(avg);
+    if (decimal >= 0.75) overall += 1.0;
+    else if (decimal >= 0.25) overall += 0.5;
 
     return NextResponse.json({
-      topic: cueCard,
-      transcript: transcriptText,
-      ...analysisResult,
-      overall: finalOverall,
+      message: "Cue Card Score Test — NEW prompt (GPT-4o) vs OLD (Groq Llama)",
+      topic: TEST_CUE_CARD,
+      new_scores: {
+        fluency: result.fluency,
+        lexical: result.lexical,
+        grammar: result.grammar,
+        pronunciation: result.pronunciation,
+        overall: overall,
+      },
+      old_scores: {
+        fluency: 6,
+        lexical: 5.5,
+        grammar: 5,
+        pronunciation: 5,
+        overall: 5.5,
+      },
+      feedback: result.feedback,
+      grammarCorrection: result.grammarCorrection,
     });
-
   } catch (error) {
-    console.error("🔥 ERROR:", error);
-    return NextResponse.json(
-      { error: error.message || "Terjadi kesalahan pada AI." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
