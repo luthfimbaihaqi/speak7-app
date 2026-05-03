@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, 
   BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock, 
-  Filter, AlertTriangle, LogIn, ChevronDown, LogOut, User, Zap, Clock, Plus, Menu, X, Gift, Quote 
+  Filter, AlertTriangle, LogIn, ChevronDown, LogOut, User, Zap, Clock, Plus, Menu, X, Gift, Quote,
+  PenLine, FileText
 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
@@ -66,6 +67,8 @@ export default function Home() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
+  // 🔥 NEW: 2-level tab state
+  const [selectedSkill, setSelectedSkill] = useState("speaking"); // 'speaking' | 'writing'
   const [practiceMode, setPracticeMode] = useState("cue-card"); 
   
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -246,12 +249,26 @@ export default function Home() {
     setAnalysisResult(null); 
   };
 
+  // 🔥 NEW: Skill switch handler — reset mode to skill default
+  const handleSkillSwitch = (skill) => {
+    setSelectedSkill(skill);
+    setAnalysisResult(null);
+    if (skill === "speaking") {
+      setPracticeMode("cue-card");
+    } else {
+      setPracticeMode("writing-single");
+    }
+  };
+
   const handleMarketingCardClick = (mode) => {
     if (mode === 'full') {
+        setSelectedSkill("speaking");
         handleModeSwitch('full');
     } else if (mode === 'quick' || mode === 'quick-test') {
+        setSelectedSkill("speaking");
         handleModeSwitch('quick'); 
     } else {
+        setSelectedSkill("speaking");
         handleModeSwitch(mode);
     }
     if (heroRef.current) heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -269,13 +286,13 @@ export default function Home() {
             </h2>
             <p className="text-slate-400 text-lg leading-relaxed">
                 Short on time? Jump straight to <strong>Part 3 (Discussion)</strong>. <br/>
-                Experience a realistic dialogue with AI Examiner in just 5 minutes.
+                Experience a realistic dialogue in just 5 minutes.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left my-8">
                 {[
                     { val: "3-5m", lbl: "Duration", col: "text-purple-400" },
                     { val: "Part 3", lbl: "Focus", col: "text-purple-400" },
-                    { val: "AI", lbl: "Examiner", col: "text-purple-400" },
+                    { val: "Detailed", lbl: "Feedback", col: "text-purple-400" },
                     { val: "1 🪙", lbl: "Cost", col: "text-slate-300" }
                 ].map((item, i) => (
                       <div key={i} className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
@@ -305,13 +322,13 @@ export default function Home() {
                 Full IELTS Speaking <br/> <span className="text-blue-400">Simulation Test</span>
             </h2>
             <p className="text-slate-400 text-lg leading-relaxed">
-                Experience the real exam format. Complete Part 1, 2, and 3 in one go with our AI Examiner. Get a comprehensive Band 8.0 analysis.
+                Experience the real exam format. Complete Part 1, 2, and 3 in one go. Get a comprehensive Band 8.0 analysis.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left my-8">
                 {[
                     { val: "15m", lbl: "Duration", col: "text-blue-400" },
                     { val: "3 Parts", lbl: "Format", col: "text-blue-400" },
-                    { val: "AI", lbl: "Examiner", col: "text-blue-400" },
+                    { val: "Detailed", lbl: "Feedback", col: "text-blue-400" },
                     { val: "3 🪙", lbl: "Cost", col: "text-slate-300" }
                 ].map((item, i) => (
                       <div key={i} className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
@@ -327,6 +344,82 @@ export default function Home() {
                 </button>
             </Link>
             <p className="text-xs text-slate-500 mt-4">Requires 3 Tokens per session.</p>
+        </div>
+    </div>
+  );
+
+  // 🔥 NEW: Writing Single Task Card (Emerald identity)
+  const WritingSingleTaskCard = () => (
+    <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 min-h-[450px] flex flex-col justify-center items-center text-center border border-emerald-500/30 shadow-lg bg-[#1A1D26]">
+        <div className="relative z-10 space-y-6 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-widest mb-2">
+                 Writing Practice
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-[#E6E8EE] tracking-tight leading-tight">
+                Single Task <br/> <span className="text-emerald-400">Practice Mode</span>
+            </h2>
+            <p className="text-slate-400 text-lg leading-relaxed">
+                Focus on one task. No time pressure. <br/>
+                Perfect for learning and gradual improvement.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left my-8">
+                {[
+                    { val: "No Limit", lbl: "Duration", col: "text-emerald-400" },
+                    { val: "1 Task", lbl: "Focus", col: "text-emerald-400" },
+                    { val: "Detailed", lbl: "Feedback", col: "text-emerald-400" },
+                    { val: "Free", lbl: "Cost", col: "text-slate-300" }
+                ].map((item, i) => (
+                      <div key={i} className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                        <div className={`${item.col} font-bold text-xl mb-1`}>{item.val}</div>
+                        <div className="text-slate-500 text-xs uppercase font-bold">{item.lbl}</div>
+                    </div>
+                ))}
+            </div>
+            <Link href="/writing/academic">
+                <button className="group relative inline-flex items-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-1">
+                    <span>Explore Practice</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+            </Link>
+            <p className="text-xs text-slate-500 mt-4">Pick from Academic or General Training topics.</p>
+        </div>
+    </div>
+  );
+
+  // 🔥 NEW: Writing Full Test Card (Emerald identity)
+  const WritingFullTestCard = () => (
+    <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 min-h-[450px] flex flex-col justify-center items-center text-center border border-emerald-500/30 shadow-lg bg-[#1A1D26]">
+        <div className="relative z-10 space-y-6 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-widest mb-2">
+                 Writing Full Test
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-[#E6E8EE] tracking-tight leading-tight">
+                Full IELTS Writing <br/> <span className="text-emerald-400">Simulation Test</span>
+            </h2>
+            <p className="text-slate-400 text-lg leading-relaxed">
+                60 minutes. Task 1 + Task 2. <br/>
+                Real exam conditions. Test your time management.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left my-8">
+                {[
+                    { val: "60m", lbl: "Duration", col: "text-emerald-400" },
+                    { val: "2 Tasks", lbl: "Format", col: "text-emerald-400" },
+                    { val: "Detailed", lbl: "Feedback", col: "text-emerald-400" },
+                    { val: "Free", lbl: "Cost", col: "text-slate-300" }
+                ].map((item, i) => (
+                      <div key={i} className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                        <div className={`${item.col} font-bold text-xl mb-1`}>{item.val}</div>
+                        <div className="text-slate-500 text-xs uppercase font-bold">{item.lbl}</div>
+                    </div>
+                ))}
+            </div>
+            <Link href="/writing/academic">
+                <button className="group relative inline-flex items-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-1">
+                    <span>Start Full Test</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+            </Link>
+            <p className="text-xs text-slate-500 mt-4">Pick from Academic or General Training topics.</p>
         </div>
     </div>
   );
@@ -582,25 +675,57 @@ export default function Home() {
             </Link>
             
             <h2 className="text-4xl md:text-6xl font-bold text-[#E6E8EE] mb-6 leading-tight tracking-tight">
-            Master Your Speaking <br/>
+            Master Your IELTS <br/>
             <span className="text-blue-400">With IELTS4our</span>
             </h2>
             <p className="text-slate-400 text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto">
-            {isPremium ? "Nikmati akses tanpa batas, durasi lebih panjang, dan jawaban Band 8.0." : "Latihan setiap hari, dapatkan skor instan, dan perbaiki grammar secara otomatis."}
+            {isPremium ? "Nikmati akses tanpa batas, durasi lebih panjang, dan jawaban Band 8.0." : "Latihan setiap hari, dapatkan skor instan, dan feedback detail dari IELTS4our."}
             </p>
         </div>
 
-        <div className="max-w-md mx-auto mb-8 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
-            <button onClick={() => handleModeSwitch("cue-card")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "cue-card" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
-                 Cue Card
+        {/* 🔥 NEW: LEVEL 1 — SKILL TAB (Speaking | Writing) */}
+        <div className="max-w-xs mx-auto mb-4 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
+            <button 
+                onClick={() => handleSkillSwitch("speaking")} 
+                className={`flex-1 py-2.5 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                    selectedSkill === "speaking" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"
+                }`}
+            >
+                <Mic2 className="w-3.5 h-3.5" /> Speaking
             </button>
-            <button onClick={() => handleModeSwitch("quick")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "quick" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
-                 Quick Test
-            </button>
-            <button onClick={() => handleModeSwitch("full")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "full" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
-                 Full Test
+            <button 
+                onClick={() => handleSkillSwitch("writing")} 
+                className={`flex-1 py-2.5 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                    selectedSkill === "writing" ? "bg-emerald-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"
+                }`}
+            >
+                <PenLine className="w-3.5 h-3.5" /> Writing
             </button>
         </div>
+
+        {/* 🔥 NEW: LEVEL 2 — MODE TAB (per skill) */}
+        {selectedSkill === "speaking" ? (
+            <div className="max-w-md mx-auto mb-8 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
+                <button onClick={() => handleModeSwitch("cue-card")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "cue-card" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
+                    Cue Card
+                </button>
+                <button onClick={() => handleModeSwitch("quick")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "quick" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
+                    Quick Test
+                </button>
+                <button onClick={() => handleModeSwitch("full")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "full" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
+                    Full Test
+                </button>
+            </div>
+        ) : (
+            <div className="max-w-sm mx-auto mb-8 bg-[#1A1D26] p-1 rounded-full border border-slate-800 flex relative shadow-sm">
+                <button onClick={() => handleModeSwitch("writing-single")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "writing-single" ? "bg-emerald-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
+                    Single Task
+                </button>
+                <button onClick={() => handleModeSwitch("writing-full")} className={`flex-1 py-2 px-3 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center gap-2 transition-all ${practiceMode === "writing-full" ? "bg-emerald-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"}`}>
+                    Full Test
+                </button>
+            </div>
+        )}
 
         {/* 🔥 GUEST CTA BANNER — hanya muncul untuk guest user */}
         {!userProfile && (
@@ -639,6 +764,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto space-y-12">
             <motion.div initial={{ scale: 0.99, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
             
+            {/* SPEAKING MODES */}
             {practiceMode === "full" && <PremiumHeroCard />}
             {practiceMode === "quick" && <QuickTestHeroCard />}
 
@@ -707,6 +833,10 @@ export default function Home() {
 
             </div>
             )}
+
+            {/* WRITING MODES */}
+            {practiceMode === "writing-single" && <WritingSingleTaskCard />}
+            {practiceMode === "writing-full" && <WritingFullTestCard />}
             
             </motion.div>
         </div>
@@ -803,7 +933,7 @@ export default function Home() {
         <FAQSection isTeaser={true} />
 
         <footer className="text-center mt-24 pb-10 text-slate-500 text-xs md:text-sm border-t border-slate-800 pt-8">
-            <p className="mb-4">&copy; 2025 Ielts4our. Created with ❤️ by <Link href="/about" className="hover:text-blue-400 transition-colors">IELTS 4our</Link>.</p>
+            <p className="mb-4">&copy; 2025 IELTS4our. Made with ❤️ by <Link href="/about" className="hover:text-blue-400 transition-colors">IELTS4our</Link>.</p>
             <p><Link href="/terms" className="underline decoration-slate-700 hover:decoration-blue-400 hover:text-blue-400 transition-all">Terms & Conditions</Link></p>
         </footer>
       </div>

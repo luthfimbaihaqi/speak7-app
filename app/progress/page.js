@@ -5,10 +5,12 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Calendar, BarChart3, ChevronRight, X, Crown, Loader2, Trash2, 
-  Filter, Flame, Sparkles, Zap, Trophy, Star, Target, Plus, LogIn, TrendingUp, TrendingDown, Minus, ArrowRight
+  Filter, Flame, Sparkles, Zap, Trophy, Star, Target, Plus, LogIn, TrendingUp, TrendingDown, Minus, ArrowRight,
+  PenLine, FileEdit
 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient";
 import ScoreCard from "@/components/ScoreCard";
+import WritingScoreCard from "@/components/writing/WritingScoreCard";
 import UpgradeModal from "@/components/UpgradeModal"; 
 import TestimonialModal from "@/components/TestimonialModal";
 
@@ -54,22 +56,20 @@ export default function ProgressPage() {
     checkUserStatus();
   }, []);
 
-  // --- LOGIC FILTER ---
+  // --- LOGIC FILTER (extended for Writing) ---
   useEffect(() => {
     if (filterType === "all") {
         setFilteredHistory(history);
     } else if (filterType === "cue-card") {
-        setFilteredHistory(history.filter(item => 
-            !item.topic.includes("QUICK TEST") && 
-            !item.topic.includes("FULL EXAM") &&
-            !item.topic.includes("Mock Interview")
-        ));
+        setFilteredHistory(history.filter(item => item.source_type === "speaking-cue"));
     } else if (filterType === "quick-test") {
-        setFilteredHistory(history.filter(item => 
-            item.topic.includes("QUICK TEST") || item.topic.includes("Mock Interview")
-        ));
+        setFilteredHistory(history.filter(item => item.source_type === "speaking-quick"));
     } else if (filterType === "full-exam") {
-        setFilteredHistory(history.filter(item => item.topic.includes("FULL EXAM")));
+        setFilteredHistory(history.filter(item => item.source_type === "speaking-full"));
+    } else if (filterType === "writing-single") {
+        setFilteredHistory(history.filter(item => item.source_type === "writing-single"));
+    } else if (filterType === "writing-full") {
+        setFilteredHistory(history.filter(item => item.source_type === "writing-full"));
     }
   }, [filterType, history]);
 
@@ -78,6 +78,9 @@ export default function ProgressPage() {
         let combinedData = [];
 
         if (userId) {
+            // ═══════════════════════════════════════════
+            // SPEAKING: practice_history + exam_sessions (UNCHANGED)
+            // ═══════════════════════════════════════════
             const practicePromise = supabase
                 .from('practice_history')
                 .select('*')
@@ -89,18 +92,44 @@ export default function ProgressPage() {
                 .eq('user_id', userId)
                 .not('score_data', 'is', null);
 
-            const [practiceRes, sessionRes] = await Promise.all([practicePromise, sessionPromise]);
+            // ═══════════════════════════════════════════
+            // WRITING: writing_history + writing_full_test_history (NEW)
+            // ═══════════════════════════════════════════
+            const writingSinglePromise = supabase
+                .from('writing_history')
+                .select('*')
+                .eq('user_id', userId);
 
+            const writingFullPromise = supabase
+                .from('writing_full_test_history')
+                .select('*')
+                .eq('user_id', userId);
+
+            const [practiceRes, sessionRes, writingSingleRes, writingFullRes] = await Promise.all([
+                practicePromise, sessionPromise, writingSinglePromise, writingFullPromise
+            ]);
+
+            // ═══════════════════════════════════════════
+            // NORMALIZE SPEAKING (UNCHANGED, only added source_type)
+            // ═══════════════════════════════════════════
             const practiceData = (practiceRes.data || []).map(item => ({
                 ...item,
-                source_table: 'practice_history'
+                source_table: 'practice_history',
+                source_type: 'speaking-cue',
             }));
 
             const sessionData = (sessionRes.data || []).map(session => {
                 const scores = session.score_data || {};
                 let topicLabel = "Mock Interview";
-                if (session.mode === 'full') topicLabel = "FULL EXAM: Complete Simulation";
-                else if (session.mode === 'quick') topicLabel = "QUICK TEST: Part 3 Mock";
+                let sourceType = "speaking-quick";
+                if (session.mode === 'full') {
+                    topicLabel = "FULL EXAM: Complete Simulation";
+                    sourceType = "speaking-full";
+                }
+                else if (session.mode === 'quick') {
+                    topicLabel = "QUICK TEST: Part 3 Mock";
+                    sourceType = "speaking-quick";
+                }
 
                 return {
                     id: session.id,
@@ -113,13 +142,113 @@ export default function ProgressPage() {
                         transcript: session.transcript_data ? JSON.stringify(session.transcript_data) : null
                     },
                     created_at: session.created_at,
-                    source_table: 'exam_sessions'
+                    source_table: 'exam_sessions',
+                    source_type: sourceType,
                 };
             });
 
-            combinedData = [...practiceData, ...sessionData];
+            // ═══════════════════════════════════════════
+            // NORMALIZE WRITING SINGLE TASK (NEW)
+            // ═══════════════════════════════════════════
+            const writingSingleData = (writingSingleRes.data || []).map(item => {
+                const taskTypeLabel = item.task_type === "task_1_academic" ? "Task 1 Chart"
+                    : item.task_type === "task_1_general" ? "Task 1 Letter"
+                    : "Task 2 Essay";
+                
+                return {
+                    id: item.id,
+                    user_id: item.user_id,
+                    topic: `WRITING SINGLE: ${taskTypeLabel} - ${item.prompt_code || 'N/A'}`,
+                    overall_score: parseFloat(item.overall_band) || 0,
+                    full_feedback: item.full_feedback || {},
+                    created_at: item.created_at,
+                    source_table: 'writing_history',
+                    source_type: 'writing-single',
+                    // Writing-specific fields for ScoreCard
+                    writing_data: {
+                        type: 'single_task',
+                        evaluation: {
+                            overall_band: parseFloat(item.overall_band),
+                            task_achievement: parseFloat(item.task_achievement),
+                            coherence_cohesion: parseFloat(item.coherence_cohesion),
+                            lexical_resource: parseFloat(item.lexical_resource),
+                            grammatical_range: parseFloat(item.grammatical_range),
+                            full_feedback: item.full_feedback || {},
+                        },
+                        historyId: item.id,
+                        timeSpentSeconds: item.time_spent_seconds,
+                        essayText: item.essay_text,
+                        wordCount: item.word_count,
+                        isUnlocked: item.is_feedback_unlocked || false,
+                    },
+                    // For Practice Again
+                    prompt_id: item.prompt_id,
+                    prompt_code: item.prompt_code,
+                    task_type: item.task_type,
+                    is_feedback_unlocked: item.is_feedback_unlocked || false,
+                };
+            });
+
+            // ═══════════════════════════════════════════
+            // NORMALIZE WRITING FULL TEST (NEW)
+            // ═══════════════════════════════════════════
+            const writingFullData = (writingFullRes.data || []).map(item => {
+                const moduleLabel = item.module === "academic" ? "Academic" : "General Training";
+                
+                return {
+                    id: item.id,
+                    user_id: item.user_id,
+                    topic: `WRITING FULL: ${moduleLabel} - Pair ${item.pair_code || 'N/A'}`,
+                    overall_score: parseFloat(item.combined_overall_band) || 0,
+                    full_feedback: {
+                        task_1: item.task_1_full_feedback || {},
+                        task_2: item.task_2_full_feedback || {},
+                    },
+                    created_at: item.created_at,
+                    source_table: 'writing_full_test_history',
+                    source_type: 'writing-full',
+                    // Writing-specific fields for ScoreCard
+                    writing_data: {
+                        type: 'full_test',
+                        task1Evaluation: {
+                            overall_band: parseFloat(item.task_1_overall_band),
+                            task_achievement: parseFloat(item.task_1_task_achievement),
+                            coherence_cohesion: parseFloat(item.task_1_coherence_cohesion),
+                            lexical_resource: parseFloat(item.task_1_lexical_resource),
+                            grammatical_range: parseFloat(item.task_1_grammatical_range),
+                            full_feedback: item.task_1_full_feedback || {},
+                            word_count: item.task_1_word_count,
+                        },
+                        task2Evaluation: {
+                            overall_band: parseFloat(item.task_2_overall_band),
+                            task_achievement: parseFloat(item.task_2_task_achievement),
+                            coherence_cohesion: parseFloat(item.task_2_coherence_cohesion),
+                            lexical_resource: parseFloat(item.task_2_lexical_resource),
+                            grammatical_range: parseFloat(item.task_2_grammatical_range),
+                            full_feedback: item.task_2_full_feedback || {},
+                            word_count: item.task_2_word_count,
+                        },
+                        combinedBand: parseFloat(item.combined_overall_band),
+                        pairCode: item.pair_code,
+                        module: item.module,
+                        historyId: item.id,
+                        totalTimeSpentSeconds: item.total_time_spent_seconds,
+                        task1Text: item.task_1_essay_text,
+                        task2Text: item.task_2_essay_text,
+                        isUnlocked: item.is_feedback_unlocked || false,
+                    },
+                    // For Practice Again
+                    pair_id: item.pair_id,
+                    pair_code: item.pair_code,
+                    module: item.module,
+                    is_feedback_unlocked: item.is_feedback_unlocked || false,
+                };
+            });
+
+            combinedData = [...practiceData, ...sessionData, ...writingSingleData, ...writingFullData];
 
         } else {
+            // GUEST: Local storage (UNCHANGED)
             const localRaw = localStorage.getItem("ielts4our_history");
             if (localRaw) {
                 const localData = JSON.parse(localRaw);
@@ -130,7 +259,8 @@ export default function ProgressPage() {
                     overall_score: item.overall, 
                     created_at: new Date(item.id).toISOString(), 
                     full_feedback: item, 
-                    is_local: true 
+                    is_local: true,
+                    source_type: 'speaking-cue', // Guest only has Speaking cue cards
                 }));
                 combinedData = [...normalizedLocal];
             }
@@ -163,10 +293,8 @@ export default function ProgressPage() {
                 localStorage.setItem("ielts4our_history", JSON.stringify(newData));
             }
         } else {
-            let tableName = 'practice_history';
-            if (item.source_table === 'exam_sessions') {
-                tableName = 'exam_sessions';
-            }
+            // Map source_table to actual table name
+            const tableName = item.source_table || 'practice_history';
 
             const { error } = await supabase
                 .from(tableName)
@@ -183,22 +311,26 @@ export default function ProgressPage() {
     }
   };
 
-  // --- STATISTIK ---
-  const rawSum = history.reduce((acc, curr) => acc + (curr.overall_score || 0), 0);
-  const rawAvg = history.length > 0 ? rawSum / history.length : 0;
-  const averageScore = history.length > 0 ? (Math.round(rawAvg * 2) / 2).toFixed(1) : "0.0";
+  // ═══════════════════════════════════════════
+  // STATS — Filter-aware (compute from filteredHistory)
+  // ═══════════════════════════════════════════
+  const statsSource = filterType === "all" ? history : filteredHistory;
   
-  const highestScore = history.length > 0 
-    ? Math.max(...history.map(item => item.overall_score || 0)) 
+  const rawSum = statsSource.reduce((acc, curr) => acc + (curr.overall_score || 0), 0);
+  const rawAvg = statsSource.length > 0 ? rawSum / statsSource.length : 0;
+  const averageScore = statsSource.length > 0 ? (Math.round(rawAvg * 2) / 2).toFixed(1) : "0.0";
+  
+  const highestScore = statsSource.length > 0 
+    ? Math.max(...statsSource.map(item => item.overall_score || 0)) 
     : 0;
 
-  // 🔥 Trend indicator — bandingkan 5 latihan terakhir vs 5 sebelumnya
+  // Trend indicator — bandingkan 5 latihan terakhir vs 5 sebelumnya (use statsSource)
   const getTrend = () => {
-      if (history.length < 4) return { direction: "neutral", diff: 0 };
+      if (statsSource.length < 4) return { direction: "neutral", diff: 0 };
       
-      const splitPoint = Math.min(5, Math.floor(history.length / 2));
-      const recent = history.slice(0, splitPoint);
-      const older = history.slice(splitPoint, splitPoint * 2);
+      const splitPoint = Math.min(5, Math.floor(statsSource.length / 2));
+      const recent = statsSource.slice(0, splitPoint);
+      const older = statsSource.slice(splitPoint, splitPoint * 2);
       
       if (older.length === 0) return { direction: "neutral", diff: 0 };
       
@@ -213,31 +345,65 @@ export default function ProgressPage() {
 
   const trend = getTrend();
 
-  // --- HELPER: Practice Again URL berdasarkan tipe latihan ---
-  const getPracticeAgainUrl = (topic) => {
-      if (topic.includes("FULL EXAM")) return "/simulation?mode=full";
-      if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) return "/simulation?mode=quick";
+  // ═══════════════════════════════════════════
+  // HELPERS — Extended for Writing
+  // ═══════════════════════════════════════════
+
+  const getPracticeAgainUrl = (item) => {
+      // Writing handlers (priority)
+      if (item.source_type === "writing-single") {
+          return `/writing/exam?mode=single_task&promptId=${item.prompt_id}`;
+      }
+      if (item.source_type === "writing-full") {
+          return `/writing/exam?mode=full_test&pairId=${item.pair_id}`;
+      }
+      // Speaking handlers (preserved)
+      if (item.source_type === "speaking-full" || item.topic?.includes("FULL EXAM")) return "/simulation?mode=full";
+      if (item.source_type === "speaking-quick" || item.topic?.includes("QUICK TEST") || item.topic?.includes("Mock Interview")) return "/simulation?mode=quick";
       return "/";
   };
 
-  const getPracticeAgainLabel = (topic) => {
-      if (topic.includes("FULL EXAM")) return "Start Full Exam";
-      if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) return "Start Quick Test";
+  const getPracticeAgainLabel = (item) => {
+      // Writing handlers
+      if (item.source_type === "writing-single") return "Try Again";
+      if (item.source_type === "writing-full") return "Try Again";
+      // Speaking handlers (preserved)
+      if (item.source_type === "speaking-full" || item.topic?.includes("FULL EXAM")) return "Start Full Exam";
+      if (item.source_type === "speaking-quick" || item.topic?.includes("QUICK TEST") || item.topic?.includes("Mock Interview")) return "Start Quick Test";
       return "Practice Cue Card";
   };
 
-  // --- HELPER VISUAL ---
-  const getCleanTitle = (topic) => {
-      return topic
-        .replace("Mock Interview: ", "")
-        .replace("FULL EXAM: ", "")
-        .replace("QUICK TEST: ", "")
-        .replace("Cue Card: ", "");
+  const getCleanTitle = (item) => {
+      // Writing
+      if (item.source_type === "writing-single") {
+          const taskTypeLabel = item.task_type === "task_1_academic" ? "Task 1 Chart"
+              : item.task_type === "task_1_general" ? "Task 1 Letter"
+              : "Task 2 Essay";
+          return `${taskTypeLabel} — Code ${item.prompt_code || 'N/A'}`;
+      }
+      if (item.source_type === "writing-full") {
+          const moduleLabel = item.module === "academic" ? "Academic" : "General Training";
+          return `Full Test — ${moduleLabel} Pair ${item.pair_code || 'N/A'}`;
+      }
+      // Speaking (preserved)
+      return (item.topic || "")
+          .replace("Mock Interview: ", "")
+          .replace("FULL EXAM: ", "")
+          .replace("QUICK TEST: ", "")
+          .replace("Cue Card: ", "");
   };
 
-  const getTopicTypeLabel = (topic) => {
-      if (topic.includes("FULL EXAM")) return { label: "Full Simulation", icon: <Sparkles className="w-3 h-3" />, color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" };
-      if (topic.includes("QUICK TEST") || topic.includes("Mock Interview")) return { label: "Quick Test", icon: <Zap className="w-3 h-3" />, color: "text-purple-400 bg-purple-500/10 border-purple-500/20" };
+  const getTopicTypeLabel = (item) => {
+      // Writing
+      if (item.source_type === "writing-single") {
+          return { label: "Writing Single", icon: <PenLine className="w-3 h-3" />, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
+      }
+      if (item.source_type === "writing-full") {
+          return { label: "Writing Full", icon: <FileEdit className="w-3 h-3" />, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
+      }
+      // Speaking (preserved)
+      if (item.source_type === "speaking-full" || item.topic?.includes("FULL EXAM")) return { label: "Full Simulation", icon: <Sparkles className="w-3 h-3" />, color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" };
+      if (item.source_type === "speaking-quick" || item.topic?.includes("QUICK TEST") || item.topic?.includes("Mock Interview")) return { label: "Quick Test", icon: <Zap className="w-3 h-3" />, color: "text-purple-400 bg-purple-500/10 border-purple-500/20" };
       return { label: "Daily Cue Card", icon: <Target className="w-3 h-3" />, color: "text-teal-400 bg-teal-500/10 border-teal-500/20" };
   };
 
@@ -245,6 +411,65 @@ export default function ProgressPage() {
       if (score >= 7.0) return "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]";
       if (score >= 5.5) return "bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]";
       return "bg-slate-700 text-slate-300";
+  };
+
+  // ═══════════════════════════════════════════
+  // UNLOCK HANDLER FOR WRITING (used in modal)
+  // ═══════════════════════════════════════════
+  const handleWritingUnlock = async (historyType, historyId) => {
+      if (!userProfile) return { success: false, error: "Not logged in" };
+      try {
+          const res = await fetch("/api/writing/unlock", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  userId: userProfile.id,
+                  historyId,
+                  historyType,
+              }),
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+              return { success: false, error: data.error || "Failed to unlock" };
+          }
+
+          // Update local state to reflect unlock
+          if (data.newTokenBalance !== undefined) {
+              setUserProfile((prev) => ({ ...prev, token_balance: data.newTokenBalance }));
+          }
+
+          // Update history item locally
+          setHistory((prev) => prev.map((h) => {
+              if (h.id === historyId) {
+                  return {
+                      ...h,
+                      is_feedback_unlocked: true,
+                      writing_data: { ...h.writing_data, isUnlocked: true },
+                  };
+              }
+              return h;
+          }));
+
+          // Update selectedItem if open
+          if (selectedItem && selectedItem.id === historyId) {
+              setSelectedItem((prev) => ({
+                  ...prev,
+                  is_feedback_unlocked: true,
+                  writing_data: { ...prev.writing_data, isUnlocked: true },
+              }));
+          }
+
+          return { success: true };
+      } catch (err) {
+          console.error("Unlock error:", err);
+          return { success: false, error: err.message || "Network error" };
+      }
+  };
+
+  // Helper: Is this item Writing?
+  const isWritingItem = (item) => {
+      return item?.source_type === "writing-single" || item?.source_type === "writing-full";
   };
 
   return (
@@ -277,7 +502,7 @@ export default function ProgressPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-10">
             <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Your Progress 📈</h1>
-            <p className="text-slate-400">Lacak perkembangan Speaking IELTS kamu dari waktu ke waktu.</p>
+            <p className="text-slate-400">Lacak perkembangan Speaking & Writing IELTS kamu dari waktu ke waktu.</p>
         </div>
 
         {loading ? (
@@ -316,7 +541,7 @@ export default function ProgressPage() {
              </div>
         ) : (
             <>
-                {/* STATS CARDS */}
+                {/* STATS CARDS — Filter-aware */}
                 <div className="grid grid-cols-3 gap-3 md:gap-4 mb-10">
                     {/* Card 1: Total */}
                     <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl border border-white/10 relative overflow-hidden group">
@@ -324,7 +549,7 @@ export default function ProgressPage() {
                             <Target className="w-16 h-16 text-white" />
                         </div>
                         <p className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Total</p>
-                        <p className="text-2xl md:text-4xl font-black text-white">{history.length}</p>
+                        <p className="text-2xl md:text-4xl font-black text-white">{statsSource.length}</p>
                         <p className="text-[10px] text-slate-500 mt-1">Practices</p>
                     </div>
 
@@ -346,7 +571,7 @@ export default function ProgressPage() {
                                     <TrendingDown className="w-3 h-3" /> -{trend.diff}
                                 </span>
                             )}
-                            {trend.direction === "neutral" && history.length >= 4 && (
+                            {trend.direction === "neutral" && statsSource.length >= 4 && (
                                 <span className="flex items-center gap-0.5 text-slate-500 text-[10px] font-bold">
                                     <Minus className="w-3 h-3" /> Stable
                                 </span>
@@ -366,13 +591,15 @@ export default function ProgressPage() {
                     </div>
                 </div>
 
-                {/* FILTER TABS */}
+                {/* FILTER TABS — Extended for Writing */}
                 <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                     {[
                         { id: 'all', label: 'All History' },
                         { id: 'cue-card', label: 'Cue Cards' },
                         { id: 'quick-test', label: 'Quick Tests' }, 
-                        { id: 'full-exam', label: 'Full Simulation' }
+                        { id: 'full-exam', label: 'Full Simulation' },
+                        { id: 'writing-single', label: 'Writing Single' },
+                        { id: 'writing-full', label: 'Writing Full' },
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -395,8 +622,9 @@ export default function ProgressPage() {
                             No history found for this filter.
                         </div>
                     ) : filteredHistory.map((item, index) => {
-                        const typeInfo = getTopicTypeLabel(item.topic);
-                        const cleanTitle = getCleanTitle(item.topic);
+                        const typeInfo = getTopicTypeLabel(item);
+                        const cleanTitle = getCleanTitle(item);
+                        const isWriting = isWritingItem(item);
                         
                         return (
                             <motion.div 
@@ -405,7 +633,11 @@ export default function ProgressPage() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
                                 onClick={() => setSelectedItem(item)}
-                                className={`bg-[#1A1D26] hover:bg-[#20242e] border p-4 md:p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all group relative ${item.topic.includes("FULL EXAM") ? "border-indigo-500/20" : "border-slate-800 hover:border-slate-700"}`}
+                                className={`bg-[#1A1D26] hover:bg-[#20242e] border p-4 md:p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all group relative ${
+                                    item.source_type === "speaking-full" ? "border-indigo-500/20" : 
+                                    isWriting ? "border-emerald-500/20" :
+                                    "border-slate-800 hover:border-slate-700"
+                                }`}
                             >
                                 <div className="flex-1 min-w-0 pr-4">
                                     <div className="flex items-center gap-2 mb-2">
@@ -415,6 +647,9 @@ export default function ProgressPage() {
                                         <span className="text-[10px] text-slate-600 flex items-center gap-1 font-medium">
                                             • {new Date(item.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' })}
                                         </span>
+                                        {isWriting && !item.is_feedback_unlocked && (
+                                            <span className="text-[10px] text-amber-400 font-bold">• 🔒 Locked</span>
+                                        )}
                                     </div>
                                     
                                     <h3 className="text-white font-bold truncate max-w-[200px] md:max-w-md text-base md:text-lg group-hover:text-blue-400 transition-colors">
@@ -449,7 +684,7 @@ export default function ProgressPage() {
         )}
       </div>
 
-      {/* DETAIL MODAL */}
+      {/* DETAIL MODAL — Conditional render Speaking vs Writing */}
       <AnimatePresence>
         {selectedItem && (
             <motion.div 
@@ -467,7 +702,10 @@ export default function ProgressPage() {
                             <ArrowLeft className="w-4 h-4" /> Back to List
                         </button>
                         <h2 className="text-white font-bold hidden md:block">
-                            {selectedItem.topic.includes("FULL EXAM") ? "Full Exam Result" : "Result Details"}
+                            {isWritingItem(selectedItem) 
+                                ? (selectedItem.source_type === "writing-full" ? "Full Test Result" : "Writing Result")
+                                : selectedItem.topic?.includes("FULL EXAM") ? "Full Exam Result" : "Result Details"
+                            }
                         </h2>
                         <button onClick={() => setSelectedItem(null)} className="p-2 bg-white/10 rounded-full hover:bg-white/20 text-white">
                             <X className="w-5 h-5" />
@@ -475,29 +713,48 @@ export default function ProgressPage() {
                     </div>
                     
                     <div className="pb-20">
-                        <ScoreCard 
-                            result={selectedItem.full_feedback} 
-                            cue={selectedItem.topic}
-                            onOpenTestimonial={() => setShowTestimonialModal(true)}
-                            isLoggedIn={!!userProfile}
-                        />
+                        {isWritingItem(selectedItem) ? (
+                            // WRITING SCORECARD
+                            <WritingScoreCard
+                                data={selectedItem.writing_data}
+                                userTokenBalance={userProfile?.token_balance || 0}
+                                isLoggedIn={!!userProfile}
+                                onUnlock={handleWritingUnlock}
+                                onTryAnother={() => {
+                                    setSelectedItem(null);
+                                    const url = getPracticeAgainUrl(selectedItem);
+                                    window.location.href = url;
+                                }}
+                                onViewProgress={() => setSelectedItem(null)}
+                            />
+                        ) : (
+                            // SPEAKING SCORECARD (UNCHANGED)
+                            <>
+                                <ScoreCard 
+                                    result={selectedItem.full_feedback} 
+                                    cue={selectedItem.topic}
+                                    onOpenTestimonial={() => setShowTestimonialModal(true)}
+                                    isLoggedIn={!!userProfile}
+                                />
 
-                        {/* Tombol Practice Again */}
-                        <div className="mt-8 text-center">
-                            <Link href={getPracticeAgainUrl(selectedItem.topic)}>
-                                <button className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2 mx-auto">
-                                    <span>{getPracticeAgainLabel(selectedItem.topic)}</span>
-                                    <ArrowRight className="w-4 h-4" />
-                                </button>
-                            </Link>
-                        </div>
+                                {/* Practice Again Button — Speaking only (Writing has its own footer) */}
+                                <div className="mt-8 text-center">
+                                    <Link href={getPracticeAgainUrl(selectedItem)}>
+                                        <button className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2 mx-auto">
+                                            <span>{getPracticeAgainLabel(selectedItem)}</span>
+                                            <ArrowRight className="w-4 h-4" />
+                                        </button>
+                                    </Link>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </motion.div>
         )}
       </AnimatePresence>
 
-      {/* CUSTOM DELETE MODAL */}
+      {/* CUSTOM DELETE MODAL — UNCHANGED */}
       <AnimatePresence>
         {deleteTarget && (
             <motion.div 
