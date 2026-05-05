@@ -8,7 +8,7 @@ import {
   BookOpen, Sparkles, RefreshCw, Crown, ArrowRight, Lock, 
   BarChart3, ChevronRight, Mic2, Users, Volume2, Unlock, 
   Filter, AlertTriangle, LogIn, ChevronDown, LogOut, User, Zap, Clock, Plus, Menu, X, Gift, Quote,
-  PenLine, FileText
+  PenLine, FileText, Info
 } from "lucide-react";
 import { supabase } from "@/utils/supabaseClient"; 
 import Image from "next/image";
@@ -469,6 +469,19 @@ export default function Home() {
                 <div className="relative w-32 h-10 md:w-40 md:h-12">
                     <Image src="/logo-white.png" alt="IELTS4our Logo" fill className="object-contain object-center md:object-left" priority />
                 </div>
+
+                {/* 🔥 UPDATED: Desktop About — Pill Button next to Logo */}
+                <Link href="/about" className="hidden md:block">
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full transition-colors text-xs font-bold cursor-pointer ml-2"
+                    >
+                        <span className="text-[#E6E8EE]">About</span>
+                        <span className="text-blue-400 ml-1">IELTS4our</span>
+                    </motion.div>
+                </Link>
+
                 <div className="w-8 md:hidden"></div> 
             </div>
 
@@ -607,6 +620,10 @@ export default function Home() {
                                         <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <BookOpen className="w-5 h-5 text-teal-400" /> Speaking Guide
                                         </Link>
+                                        {/* About IELTS4our link */}
+                                        <Link href="/about" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <Info className="w-5 h-5 text-blue-400" /> About IELTS4our
+                                        </Link>
                                         <Link href="/faq" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <BookOpen className="w-5 h-5 text-blue-400" /> FAQ
                                         </Link>
@@ -637,6 +654,10 @@ export default function Home() {
                                         <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <BookOpen className="w-5 h-5 text-teal-400" /> Speaking Guide
                                         </Link>
+                                        {/* About IELTS4our link */}
+                                        <Link href="/about" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            <Info className="w-5 h-5 text-blue-400" /> About IELTS4our
+                                        </Link>
                                         <Link href="/faq" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
                                             <BookOpen className="w-5 h-5 text-blue-400" /> FAQ
                                         </Link>
@@ -659,20 +680,45 @@ export default function Home() {
 
         {/* HERO */}
         <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
-            <Link href="/mission">
-            <motion.div
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                whileHover={{ scale: 1.02 }}
-                className="inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-[#1A1D26] border border-slate-800 hover:border-teal-500/30 text-slate-300 text-xs font-medium mb-6 cursor-pointer transition-all group"
-            >
-                <div className="flex flex-col items-start">
-                    <span className="font-bold text-slate-200 text-xs">Speaking Guide</span>
-                    <span className="text-[10px] text-slate-500 hidden md:block">Strategi per Part + contoh jawaban Band 7+</span>
-                </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-teal-400 group-hover:translate-x-1.5 transition-all" />
-            </motion.div>
-            </Link>
+
+            {/* 🔥 UPDATED: Mobile CTAs — vertical stack (md:inline-flex restored for desktop) */}
+            <div className="flex flex-col items-center gap-2 mb-6 md:mb-6 md:gap-0">
+
+                {/* Speaking Guide CTA */}
+                <Link href="/mission" className="w-full md:w-auto">
+                    <motion.div
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        whileHover={{ scale: 1.02 }}
+                        className="w-full md:w-auto flex md:inline-flex items-center justify-center gap-3 px-5 py-2.5 rounded-2xl bg-[#1A1D26] border border-slate-800 hover:border-teal-500/30 text-slate-300 text-xs font-medium cursor-pointer transition-all group"
+                    >
+                        <div className="flex flex-col items-start">
+                            <span className="font-bold text-slate-200 text-xs">Speaking Guide</span>
+                            <span className="text-[10px] text-slate-500 hidden md:block">Strategi per Part + contoh jawaban Band 7+</span>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-teal-400 group-hover:translate-x-1.5 transition-all" />
+                    </motion.div>
+                </Link>
+
+                {/* About IELTS4our CTA — visible only on mobile */}
+                <Link href="/about" className="w-full md:hidden">
+                    <motion.div
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                        whileHover={{ scale: 1.02 }}
+                        className="w-full flex items-center justify-center gap-3 px-5 py-2.5 rounded-2xl bg-[#1A1D26] border border-slate-800 hover:border-blue-500/30 text-slate-300 text-xs font-medium cursor-pointer transition-all group"
+                    >
+                        <div className="flex flex-col items-start">
+                            <span className="font-bold text-xs">
+                                <span className="text-[#E6E8EE]">About</span>
+                                <span className="text-blue-400 ml-1">IELTS4our</span>
+                            </span>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-1.5 transition-all" />
+                    </motion.div>
+                </Link>
+            </div>
             
             <h2 className="text-4xl md:text-6xl font-bold text-[#E6E8EE] mb-6 leading-tight tracking-tight">
             Master Your IELTS <br/>
