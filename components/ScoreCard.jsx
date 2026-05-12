@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, AlertOctagon, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight, XCircle, PlayCircle, ListMusic, Quote } from "lucide-react";
+import { CheckCircle2, AlertOctagon, Star, FileText, ChevronDown, ChevronUp, Share2, ArrowRight, XCircle, PlayCircle, ListMusic, Quote, Edit3 } from "lucide-react";
 import Confetti from "react-confetti";
 
 export default function ScoreCard({ result, cue, onOpenTestimonial, isLoggedIn }) {
@@ -17,7 +17,7 @@ export default function ScoreCard({ result, cue, onOpenTestimonial, isLoggedIn }
   const isHighScore = result.overall >= 7.0;
 
   const shareToWA = () => {
-    const text = `🔥 I scored Band ${result.overall} on Ielts4our!\nTopic: "${cue}"\n\nTry it: https://ielts4our.vercel.app`;
+    const text = `I scored Band ${result.overall} on Ielts4our!\nTopic: "${cue}"\n\nTry it: https://ielts4our.vercel.app`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
@@ -32,7 +32,8 @@ export default function ScoreCard({ result, cue, onOpenTestimonial, isLoggedIn }
         animate={{ y: 0, opacity: 1 }}
         className="relative bg-white/5 backdrop-blur-xl rounded-[2rem] p-8 border border-white/10 shadow-2xl overflow-hidden"
       >
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 via-purple-500 to-blue-500" />
+        {/* Top accent: blue-to-transparent fade (editorial, brand-aligned) */}
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" />
         
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             {/* Left: Score Circle */}
@@ -124,25 +125,26 @@ export default function ScoreCard({ result, cue, onOpenTestimonial, isLoggedIn }
         </div>
       )}
 
-      {/* --- FEEDBACK SPLIT --- */}
+      {/* --- FEEDBACK SPLIT (Strengths / Area to Improve) --- */}
+      {/* Pattern: neutral card surface + left border accent (GitHub PR style) */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-emerald-500/5 backdrop-blur-md p-6 rounded-2xl border border-emerald-500/10">
-          <h3 className="flex items-center gap-2 text-emerald-400 font-bold mb-4 text-sm uppercase tracking-wider">
-            <CheckCircle2 className="w-5 h-5" /> Strengths
+        <div className="bg-[#1A1D26] border border-slate-800 border-l-4 border-l-emerald-500 p-6 rounded-2xl">
+          <h3 className="text-emerald-400 font-bold mb-4 text-sm uppercase tracking-wider">
+            Strengths
           </h3>
           <ul className="space-y-3">
             {result.feedback?.map((point, i) => (
               <li key={i} className="flex gap-3 text-slate-300 text-sm leading-relaxed">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"/>
+                <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-600 shrink-0"/>
                 {point}
               </li>
             ))}
           </ul>
         </div>
         
-        <div className="bg-rose-500/5 backdrop-blur-md p-6 rounded-2xl border border-rose-500/10">
-          <h3 className="flex items-center gap-2 text-rose-400 font-bold mb-4 text-sm uppercase tracking-wider">
-            <AlertOctagon className="w-5 h-5" /> Area to Improve
+        <div className="bg-[#1A1D26] border border-slate-800 border-l-4 border-l-rose-500 p-6 rounded-2xl">
+          <h3 className="text-rose-400 font-bold mb-4 text-sm uppercase tracking-wider">
+            Area to Improve
           </h3>
           <p className="text-slate-300 text-sm leading-relaxed">
             {result.improvement}
@@ -151,27 +153,39 @@ export default function ScoreCard({ result, cue, onOpenTestimonial, isLoggedIn }
       </div>
 
       {/* --- GRAMMAR CLINIC (UNLOCKED) --- */}
+      {/* Pattern: 3 connected rows per item (Before / After / Reason). Deep dark tints + solid 2px left borders. */}
       {result.grammarCorrection && result.grammarCorrection.length > 0 && (
-        <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
-          <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <span className="text-lg">🛠️</span> Grammar Clinic
+        <div className="space-y-3">
+          {/* Section header */}
+          <div className="flex justify-between items-center px-1 pb-1">
+            <h3 className="font-bold text-[#E6E8EE] flex items-center gap-2 text-sm uppercase tracking-wider">
+              <Edit3 className="w-4 h-4 text-slate-500" /> Grammar Clinic
             </h3>
+            <span className="text-xs text-slate-500 font-mono tabular-nums">
+              {result.grammarCorrection.length} {result.grammarCorrection.length === 1 ? "fix" : "fixes"}
+            </span>
           </div>
-          
-          <div className="divide-y divide-white/5">
+
+          {/* Items */}
+          <div className="space-y-3">
             {result.grammarCorrection.map((item, i) => (
-              <div key={i} className={`p-5 hover:bg-white/5 transition-colors relative`}>
-                <div className="flex flex-col md:flex-row gap-4 md:items-center text-sm mb-2">
-                  <div className="text-rose-400 line-through decoration-rose-500/50 md:w-1/2 opacity-80 flex gap-2">
-                      <XCircle className="w-4 h-4 shrink-0 mt-0.5"/> "{item.original}"
-                  </div>
-                  <div className="hidden md:block text-slate-600"><ArrowRight className="w-4 h-4"/></div>
-                  <div className="text-emerald-400 font-bold md:w-1/2 flex gap-2">
-                      <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5"/> "{item.correction}"
-                  </div>
+              <div key={i} className="bg-slate-900/40 border border-slate-800 rounded-xl overflow-hidden">
+                {/* Before row */}
+                <div className="px-5 py-4 bg-rose-950/30 border-l-2 border-rose-500">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-rose-300/80 mb-1.5">Before</p>
+                  <p className="text-sm text-slate-300 leading-relaxed">"{item.original}"</p>
                 </div>
-                <p className="text-xs text-slate-500 pl-6 border-l-2 border-slate-700 ml-1">💡 {item.reason}</p>
+
+                {/* After row */}
+                <div className="px-5 py-4 bg-emerald-950/30 border-l-2 border-emerald-500">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300/80 mb-1.5">After</p>
+                  <p className="text-sm text-[#E6E8EE] leading-relaxed font-medium">"{item.correction}"</p>
+                </div>
+
+                {/* Reason row */}
+                <div className="px-5 py-3 border-t border-slate-800 bg-slate-900/50">
+                  <p className="text-xs text-slate-400 leading-relaxed">{item.reason}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -205,7 +219,7 @@ export default function ScoreCard({ result, cue, onOpenTestimonial, isLoggedIn }
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }} // Muncul sedikit terlambat untuk efek dramatis
+              transition={{ delay: 0.5 }}
               className="w-full bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 p-6 rounded-2xl text-center space-y-4 shadow-lg"
             >
               <div>

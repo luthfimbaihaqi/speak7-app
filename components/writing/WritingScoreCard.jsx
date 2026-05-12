@@ -581,9 +581,6 @@ function FreeFeedbackSection({ feedback }) {
       {biggestArea && (
         <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20 shrink-0">
-              <Lightbulb className="w-4 h-4 text-amber-400" />
-            </div>
             <div className="flex-1">
               <p className="text-xs text-amber-400 uppercase tracking-widest font-bold mb-1">
                 Biggest Area to Improve
@@ -730,13 +727,12 @@ function StrengthsSection({ items }) {
   return (
     <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5">
       <h3 className="text-sm font-bold text-emerald-300 mb-4 flex items-center gap-2 uppercase tracking-wider">
-        <CheckCircle className="w-4 h-4" />
         Strengths ({items.length})
       </h3>
       <ul className="space-y-3">
         {items.map((item, i) => (
           <li key={i} className="flex gap-3 text-sm text-slate-200 leading-relaxed">
-            <span className="text-emerald-400 shrink-0 mt-0.5">✓</span>
+            <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-600 shrink-0"/>
             <div className="flex-1">
               {typeof item === "string" ? (
                 <p>{item}</p>
@@ -763,13 +759,12 @@ function WeaknessesSection({ items }) {
   return (
     <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-5">
       <h3 className="text-sm font-bold text-rose-300 mb-4 flex items-center gap-2 uppercase tracking-wider">
-        <AlertTriangle className="w-4 h-4" />
         Areas to Improve ({items.length})
       </h3>
       <ul className="space-y-3">
         {items.map((item, i) => (
           <li key={i} className="flex gap-3 text-sm text-slate-200 leading-relaxed">
-            <span className="text-rose-400 shrink-0 mt-0.5">!</span>
+            <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-600 shrink-0"/>
             <div className="flex-1">
               {typeof item === "string" ? (
                 <p>{item}</p>
@@ -783,7 +778,7 @@ function WeaknessesSection({ items }) {
                   )}
                   {item.suggestion && (
                     <p className="mt-1 text-xs text-emerald-300">
-                      💡 {item.suggestion}
+                      {item.suggestion}
                     </p>
                   )}
                 </>
@@ -801,7 +796,7 @@ function GrammarClinicSection({ items }) {
   return (
     <div className="bg-[#1A1D26] border border-slate-800 rounded-2xl p-5">
       <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2 uppercase tracking-wider">
-        <Edit3 className="w-4 h-4 text-amber-400" />
+       
         Grammar Clinic ({items.length})
       </h3>
       <div className="space-y-4">
@@ -835,7 +830,7 @@ function VocabularySuggestionsSection({ items }) {
   return (
     <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-5">
       <h3 className="text-base font-bold text-blue-300 uppercase tracking-wider flex items-center gap-2 mb-4">
-        <BookOpen className="w-4 h-4" />
+        
         Vocabulary Upgrade ({items.length})
       </h3>
       <div className="space-y-4">
@@ -923,8 +918,8 @@ function ShareWhatsApp({ data, isFullTest }) {
   if (!heroBand) return null;
 
   const message = isFullTest
-    ? `Just completed IELTS Writing Full Test! 🎯\n\nCombined Band: ${heroBand.toFixed(1)}\nTask 1: ${data.task1Evaluation?.overall_band?.toFixed(1)}\nTask 2: ${data.task2Evaluation?.overall_band?.toFixed(1)}\n\nLatihan di IELTS4our.net 📝`
-    : `Just submitted my IELTS Writing essay! 🎯\n\nBand Score: ${heroBand.toFixed(1)}\n\nLatihan di IELTS4our.net 📝`;
+    ? `Just completed IELTS Writing Full Test!\n\nCombined Band: ${heroBand.toFixed(1)}\nTask 1: ${data.task1Evaluation?.overall_band?.toFixed(1)}\nTask 2: ${data.task2Evaluation?.overall_band?.toFixed(1)}\n\nLatihan di IELTS4our.net`
+    : `Just submitted my IELTS Writing essay!\n\nBand Score: ${heroBand.toFixed(1)}\n\nLatihan di IELTS4our.net`;
 
   const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
 
