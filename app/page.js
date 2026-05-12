@@ -737,7 +737,7 @@ export default function Home() {
                     selectedSkill === "speaking" ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"
                 }`}
             >
-                <Mic2 className="w-3.5 h-3.5" /> Speaking
+                 Speaking
             </button>
             <button 
                 onClick={() => handleSkillSwitch("writing")} 
@@ -745,7 +745,7 @@ export default function Home() {
                     selectedSkill === "writing" ? "bg-emerald-600 text-white shadow-md" : "text-slate-400 hover:text-slate-200"
                 }`}
             >
-                <PenLine className="w-3.5 h-3.5" /> Writing
+                 Writing
             </button>
         </div>
 
