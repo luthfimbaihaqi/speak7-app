@@ -10,7 +10,7 @@ import {
   ArrowLeft, ArrowRight, Mail, Twitter, Instagram, Linkedin,
   BookOpen, Sparkles, BarChart3, LogOut, User, Plus,
   Menu, X, LogIn, ChevronDown, Crown, Gift,
-  Code, Coffee, Database, Brain, Mic, Cloud, Wind,
+  Coffee,
   PenLine, Mic2,
 } from "lucide-react";
 
@@ -305,7 +305,7 @@ export default function AboutPage() {
         </div>
 
         {/* ═══════════════════════════════════════ */}
-        {/* HERO SECTION (clean, all-white name) */}
+        {/* HERO SECTION */}
         {/* ═══════════════════════════════════════ */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -341,7 +341,7 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* Hero Text — ALL WHITE, CLEAN */}
+            {/* Hero Text */}
             <div className="flex-1 text-center md:text-left">
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -362,7 +362,7 @@ export default function AboutPage() {
                 </p>
               </motion.div>
 
-              {/* Social links — added LinkedIn */}
+              {/* Social links */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -424,16 +424,16 @@ export default function AboutPage() {
 
           <div className="space-y-6 text-slate-300 text-base md:text-lg leading-relaxed font-medium">
             <p>
-              Let’s be real: IELTS prep is pricey. When I was looking for ways to practice, I realized how much of a barrier the cost can be for most students. I was looking at courses and thinking, there's gotta be a cheaper way.
+              Let's be real: IELTS prep is pricey. When I was looking for ways to practice, I realized how much of a barrier the cost can be for most students. I was looking at courses and thinking, there's gotta be a cheaper way.
             </p>
             <p>
-              Since I’ve been coding for a while, So I figured, why not build my own?
+              Since I've been coding for a while, So I figured, why not build my own?
             </p>
             <p>
               The first version was pretty basic, and I only shared it with a few friends at the office. They tested it, gave me a lot of feedback, and surprisingly, they kept coming back to use it. Word spread, and soon, people I didn't even know were asking for access.
             </p>
             <p className="text-[#E6E8EE] font-bold text-lg md:text-xl pt-2">
-              It’s still a one-man show, but seeing students from all over the place use it to improve their scores is what keeps me going.
+              It's still a one-man show, but seeing students from all over the place use it to improve their scores is what keeps me going.
             </p>
           </div>
         </motion.section>
@@ -441,7 +441,7 @@ export default function AboutPage() {
         <SectionDivider />
 
         {/* ═══════════════════════════════════════ */}
-        {/* 02 — CURRENTLY (minimalist arrow list) */}
+        {/* 02 — WHY IT'S FREE */}
         {/* ═══════════════════════════════════════ */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -450,100 +450,7 @@ export default function AboutPage() {
           transition={{ duration: 0.5 }}
           className="max-w-3xl mx-auto"
         >
-          <SectionHeader number="02" title="Currently" accent="emerald" />
-
-          <ul className="space-y-4">
-            {[
-              "Prepping for a master's degree abroad",
-              "Juggling a 9-to-5 with side projects",
-              "On a Murakami marathon, currently on Norwegian Wood",
-              "Building this thing you're using right now",
-            ].map((item, i) => (
-              <motion.li
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="flex items-start gap-4 group"
-              >
-                <span className="text-emerald-400 font-bold mt-0.5 group-hover:translate-x-1 transition-transform">
-                  →
-                </span>
-                <span className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
-                  {item}
-                </span>
-              </motion.li>
-            ))}
-          </ul>
-        </motion.section>
-
-        <SectionDivider />
-
-        {/* ═══════════════════════════════════════ */}
-        {/* 03 — THE STACK */}
-        {/* ═══════════════════════════════════════ */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
-          className="max-w-3xl mx-auto"
-        >
-          <SectionHeader number="03" title="The Stack" accent="purple" />
-
-          <p className="text-slate-400 mb-6 text-sm md:text-base">
-            For the curious devs out there:
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { name: "Next.js 16 + React 19", desc: "the framework", icon: <Code className="w-4 h-4" /> },
-              { name: "Supabase", desc: "Postgres + Auth", icon: <Database className="w-4 h-4" /> },
-              { name: "OpenAI GPT-4o", desc: "the brain behind scoring", icon: <Brain className="w-4 h-4" /> },
-              { name: "Whisper API", desc: "turns your voice into text", icon: <Mic className="w-4 h-4" /> },
-              { name: "Vercel", desc: "where all this lives", icon: <Cloud className="w-4 h-4" /> },
-              { name: "Tailwind CSS", desc: "because writing CSS by hand is pain", icon: <Wind className="w-4 h-4" /> },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-[#1A1D26] border border-slate-800 hover:border-purple-500/30 rounded-2xl p-4 transition-all group cursor-default"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-400 group-hover:bg-purple-500/20 transition-colors mt-0.5">
-                    {item.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-200 font-bold text-sm">
-                      {item.name}
-                    </p>
-                    <p className="text-slate-500 text-xs italic mt-0.5">
-                      {item.desc}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-
-        <SectionDivider />
-
-        {/* ═══════════════════════════════════════ */}
-        {/* 04 — WHY IT'S FREE (KEEP AS-IS) */}
-        {/* ═══════════════════════════════════════ */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.5 }}
-          className="max-w-3xl mx-auto"
-        >
-          <SectionHeader number="04" title="IELTS4our is free (?)" accent="amber" />
+          <SectionHeader number="02" title="IELTS4our is free (?)" accent="amber" />
 
           <div className="bg-gradient-to-br from-amber-500/5 to-yellow-500/5 border border-amber-500/20 rounded-3xl p-6 md:p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -566,7 +473,7 @@ export default function AboutPage() {
         <SectionDivider />
 
         {/* ═══════════════════════════════════════ */}
-        {/* 05 — COMING SOON (detailed cards w/ IELTS4OUR prefix) */}
+        {/* 03 — WHAT'S NEXT (monogram letters) */}
         {/* ═══════════════════════════════════════ */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -575,33 +482,36 @@ export default function AboutPage() {
           transition={{ duration: 0.5 }}
           className="max-w-3xl mx-auto"
         >
-          <SectionHeader number="05" title="What's next?" accent="emerald" />
+          <SectionHeader number="03" title="What's next?" accent="emerald" />
 
           <div className="space-y-4">
             {[
               {
-                emoji: "📖",
+                letter: "R",
                 title: "IELTS4OUR Reading Practice",
                 status: "In Progress",
                 statusColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
                 desc: "Multi-passage reading with comprehension questions, time tracking, and instant band score for both Academic and General Training modules.",
                 accent: "border-emerald-500/30 hover:border-emerald-500/50",
+                letterColor: "text-emerald-500",
               },
               {
-                emoji: "🎧",
+                letter: "L",
                 title: "IELTS4OUR Listening Practice",
                 status: "In Progress",
                 statusColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
                 desc: "Real audio with multiple accents, section-by-section practice, and detailed performance breakdown across all four parts.",
                 accent: "border-blue-500/30 hover:border-blue-500/50",
+                letterColor: "text-blue-500",
               },
               {
-                emoji: "📱",
+                letter: "M",
                 title: "IELTS4OUR Mobile App",
                 status: "Exploring",
                 statusColor: "text-purple-400 bg-purple-500/10 border-purple-500/20",
                 desc: "Native iOS and Android app for offline practice and seamless mobile experience. Let's see what happens ;)",
                 accent: "border-purple-500/30 hover:border-purple-500/50",
+                letterColor: "text-purple-500",
               },
             ].map((item, i) => (
               <motion.div
@@ -612,10 +522,10 @@ export default function AboutPage() {
                 transition={{ delay: i * 0.1 }}
                 className={`bg-[#1A1D26] border ${item.accent} rounded-2xl p-5 md:p-6 transition-all cursor-default group`}
               >
-                <div className="flex items-start gap-4">
-                  <div className="text-3xl md:text-4xl shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
-                    {item.emoji}
-                  </div>
+                <div className="flex items-start gap-4 md:gap-5">
+                  <span className={`text-3xl md:text-4xl font-black font-mono leading-none ${item.letterColor} shrink-0 w-8 md:w-10 text-center select-none group-hover:scale-110 transition-transform`}>
+                    {item.letter}
+                  </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-3 mb-2">
                       <h4 className="text-[#E6E8EE] font-black text-base md:text-lg tracking-tight">
@@ -638,7 +548,7 @@ export default function AboutPage() {
         <SectionDivider />
 
         {/* ═══════════════════════════════════════ */}
-        {/* 06 — LET'S CONNECT (4-card grid w/ LinkedIn) */}
+        {/* 04 — LET'S CONNECT */}
         {/* ═══════════════════════════════════════ */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -647,7 +557,7 @@ export default function AboutPage() {
           transition={{ duration: 0.5 }}
           className="max-w-3xl mx-auto"
         >
-          <SectionHeader number="06" title="Let's Connect" accent="blue" />
+          <SectionHeader number="04" title="Let's Connect" accent="blue" />
 
           <p className="text-slate-300 mb-6 text-base md:text-lg font-medium">
             I read every message. Sometimes I even reply quickly.
@@ -742,7 +652,7 @@ export default function AboutPage() {
         </motion.div>
 
         {/* ═══════════════════════════════════════ */}
-        {/* FOOTER (simple) */}
+        {/* FOOTER */}
         {/* ═══════════════════════════════════════ */}
         <footer className="text-center mt-24 pt-8 border-t border-slate-800 max-w-3xl mx-auto">
           <p className="text-slate-500 text-xs md:text-sm">
