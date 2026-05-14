@@ -16,6 +16,7 @@ import { CUE_CARDS, PART3_TOPICS, GUILT_MESSAGES } from "@/utils/constants";
 import UniversityBanner from "@/components/UniversityBanner";
 import TestimonialSection from "@/components/TestimonialSection";
 import MarketingSection from "@/components/MarketingSection";
+import BlogLatestSection from "@/components/BlogLatestSection";
 import UpgradeModal from "@/components/UpgradeModal";
 import AlertModal from "@/components/AlertModal"; 
 import FAQSection from "@/components/FAQSection"; 
@@ -482,6 +483,17 @@ export default function Home() {
                     </motion.div>
                 </Link>
 
+                {/* 🔥 NEW: Desktop Blog — Pill Button next to About */}
+                <Link href="/blog" className="hidden md:block">
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full transition-colors text-xs font-bold cursor-pointer ml-1"
+                    >
+                        <span className="text-[#E6E8EE]">Blog</span>
+                    </motion.div>
+                </Link>
+
                 <div className="w-8 md:hidden"></div> 
             </div>
 
@@ -613,19 +625,19 @@ export default function Home() {
                                         </button>
                                     </div>
 
+                                    {/* 🔥 UPDATED: Mobile drawer nav — Speaking Guide removed, all icons removed */}
                                     <nav className="space-y-2">
-                                        <Link href="/progress" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <BarChart3 className="w-5 h-5 text-blue-400" /> My Progress
+                                        <Link href="/progress" className="flex items-center px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            My Progress
                                         </Link>
-                                        <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <BookOpen className="w-5 h-5 text-teal-400" /> Speaking Guide
+                                        <Link href="/about" className="flex items-center px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            About IELTS4our
                                         </Link>
-                                        {/* About IELTS4our link */}
-                                        <Link href="/about" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <Info className="w-5 h-5 text-blue-400" /> About IELTS4our
+                                        <Link href="/blog" className="flex items-center px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            Blog
                                         </Link>
-                                        <Link href="/faq" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <BookOpen className="w-5 h-5 text-blue-400" /> FAQ
+                                        <Link href="/faq" className="flex items-center px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            FAQ
                                         </Link>
                                     </nav>
                                 </>
@@ -650,16 +662,16 @@ export default function Home() {
 
                                     <div className="h-px bg-slate-800 mb-6"></div>
 
+                                    {/* 🔥 UPDATED: Mobile drawer nav (guest) — Speaking Guide removed, all icons removed */}
                                     <nav className="space-y-2">
-                                        <Link href="/mission" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <BookOpen className="w-5 h-5 text-teal-400" /> Speaking Guide
+                                        <Link href="/about" className="flex items-center px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            About IELTS4our
                                         </Link>
-                                        {/* About IELTS4our link */}
-                                        <Link href="/about" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <Info className="w-5 h-5 text-blue-400" /> About IELTS4our
+                                        <Link href="/blog" className="flex items-center px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            Blog
                                         </Link>
-                                        <Link href="/faq" className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
-                                            <BookOpen className="w-5 h-5 text-blue-400" /> FAQ
+                                        <Link href="/faq" className="flex items-center px-4 py-3 bg-white/5 rounded-xl text-slate-300 hover:text-white transition-colors">
+                                            FAQ
                                         </Link>
                                     </nav>
                                 </div>
@@ -681,31 +693,31 @@ export default function Home() {
         {/* HERO */}
         <div ref={heroRef} className="text-center max-w-3xl mx-auto mt-6 mb-12 scroll-mt-24">
 
-            {/* 🔥 UPDATED: Mobile CTAs — vertical stack (md:inline-flex restored for desktop) */}
+            {/* 🔥 UPDATED: Hero CTAs — Speaking Guide pill removed from mobile,
+                kept on desktop only. Mobile shows: About → Blog. */}
             <div className="flex flex-col items-center gap-2 mb-6 md:mb-6 md:gap-0">
 
-                {/* Speaking Guide CTA */}
-                <Link href="/mission" className="w-full md:w-auto">
+                {/* Speaking Guide CTA — DESKTOP ONLY */}
+                <Link href="/mission" className="hidden md:inline-block">
                     <motion.div
                         initial={{ y: -10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         whileHover={{ scale: 1.02 }}
-                        className="w-full md:w-auto flex md:inline-flex items-center justify-center gap-3 px-5 py-2.5 rounded-2xl bg-[#1A1D26] border border-slate-800 hover:border-teal-500/30 text-slate-300 text-xs font-medium cursor-pointer transition-all group"
+                        className="inline-flex items-center justify-center gap-3 px-5 py-2.5 rounded-2xl bg-[#1A1D26] border border-slate-800 hover:border-teal-500/30 text-slate-300 text-xs font-medium cursor-pointer transition-all group"
                     >
                         <div className="flex flex-col items-start">
                             <span className="font-bold text-slate-200 text-xs">Speaking Guide</span>
-                            <span className="text-[10px] text-slate-500 hidden md:block">Strategi per Part + contoh jawaban Band 7+</span>
+                            <span className="text-[10px] text-slate-500">Strategi per Part + contoh jawaban Band 7+</span>
                         </div>
                         <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-teal-400 group-hover:translate-x-1.5 transition-all" />
                     </motion.div>
                 </Link>
 
-                {/* About IELTS4our CTA — visible only on mobile */}
+                {/* About IELTS4our CTA — MOBILE ONLY (1st) */}
                 <Link href="/about" className="w-full md:hidden">
                     <motion.div
                         initial={{ y: -10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.1 }}
                         whileHover={{ scale: 1.02 }}
                         className="w-full flex items-center justify-center gap-3 px-5 py-2.5 rounded-2xl bg-[#1A1D26] border border-slate-800 hover:border-blue-500/30 text-slate-300 text-xs font-medium cursor-pointer transition-all group"
                     >
@@ -714,6 +726,22 @@ export default function Home() {
                                 <span className="text-[#E6E8EE]">About</span>
                                 <span className="text-blue-400 ml-1">IELTS4our</span>
                             </span>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-1.5 transition-all" />
+                    </motion.div>
+                </Link>
+
+                {/* 🔥 NEW: Blog CTA — MOBILE ONLY (2nd, after About) */}
+                <Link href="/blog" className="w-full md:hidden">
+                    <motion.div
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                        whileHover={{ scale: 1.02 }}
+                        className="w-full flex items-center justify-center gap-3 px-5 py-2.5 rounded-2xl bg-[#1A1D26] border border-slate-800 hover:border-blue-500/30 text-slate-300 text-xs font-medium cursor-pointer transition-all group"
+                    >
+                        <div className="flex flex-col items-start">
+                            <span className="font-bold text-[#E6E8EE] text-xs">Blog</span>
                         </div>
                         <ArrowRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-1.5 transition-all" />
                     </motion.div>
@@ -976,11 +1004,19 @@ export default function Home() {
 
         
         <MarketingSection onSelectMode={handleMarketingCardClick} />
+
+        {/* 🔥 NEW: Latest Articles Section */}
+        <BlogLatestSection />
+
         <FAQSection isTeaser={true} />
 
         <footer className="text-center mt-24 pb-10 text-slate-500 text-xs md:text-sm border-t border-slate-800 pt-8">
             <p className="mb-4">&copy; 2025 IELTS4our. Made with ❤️ by <Link href="/about" className="hover:text-blue-400 transition-colors">IELTS4our</Link>.</p>
-            <p><Link href="/terms" className="underline decoration-slate-700 hover:decoration-blue-400 hover:text-blue-400 transition-all">Terms & Conditions</Link></p>
+            <p>
+                <Link href="/blog" className="underline decoration-slate-700 hover:decoration-blue-400 hover:text-blue-400 transition-all">Blog</Link>
+                <span className="mx-2 text-slate-700">·</span>
+                <Link href="/terms" className="underline decoration-slate-700 hover:decoration-blue-400 hover:text-blue-400 transition-all">Terms & Conditions</Link>
+            </p>
         </footer>
       </div>
 
