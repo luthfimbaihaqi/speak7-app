@@ -275,9 +275,8 @@ async function generateScore(fullTranscript, topicContext) {
     return { ...result, overall };
 }
 
-// --- HELPER: INSTRUKSI (PERSONA V5: REAL IELTS EXAMINER) ---
+// --- HELPER: INSTRUKSI (PERSONA V7: REAL IELTS EXAMINER - DYNAMIC PART 2 ROUNDING) ---
 function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false, isQuickMode = false, askedQuestions = []) {
-  const nickname = contextData?.nickname || "Candidate";
   const userContent = isSilent ? "(User remained silent)" : `"${userLastText}"`;
 
   let basePrompt = `
@@ -288,25 +287,24 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
     1. NO ROBOTIC TRANSITIONS: Do NOT use phrases like "That's an interesting perspective," "I see what you mean," or "Moving on."
     2. BE NATURAL: If the user gives a good answer, just say "Right," or "Okay," and immediately ask the next question. Sometimes, ask the next question with NO transition word at all.
     3. KEEP IT BRIEF: Ask only ONE short question. Do NOT over-explain.
-    4. ADDRESS the candidate as "${nickname}" occasionally to make it personal.
+    4. NEVER address the candidate by name, nickname, or "you" as substitute. Just ask questions naturally without addressing them personally. Real IELTS examiners do NOT use the candidate's name during questioning.
   `;
 
   if (isExamFinished) {
-      return `${basePrompt} SITUATION: Final question answered. TASK: Say "Thank you, ${nickname}. That is the end of the speaking test. You have done well. Have a great day."`;
+      return `${basePrompt} SITUATION: Final question answered. TASK: Say "Thank you. That is the end of the speaking test. You have done well. Have a great day."`;
   }
 
   // PART 1
   if (part === 1) {
     switch (step) {
       case 0: return `${basePrompt} TASK: Greet warmly, INTRODUCE YOURSELF as "Mr. Paul", and ask for the candidate's full name.`;
-      case 1: return `${basePrompt} SITUATION: User name: ${userContent}. TASK: Acknowledge. Ask: "What shall I call you?"`;
-      case 2: return `${basePrompt} SITUATION: User nickname: ${userContent}. TASK: Address by nickname. Ask: "Where are you from?"`;
-      case 3: return `${basePrompt} SITUATION: From ${userContent}. TASK: Acknowledge. Pivot to Work/Study. Ask: "Do you work or are you a student?"`;
-      case 4: return `${basePrompt} SITUATION: Job/Study: ${userContent}. TASK: Acknowledge. Ask ONE simple follow-up (e.g. "Do you enjoy it?").`;
-      case 5: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Transition to ${topicSet.p1_topic}. Ask: "${topicSet.p1_intro}"`;
-      case 6: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: React naturally. Ask: "${topicSet.p1_follow}"`;
-      case 7: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Transition to ${topicSet.p1_topic2}. Ask: "${topicSet.p1_intro2}"`;
-      case 8: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: React naturally. Ask: "${topicSet.p1_follow2}"`;
+      case 1: return `${basePrompt} SITUATION: User shared name: ${userContent}. TASK: Acknowledge briefly with just "Thank you." then ask: "Where are you from?"`;
+      case 2: return `${basePrompt} SITUATION: From ${userContent}. TASK: Acknowledge briefly. Pivot to Work/Study. Ask: "Do you work or are you a student?"`;
+      case 3: return `${basePrompt} SITUATION: Job/Study: ${userContent}. TASK: Acknowledge. Ask ONE simple follow-up (e.g. "Do you enjoy it?").`;
+      case 4: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Transition to ${topicSet.p1_topic}. Ask: "${topicSet.p1_intro}"`;
+      case 5: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: React naturally. Ask: "${topicSet.p1_follow}"`;
+      case 6: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: Transition to ${topicSet.p1_topic2}. Ask: "${topicSet.p1_intro2}"`;
+      case 7: return `${basePrompt} SITUATION: Answered: ${userContent}. TASK: React naturally. Ask: "${topicSet.p1_follow2}"`;
       default: return `${basePrompt} TASK: Move to Part 2.`;
     }
   }
@@ -316,22 +314,45 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
       if (step === 0) {
           return `${basePrompt}
             SITUATION: Starting Part 2.
-            TASK: Say "Thank you, ${nickname}. That is the end of Part 1. Now let's move on to Part 2. I will give you a topic: ${topicSet.p2_topic}. You have one minute to prepare."`;
+            TASK: Say "Thank you. That is the end of Part 1. Now let's move on to Part 2. I will give you a topic: ${topicSet.p2_topic}. You have one minute to prepare."`;
       }
       
       if (step === 1) {
         if (isShortAnswer) return `${basePrompt} SITUATION: User stopped early. TASK: Say "You still have time. Is there anything else you'd like to add?"`;
-        if (isSilent && !isShortAnswer) return `${basePrompt} SITUATION: Prep over. TASK: Say "Please start speaking, ${nickname}. I will stop you after 2 minutes."`;
+        if (isSilent && !isShortAnswer) return `${basePrompt} SITUATION: Prep over. TASK: Say "Please start speaking. I will stop you after 2 minutes."`;
         return `${basePrompt} SITUATION: Ready to speak. TASK: Say "Please start speaking."`;
       }
 
+      // 🔥 V7: DYNAMIC ROUNDING QUESTION — Generated based on user's actual speech content
       if (step === 2) {
         return `${basePrompt}
-            SITUATION: Candidate finished speech about "${topicSet.p2_topic}".
-            TASK: Say "Thank you" to stop them. 
-            CRITICAL: Check if user ALREADY answered "${topicSet.p2_rounding}".
-            - IF YES: Ask a different simple rounding question.
-            - IF NO: Ask "${topicSet.p2_rounding}".`;
+            SITUATION: Candidate just finished a 1-2 minute speech about "${topicSet.p2_topic}".
+            
+            USER'S SPEECH: ${userContent}
+            
+            TASK: 
+            1. Say "Thank you." to stop them.
+            2. Generate ONE natural follow-up question that:
+               - Is brief (under 10 words)
+               - References something SPECIFIC the user mentioned in their speech
+               - Stays on the same topic as "${topicSet.p2_topic}"
+               - Can be answered briefly (1-2 sentences)
+            
+            EXAMPLES of good follow-ups:
+            - If user mentioned multiple items: "Which one do you like most?"
+            - If user shared personal connection: "How did you discover it?"
+            - If user described experience: "How did it make you feel?"
+            - If user shared opinion: "What makes it special to you?"
+            - If user described place: "Have you been there often?"
+            - If user described person: "When did you last meet them?"
+            
+            AVOID:
+            - Generic questions that don't fit user's specific content
+            - Compound questions (one question only)
+            - Questions starting new topics user hasn't mentioned
+            - Sensitive probes (money, religion, conflict)
+            
+            Your response format: "Thank you. [Your contextual follow-up question]"`;
       }
 
       if (step === 3) {
@@ -362,7 +383,7 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
               SITUATION: STARTING QUICK TEST MODE (Part 3 Only).
               TOPIC: ${topicSet.p3_context}
               TASK: 
-              1. Say "Hello, ${nickname}! Welcome to the Quick Test. In this session, we will jump straight to Part 3 and discuss ${topicSet.p3_context}."
+              1. Say "Hello, Candidate! Welcome to the Quick Test. In this session, we will jump straight to Part 3 and discuss ${topicSet.p3_context}."
               2. IMMEDIATELY Ask Question 1: "${topicSet.p3_q1}".`;
           }
           if (step === 1) {
@@ -398,7 +419,7 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
               SITUATION: STARTING QUICK TEST MODE (Part 3 Only).
               TOPIC: ${topicSet.p3_context}
               TASK: 
-              1. Say "Hello, ${nickname}! Welcome to the Quick Test. In this session, we will jump straight to Part 3 and discuss ${topicSet.p3_context}."
+              1. Say "Hello, Candidate! Welcome to the Quick Test. In this session, we will jump straight to Part 3 and discuss ${topicSet.p3_context}."
               2. IMMEDIATELY Ask Question 1: "${topicSet.p3_q1}".`;
           }
           return `${part3Base} SITUATION: Start Part 3 (Topic: ${topicSet.p3_context}). TASK: Ask: "${topicSet.p3_q1}".`;
@@ -474,16 +495,9 @@ export async function POST(request) {
     let isQuickStart = false;
     let updatedExtractedData = extracted_data || {};
 
-    // 🔥 SARAN 4: Extract nickname from user answers in Part 1
-    if (current_part === 1 && !isSilent) {
-        if (current_step === 0) {
-            // Step 0: User menjawab nama lengkap
-            updatedExtractedData.fullName = userText;
-        }
-        if (current_step === 1) {
-            // Step 1: User menjawab nickname
-            updatedExtractedData.nickname = userText.replace(/[^a-zA-Z\s]/g, '').trim().split(/\s+/)[0];
-        }
+    // 🔥 V6: Only capture full name for record-keeping (no longer used for AI addressing)
+    if (current_part === 1 && !isSilent && current_step === 0) {
+        updatedExtractedData.fullName = userText;
     }
 
     // Build list of already-asked Part 3 questions for anti-repeat
@@ -527,8 +541,8 @@ export async function POST(request) {
     } 
     else { // ACTION: ANSWER
         if (current_part === 1) {
-            // 🔥 SARAN 1: Part 1 sekarang sampai step 8, lalu masuk Part 2
-            if (current_step < 8) nextStep = current_step + 1;
+            // 🔥 V6: Part 1 sekarang sampai step 7 (was 8), karena nickname question dihapus
+            if (current_step < 7) nextStep = current_step + 1;
             else { 
                 nextPart = 2; nextStep = 0; 
                 metaTopic = topicSet.p2_topic;
