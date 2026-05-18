@@ -7,14 +7,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// 🔥 V2: Valid voice options
+const VALID_VOICES = ['paul', 'billie', 'taylor'];
+const DEFAULT_VOICE = 'paul';
+
 export async function POST(request) {
   try {
-    // 🔥 Tangkap 'mode' dari frontend ('quick' atau 'full')
-    const { userId, mode } = await request.json();
+    // 🔥 V2: Tangkap 'voice_choice' dari frontend (selain mode)
+    const { userId, mode, voice_choice } = await request.json();
 
     if (!userId) {
       return NextResponse.json({ error: "Missing User ID" }, { status: 400 });
     }
+
+    // 🔥 V2: Validate voice_choice, default to 'paul' if invalid
+    const validatedVoice = VALID_VOICES.includes(voice_choice) ? voice_choice : DEFAULT_VOICE;
 
     // 1. TENTUKAN HARGA & STARTING POINT
     // Default Full Test (Cost 3, Part 1)
@@ -66,6 +73,7 @@ export async function POST(request) {
           current_step: 0,
           status: 'ONGOING',
           mode: mode,
+          voice_choice: validatedVoice,  // 🔥 V2: Save validated voice
           transcript: [],
           extracted_data: {}
         }
@@ -80,10 +88,13 @@ export async function POST(request) {
       return NextResponse.json({ error: sessionError.message }, { status: 500 });
     }
 
+    console.log(`[START] Session created: ${session.id} | Mode: ${mode} | Voice: ${validatedVoice}`);
+
     // 5. SUKSES & RETURN
     return NextResponse.json({ 
         session_id: session.id,
-        remaining_balance: newBalance 
+        remaining_balance: newBalance,
+        voice_choice: validatedVoice  // 🔥 V2: Return for frontend reference
     });
 
   } catch (error) {

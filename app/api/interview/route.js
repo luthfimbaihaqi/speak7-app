@@ -12,6 +12,33 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// 🔥 V8: VOICE CONFIGURATION
+const VOICE_MAP = {
+  paul: { 
+    provider: 'inworld', 
+    voiceId: 'Ronald',
+    displayName: 'Paul'
+  },
+  billie: { 
+    provider: 'inworld', 
+    voiceId: 'Tyler',
+    displayName: 'Billie'
+  },
+  taylor: { 
+    provider: 'inworld', 
+    voiceId: 'Eleanor',
+    displayName: 'Taylor'
+  }
+};
+
+const INWORLD_ENDPOINT = 'https://api.inworld.ai/tts/v1/voice';
+const INWORLD_MODEL = 'inworld-tts-2';
+
+// 🔥 V9: Helper to get display name from voice choice
+function getExaminerName(voiceChoice) {
+  return VOICE_MAP[voiceChoice]?.displayName || 'Paul';
+}
+
 // --- TOPIC ENGINE: 12 VARIATION PACKS (IELTS STANDARD) ---
 const TOPIC_SETS = [
     {   // SET A: TRAVEL
@@ -205,6 +232,67 @@ function getTopicSet(sessionId) {
     return TOPIC_SETS[hash % TOPIC_SETS.length];
 }
 
+// 🔥 V8: INWORLD TTS HELPER
+async function generateInworldTTS(text, voiceId) {
+  const response = await fetch(INWORLD_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${process.env.INWORLD_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      text: text,
+      voiceId: voiceId,
+      modelId: INWORLD_MODEL
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Inworld API ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+  
+  if (!data.audioContent) {
+    throw new Error('Inworld response missing audioContent');
+  }
+
+  return data.audioContent; // already base64 from Inworld
+}
+
+// 🔥 V8: OPENAI TTS FALLBACK
+async function generateOpenAITTS(text) {
+  const mp3 = await openai.audio.speech.create({
+    model: "tts-1-hd",
+    voice: "onyx",
+    input: text
+  });
+  return Buffer.from(await mp3.arrayBuffer()).toString("base64");
+}
+
+// 🔥 V8: MAIN TTS DISPATCHER (with silent fallback)
+async function generateTTS(text, voiceChoice = 'paul') {
+  const voiceConfig = VOICE_MAP[voiceChoice];
+  
+  if (!voiceConfig) {
+    console.warn(`[TTS] Unknown voice_choice: ${voiceChoice}, fallback to OpenAI`);
+    return await generateOpenAITTS(text);
+  }
+
+  try {
+    // Try Inworld first
+    const audio = await generateInworldTTS(text, voiceConfig.voiceId);
+    console.log(`[TTS] ✅ Inworld success: ${voiceConfig.displayName} (${voiceConfig.voiceId})`);
+    return audio;
+  } catch (err) {
+    // Silent fallback to OpenAI
+    console.error(`[TTS] ❌ Inworld failed for ${voiceChoice}:`, err.message);
+    console.log(`[TTS] Falling back to OpenAI...`);
+    return await generateOpenAITTS(text);
+  }
+}
+
 // --- SCORING HELPER (UPDATED: GPT-4o & FAIL-SAFE) ---
 async function generateScore(fullTranscript, topicContext) {
     const hasPart2 = fullTranscript.some(t => t.part === 2);
@@ -275,12 +363,13 @@ async function generateScore(fullTranscript, topicContext) {
     return { ...result, overall };
 }
 
-// --- HELPER: INSTRUKSI (PERSONA V7: REAL IELTS EXAMINER - DYNAMIC PART 2 ROUNDING) ---
-function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false, isQuickMode = false, askedQuestions = []) {
+// 🔥 V9: HELPER INSTRUKSI - DYNAMIC EXAMINER PERSONA PER VOICE
+function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false, isQuickMode = false, askedQuestions = [], examinerName = 'Paul') {
   const userContent = isSilent ? "(User remained silent)" : `"${userLastText}"`;
 
+  // 🔥 V9: Dynamic examiner name di basePrompt (no Mr./Ms. title)
   let basePrompt = `
-    You are Mr. Paul, an official IELTS Speaking Examiner. 
+    You are ${examinerName}, an official IELTS Speaking Examiner. 
     TONE: Professional, neutral, and encouraging.
     
     🚨 STRICT RULES:
@@ -297,7 +386,8 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
   // PART 1
   if (part === 1) {
     switch (step) {
-      case 0: return `${basePrompt} TASK: Greet warmly, INTRODUCE YOURSELF as "Mr. Paul", and ask for the candidate's full name.`;
+      // 🔥 V9: Dynamic examiner name in greeting
+      case 0: return `${basePrompt} TASK: Greet warmly, INTRODUCE YOURSELF as "${examinerName}" (no title, just the name), and ask for the candidate's full name.`;
       case 1: return `${basePrompt} SITUATION: User shared name: ${userContent}. TASK: Acknowledge briefly with just "Thank you." then ask: "Where are you from?"`;
       case 2: return `${basePrompt} SITUATION: From ${userContent}. TASK: Acknowledge briefly. Pivot to Work/Study. Ask: "Do you work or are you a student?"`;
       case 3: return `${basePrompt} SITUATION: Job/Study: ${userContent}. TASK: Acknowledge. Ask ONE simple follow-up (e.g. "Do you enjoy it?").`;
@@ -466,6 +556,11 @@ export async function POST(request) {
     const topicSet = getTopicSet(sessionId);
     let { current_part, current_step, extracted_data, transcript } = session;
     const isQuickMode = session.mode === 'quick';
+    
+    // 🔥 V9: Get examiner name from session voice_choice
+    const voiceChoice = session.voice_choice || 'paul';
+    const examinerName = getExaminerName(voiceChoice);
+    
     let userText = "";
     let isSilent = true;
 
@@ -484,7 +579,7 @@ export async function POST(request) {
         }
     }
 
-    console.log(`[P${current_part}/S${current_step}] Action: ${action} | Topic: ${topicSet.id} | Mode: ${session.mode} | Words: ${userText.split(/\s+/).length}`);
+    console.log(`[P${current_part}/S${current_step}] Action: ${action} | Topic: ${topicSet.id} | Mode: ${session.mode} | Voice: ${voiceChoice} | Examiner: ${examinerName} | Words: ${userText.split(/\s+/).length}`);
 
     // --- LOGIC CORE ---
     let nextStep = current_step;
@@ -569,12 +664,14 @@ export async function POST(request) {
         }
     }
 
-    const instruction = getInstruction(nextPart, nextStep, updatedExtractedData, userText, topicSet, isSilent, isShortAnswer, isExamFinished, isQuickStart, isQuickMode, askedQuestions);
+    // 🔥 V9: Pass examinerName to getInstruction
+    const instruction = getInstruction(nextPart, nextStep, updatedExtractedData, userText, topicSet, isSilent, isShortAnswer, isExamFinished, isQuickStart, isQuickMode, askedQuestions, examinerName);
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: "You are Mr. Paul. Speak natural English. Follow instructions EXACTLY." },
+        // 🔥 V9: Dynamic examiner name di system message
+        { role: "system", content: `You are ${examinerName}. Speak natural English. Follow instructions EXACTLY.` },
         { role: "user", content: instruction }
       ],
       max_tokens: 150, temperature: 0.3, 
@@ -614,13 +711,8 @@ export async function POST(request) {
 
     await supabase.from("exam_sessions").update(updateData).eq("id", sessionId);
 
-    // TTS: HD Quality & Onyx Voice
-    const mp3 = await openai.audio.speech.create({ 
-        model: "tts-1-hd", 
-        voice: "onyx", 
-        input: aiResponseText 
-    });
-    const audioBase64 = Buffer.from(await mp3.arrayBuffer()).toString("base64");
+    // 🔥 V8: TTS via dispatcher (Inworld primary, OpenAI fallback)
+    const audioBase64 = await generateTTS(aiResponseText, voiceChoice);
 
     return NextResponse.json({
       text: aiResponseText,

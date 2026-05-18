@@ -9,6 +9,14 @@ import {
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient"; 
 import ScoreCard from "@/components/ScoreCard"; 
+import VoiceSelectionModal from "@/components/VoiceSelectionModal";
+
+// 🔥 V3: Voice ID to display name mapping (UI labels)
+const VOICE_DISPLAY_NAMES = {
+  paul: 'PAUL',
+  billie: 'BILLIE',
+  taylor: 'TAYLOR'
+};
 
 // 🔥 COMPONENT 1: REAL-TIME MIC VISUALIZER
 const MicCheckVisualizer = ({ stream }) => {
@@ -196,6 +204,11 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const [status, setStatus] = useState("idle"); 
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]); 
+  
+  // 🔥 V2: Voice selection state
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  
   const [showTutorial, setShowTutorial] = useState(false); 
 
   const [isRecording, setIsRecording] = useState(false);
@@ -220,8 +233,12 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const [globalTimer, setGlobalTimer] = useState(0); 
   const [isExamActive, setIsExamActive] = useState(false);
 
-  // 🔥 POIN 3: State untuk menunda transisi Part 2 sampai audio selesai
   const pendingPart2Ref = useRef(false);
+
+  // 🔥 V3: Helper to get examiner display name from selected voice
+  const getExaminerDisplayName = () => {
+    return VOICE_DISPLAY_NAMES[selectedVoice] || 'EXAMINER';
+  };
 
   // 1. SETUP MIC
   useEffect(() => {
@@ -267,7 +284,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     return () => clearInterval(interval);
   }, [partTimer, showPartTimer]);
 
-  // 🔥 MASTER DEFENSE: Mencegah Back, Refresh, dan Membunuh Suara Hantu
+  // MASTER DEFENSE: Mencegah Back, Refresh, dan Membunuh Suara Hantu
   useEffect(() => {
     if (!isExamActive) return;
 
@@ -366,7 +383,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       }
   };
 
-  // 🔥 POIN 3: Helper untuk trigger Part 2 (dipanggil setelah audio selesai)
   const activatePart2 = () => {
       pendingPart2Ref.current = false;
       setStatus("part2_prep");
@@ -374,6 +390,32 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       setShowPartTimer(true);
   };
 
+  // V2: Step 1 - User klik "Start Quick/Full Test" → show VoiceSelectionModal
+  const handleStartClick = () => {
+    if (!userProfile) return router.push('/auth');
+    
+    if ((userProfile.token_balance || 0) < TOKEN_COST) {
+      alert("Not enough tokens. Please top up to continue.");
+      return;
+    }
+
+    setShowVoiceModal(true);
+  };
+
+  // V2: Step 2 - User pick voice di modal → show TutorialOverlay
+  const handleVoiceSelected = (voiceId) => {
+    setSelectedVoice(voiceId);
+    setShowVoiceModal(false);
+    setShowTutorial(true);
+  };
+
+  // V2: User close VoiceSelectionModal → back to StartScreen
+  const handleVoiceModalClose = () => {
+    setShowVoiceModal(false);
+    setSelectedVoice(null);
+  };
+
+  // V2: Step 3 - User klik "Start Exam Now" di TutorialOverlay → start session dengan voice
   const startSimulation = async () => {
     setShowTutorial(false);
 
@@ -394,7 +436,11 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     try {
         const res = await fetch("/api/interview/start", {
             method: "POST",
-            body: JSON.stringify({ userId: userProfile.id, mode: mode })
+            body: JSON.stringify({ 
+                userId: userProfile.id, 
+                mode: mode,
+                voice_choice: selectedVoice
+            })
         });
         
         const data = await res.json();
@@ -514,10 +560,8 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           
           if (isFinished) handleExamFinished();
           
-          // 🔥 POIN 3: Jika masuk Part 2, TUNDA transisi sampai audio Mr. Paul selesai
           if (part === 2 && step === 0) {
               pendingPart2Ref.current = true;
-              // Jangan setStatus("part2_prep") di sini — akan dipanggil di onended audio
           }
           if (part === 2 && step > 1) setShowPartTimer(false); 
           if (part === 3) {
@@ -531,7 +575,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         activeAudioRef.current = new Audio(data.audio);
         activeAudioRef.current.onended = () => {
           setAiSpeaking(false);
-          // 🔥 POIN 3: Setelah audio transisi Part 2 selesai, baru tampilkan topic card
           if (pendingPart2Ref.current) {
               activatePart2();
           }
@@ -699,7 +742,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
             <div className="text-center">
                 <button 
-                    onClick={() => setShowTutorial(true)} 
+                    onClick={handleStartClick} 
                     disabled={!userProfile || (userProfile.token_balance || 0) < TOKEN_COST}
                     className="group relative inline-flex items-center justify-center gap-3 px-10 py-4 bg-white hover:bg-slate-200 text-slate-900 rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-white/5"
                 >
@@ -753,7 +796,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
             <div className="flex-1 flex flex-col items-center justify-center relative p-6 overflow-y-auto">
                 
-                {/* 🔥 POIN 4: Loading state saat checking_token */}
                 {status === "checking_token" && (
                     <div className="flex flex-col items-center gap-4">
                         <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
@@ -776,14 +818,16 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                             {status === "part2_prep" ? (
                                 <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">PREPARATION TIME...</p>
                             ) : aiSpeaking ? (
-                                <p className="text-blue-400 text-sm font-medium animate-pulse tracking-wider">MR. PAUL IS SPEAKING...</p>
+                                /* 🔥 V3: Dynamic examiner name */
+                                <p className="text-blue-400 text-sm font-medium animate-pulse tracking-wider">{getExaminerDisplayName()} IS SPEAKING...</p>
                             ) : isRecording ? (
                                 <>
                                     <p className="text-red-500 text-sm font-medium animate-pulse tracking-wider">LISTENING...</p>
                                     <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-semibold">Tap square to stop</p>
                                 </>
                             ) : isProcessing ? (
-                                <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">MR. PAUL IS THINKING...</p>
+                                /* 🔥 V3: Dynamic examiner name */
+                                <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">{getExaminerDisplayName()} IS THINKING...</p>
                             ) : (
                                 <>
                                     <p className="text-slate-200 text-sm font-bold tracking-wider">YOUR TURN</p>
@@ -842,7 +886,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                                 <p className="text-slate-400">Great job! Here is your performance analysis.</p>
                             </div>
                             {examResult ? (
-                                // 🔥 POIN 5: Fix ScoreCard props — tambah onOpenTestimonial & isLoggedIn
                                 <ScoreCard 
                                     result={examResult} 
                                     cue={cueCardTopic || "Full Simulation"} 
@@ -888,6 +931,18 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         </>
       )}
 
+      {/* V2: Voice Selection Modal (shows first) */}
+      <AnimatePresence>
+          {showVoiceModal && (
+              <VoiceSelectionModal
+                  onClose={handleVoiceModalClose}
+                  onContinue={handleVoiceSelected}
+                  tokenCost={TOKEN_COST}
+              />
+          )}
+      </AnimatePresence>
+
+      {/* Tutorial Overlay (shows after voice selection) */}
       <AnimatePresence>
           {showTutorial && (
               <TutorialOverlay 
