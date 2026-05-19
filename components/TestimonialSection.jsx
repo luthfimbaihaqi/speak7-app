@@ -19,14 +19,12 @@ export default function TestimonialSection() {
   
   const [isInteracting, setIsInteracting] = useState(false); 
 
-  // 🔥 POIN 1: Fetch dengan timeout 8 detik
   useEffect(() => {
     let isMounted = true;
     let timeoutId;
 
     async function fetchTestimonials() {
       try {
-        // Timeout: jika fetch tidak selesai dalam 8 detik, paksa stop loading
         timeoutId = setTimeout(() => {
           if (isMounted && loading) {
             setLoading(false);
@@ -61,9 +59,7 @@ export default function TestimonialSection() {
     };
   }, []);
 
-  // 🔥 POIN 2: Auto-scroll HANYA berjalan setelah data ready
   useEffect(() => {
-    // Guard: jangan jalankan auto-scroll jika belum ada data
     if (testimonials.length === 0) return;
 
     let animationFrameId;
@@ -115,19 +111,17 @@ export default function TestimonialSection() {
     scrollRef.current.scrollLeft = scrollLeft - walk;
   };
 
-  // Loading state
   if (loading) {
     return (
-      <section className="py-24 relative overflow-hidden bg-[#0B0D14]">
+      <section className="py-24 relative overflow-hidden bg-[#F8F5EE]">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500 text-sm">Memuat cerita...</p>
+          <div className="w-8 h-8 border-2 border-[#D17A5C]/30 border-t-[#D17A5C] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#525252] text-sm">Memuat cerita...</p>
         </div>
       </section>
     );
   }
 
-  // 🔥 POIN 3: Error state atau tidak ada data — render nothing gracefully
   if (fetchError || testimonials.length === 0) {
     return null;
   }
@@ -141,14 +135,13 @@ export default function TestimonialSection() {
   const displayData = [...baseData, ...baseData];
 
   return (
-    <section className="py-24 relative overflow-hidden bg-[#0B0D14] border-t border-white/5">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1/2 bg-blue-900/10 blur-[120px] rounded-full pointer-events-none" />
+    <section className="py-24 relative overflow-hidden bg-[#F8F5EE] border-t border-[#1A1A1A]/10">
 
       <div className="max-w-7xl mx-auto px-4 relative z-10 mb-16 text-center">
-        <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-          Why They Choose <span className="text-blue-500">ielts4our</span>
+        <h2 className="text-3xl md:text-5xl font-black text-[#1A1A1A] mb-6 tracking-tight font-display">
+          Why They Choose <span className="text-[#D17A5C]">ielts4our</span>
         </h2>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+        <p className="text-[#525252] text-lg max-w-2xl mx-auto">
           Real stories from learners who have transformed their speaking scores and are on their way to their dream universities.
         </p>
       </div>
@@ -182,30 +175,30 @@ export default function TestimonialSection() {
           {displayData.map((item, index) => (
             <div 
               key={`${item.id}-${index}`} 
-              className="bg-[#1A1D26]/60 backdrop-blur-md border border-slate-800/60 rounded-2xl p-8 hover:border-blue-500/30 transition-colors duration-300 relative group flex-none w-[85vw] md:w-[420px]"
+              className="bg-[#FAF6EC] border border-[#1A1A1A]/10 rounded-2xl p-8 hover:border-[#D17A5C]/30 transition-colors duration-300 relative group flex-none w-[85vw] md:w-[420px] shadow-sm"
             >
-              <Quote className="absolute top-6 right-6 w-10 h-10 text-slate-700/50 rotate-180 group-hover:text-blue-500/20 transition-colors duration-300" />
+              <Quote className="absolute top-6 right-6 w-10 h-10 text-[#1A1A1A]/5 rotate-180 group-hover:text-[#D17A5C]/15 transition-colors duration-300" />
               
               <div className="flex items-center gap-4 mb-6">
                 {item.avatar_url ? (
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border border-slate-700 flex-shrink-0 pointer-events-none">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#1A1A1A]/15 flex-shrink-0 pointer-events-none">
                     <Image src={item.avatar_url} alt={item.user_name || "User Avatar"} fill className="object-cover" />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-300 font-bold text-lg border border-slate-700 flex-shrink-0">
+                  <div className="w-12 h-12 bg-[#F8F5EE] rounded-full flex items-center justify-center text-[#1A1A1A] font-bold text-lg border border-[#1A1A1A]/15 flex-shrink-0">
                     {item.user_name ? item.user_name.charAt(0).toUpperCase() : "U"}
                   </div>
                 )}
                 
                 <div className="overflow-hidden">
-                  <h4 className="text-white font-bold text-base truncate pointer-events-none">{item.user_name || "IELTS Achiever"}</h4>
-                  <p className="text-blue-400 text-xs font-medium tracking-wide truncate pointer-events-none">
+                  <h4 className="text-[#1A1A1A] font-bold text-base truncate pointer-events-none">{item.user_name || "IELTS Achiever"}</h4>
+                  <p className="text-[#D17A5C] text-xs font-medium tracking-wide truncate pointer-events-none">
                     Target: {item.target}
                   </p>
                 </div>
               </div>
               
-              <p className="text-slate-300 text-sm leading-relaxed whitespace-normal break-words pointer-events-none">
+              <p className="text-[#525252] text-sm leading-relaxed whitespace-normal break-words pointer-events-none">
                 "{item.experience}"
               </p>
             </div>

@@ -11,14 +11,13 @@ import { supabase } from "@/utils/supabaseClient";
 import ScoreCard from "@/components/ScoreCard"; 
 import VoiceSelectionModal from "@/components/VoiceSelectionModal";
 
-// 🔥 V3: Voice ID to display name mapping (UI labels)
 const VOICE_DISPLAY_NAMES = {
   paul: 'PAUL',
   billie: 'BILLIE',
   taylor: 'TAYLOR'
 };
 
-// 🔥 COMPONENT 1: REAL-TIME MIC VISUALIZER
+// MIC CHECK VISUALIZER — light mode adjusted
 const MicCheckVisualizer = ({ stream }) => {
     const canvasRef = useRef(null);
     const animationRef = useRef(null);
@@ -48,7 +47,10 @@ const MicCheckVisualizer = ({ stream }) => {
 
             for (let i = 0; i < bufferLength; i++) {
                 barHeight = dataArray[i] / 2;
-                ctx.fillStyle = `rgb(${50}, ${150 + barHeight}, ${255})`;
+                const r = 209; // #D17A5C red channel
+                const g = 122 + Math.floor(barHeight * 0.3);
+                const b = 92;
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
                 ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
                 x += barWidth + 2;
             }
@@ -64,15 +66,15 @@ const MicCheckVisualizer = ({ stream }) => {
 
     return (
         <div className="flex flex-col items-center gap-2">
-            <div className="bg-slate-900/50 rounded-lg p-2 border border-white/10">
+            <div className="bg-[#F8F5EE] rounded-lg p-2 border border-[#1A1A1A]/10">
                 <canvas ref={canvasRef} width={100} height={40} className="w-24 h-10" />
             </div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Mic Input</p>
+            <p className="text-[10px] text-[#525252] uppercase tracking-wider font-bold">Mic Input</p>
         </div>
     );
 };
 
-// 🔥 COMPONENT 2: TUTORIAL OVERLAY
+// TUTORIAL OVERLAY — light mode
 const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
     const [isPlayingSound, setIsPlayingSound] = useState(false);
 
@@ -102,45 +104,45 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4"
+            className="absolute inset-0 z-50 bg-[#1A1A1A]/40 backdrop-blur-md flex items-center justify-center p-4"
         >
-            <div className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative">
+            <div className="bg-[#FAF6EC] border border-[#1A1A1A]/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative">
                 <button 
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                    className="absolute top-4 right-4 text-[#525252] hover:text-[#1A1A1A]"
                 >
                     <XCircle className="w-6 h-6" />
                 </button>
 
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
-                        <Headphones className="w-8 h-8 text-blue-400" />
+                    <div className="w-16 h-16 bg-[#4A6B8F]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#4A6B8F]/20">
+                        <Headphones className="w-8 h-8 text-[#4A6B8F]" />
                     </div>
-                    <h2 className="text-2xl font-black text-white mb-2">Pre-Flight Check</h2>
-                    <p className="text-slate-400 text-sm">Follow these instructions before we begin.</p>
+                    <h2 className="text-2xl font-black text-[#1A1A1A] mb-2 font-display">Pre-Flight Check</h2>
+                    <p className="text-[#525252] text-sm">Follow these instructions before we begin.</p>
                 </div>
 
-                <div className="bg-black/30 rounded-xl p-4 mb-6 border border-white/5 space-y-4">
+                <div className="bg-[#F8F5EE] rounded-xl p-4 mb-6 border border-[#1A1A1A]/10 space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className={`w-3 h-3 rounded-full ${audioStream ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500 animate-pulse'}`}></div>
-                            <span className="text-sm font-bold text-slate-300">Microphone</span>
+                            <div className={`w-3 h-3 rounded-full ${audioStream ? 'bg-[#8FA68E] shadow-[0_0_10px_rgba(143,166,142,0.5)]' : 'bg-[#D17A5C] animate-pulse'}`}></div>
+                            <span className="text-sm font-bold text-[#1A1A1A]">Microphone</span>
                         </div>
                         <MicCheckVisualizer stream={audioStream} />
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                    <div className="flex items-center justify-between border-t border-[#1A1A1A]/10 pt-4">
                         <div className="flex items-center gap-3">
-                             <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
-                             <span className="text-sm font-bold text-slate-300">Speaker Output</span>
+                             <div className="w-3 h-3 rounded-full bg-[#4A6B8F] shadow-[0_0_10px_rgba(74,107,143,0.5)]"></div>
+                             <span className="text-sm font-bold text-[#1A1A1A]">Speaker Output</span>
                         </div>
                         <button 
                             onClick={handleTestSound}
                             disabled={isPlayingSound}
-                            className={`px-3 py-1.5 text-xs font-bold text-white rounded-full flex items-center gap-2 transition-all ${
+                            className={`px-3 py-1.5 text-xs font-bold rounded-full flex items-center gap-2 transition-all ${
                                 isPlayingSound 
-                                ? "bg-slate-700 cursor-wait opacity-80" 
-                                : "bg-white/10 hover:bg-white/20"
+                                ? "bg-[#1A1A1A]/10 text-[#525252] cursor-wait opacity-80" 
+                                : "bg-[#1A1A1A]/10 hover:bg-[#1A1A1A]/20 text-[#1A1A1A]"
                             }`}
                         >
                             {isPlayingSound ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Volume2 className="w-3.5 h-3.5" />}
@@ -151,40 +153,40 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
 
                 <div className="space-y-4 mb-8">
                     <div className="flex gap-4 items-start">
-                        <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Volume2 className="w-4 h-4 text-teal-400" /></div>
+                        <div className="mt-1 bg-[#F8F5EE] border border-[#1A1A1A]/10 p-1.5 rounded-lg"><Volume2 className="w-4 h-4 text-[#8FA68E]" /></div>
                         <div>
-                            <h4 className="text-white font-bold text-sm">1. Listen Carefully</h4>
-                            <p className="text-xs text-slate-400">The AI Examiner will ask you questions.</p>
+                            <h4 className="text-[#1A1A1A] font-bold text-sm">1. Listen Carefully</h4>
+                            <p className="text-xs text-[#525252]">The AI Examiner will ask you questions.</p>
                         </div>
                     </div>
                     <div className="flex gap-4 items-start">
-                        <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Mic className="w-4 h-4 text-purple-400" /></div>
+                        <div className="mt-1 bg-[#F8F5EE] border border-[#1A1A1A]/10 p-1.5 rounded-lg"><Mic className="w-4 h-4 text-[#4A6B8F]" /></div>
                         <div>
-                            <h4 className="text-white font-bold text-sm">2. Record Your Answer</h4>
-                            <p className="text-xs text-slate-400">Click the microphone button to start speaking.</p>
+                            <h4 className="text-[#1A1A1A] font-bold text-sm">2. Record Your Answer</h4>
+                            <p className="text-xs text-[#525252]">Click the microphone button to start speaking.</p>
                         </div>
                     </div>
                     <div className="flex gap-4 items-start">
-                        <div className="mt-1 bg-slate-800 p-1.5 rounded-lg"><Square className="w-4 h-4 text-rose-400" /></div>
+                        <div className="mt-1 bg-[#F8F5EE] border border-[#1A1A1A]/10 p-1.5 rounded-lg"><Square className="w-4 h-4 text-[#D17A5C]" /></div>
                         <div>
-                            <h4 className="text-white font-bold text-sm">3. Stop to Send</h4>
-                            <p className="text-xs text-slate-400">Click stop when finished. Do not remain silent.</p>
+                            <h4 className="text-[#1A1A1A] font-bold text-sm">3. Stop to Send</h4>
+                            <p className="text-xs text-[#525252]">Click stop when finished. Do not remain silent.</p>
                         </div>
                     </div>
                 </div>
 
                 <button 
                     onClick={onStart}
-                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group"
+                    className="w-full py-4 bg-[#1A1A1A] hover:bg-black text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 group"
                 >
                     <span>Start Exam Now</span>
-                    <span className="bg-black/20 px-2 py-1 rounded text-xs text-blue-100 font-mono group-hover:bg-black/30">
+                    <span className="bg-white/10 px-2 py-1 rounded text-xs text-white/80 font-mono group-hover:bg-white/20">
                         -{tokenCost} Tokens
                     </span>
                     <PlayCircle className="w-5 h-5 ml-1" />
                 </button>
                 
-                <p className="text-center text-[10px] text-slate-500 mt-4">
+                <p className="text-center text-[10px] text-[#525252] mt-4">
                     Tokens will be deducted immediately after clicking Start.
                 </p>
             </div>
@@ -193,7 +195,7 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
 };
 
 
-// 🔥 MAIN EXAM COMPONENT
+// MAIN EXAM COMPONENT
 export default function FullSimulation({ userProfile, mode = "full" }) {
   const router = useRouter();
 
@@ -205,7 +207,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const [sessionId, setSessionId] = useState(null);
   const [messages, setMessages] = useState([]); 
   
-  // 🔥 V2: Voice selection state
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(null);
   
@@ -235,7 +236,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
   const pendingPart2Ref = useRef(false);
 
-  // 🔥 V3: Helper to get examiner display name from selected voice
   const getExaminerDisplayName = () => {
     return VOICE_DISPLAY_NAMES[selectedVoice] || 'EXAMINER';
   };
@@ -284,7 +284,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     return () => clearInterval(interval);
   }, [partTimer, showPartTimer]);
 
-  // MASTER DEFENSE: Mencegah Back, Refresh, dan Membunuh Suara Hantu
+  // MASTER DEFENSE
   useEffect(() => {
     if (!isExamActive) return;
 
@@ -323,7 +323,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     };
   }, [isExamActive, audioStream]);
 
-  // 4. LOGIC SAAT TIMER LOKAL HABIS (AUTO-TRANSITION)
   const handlePartTimerFinished = () => {
     if (status !== "part2_prep" && status !== "part2_speak") {
         setShowPartTimer(false);
@@ -390,7 +389,6 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
       setShowPartTimer(true);
   };
 
-  // V2: Step 1 - User klik "Start Quick/Full Test" → show VoiceSelectionModal
   const handleStartClick = () => {
     if (!userProfile) return router.push('/auth');
     
@@ -402,20 +400,17 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     setShowVoiceModal(true);
   };
 
-  // V2: Step 2 - User pick voice di modal → show TutorialOverlay
   const handleVoiceSelected = (voiceId) => {
     setSelectedVoice(voiceId);
     setShowVoiceModal(false);
     setShowTutorial(true);
   };
 
-  // V2: User close VoiceSelectionModal → back to StartScreen
   const handleVoiceModalClose = () => {
     setShowVoiceModal(false);
     setSelectedVoice(null);
   };
 
-  // V2: Step 3 - User klik "Start Exam Now" di TutorialOverlay → start session dengan voice
   const startSimulation = async () => {
     setShowTutorial(false);
 
@@ -642,99 +637,100 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                 key={i}
                 animate={{ height: [10, 24, 10] }}
                 transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
-                className="w-1.5 bg-red-500 rounded-full"
+                className="w-1.5 bg-[#D17A5C] rounded-full"
             />
         ))}
     </div>
   );
 
+  // START SCREEN — Light mode editorial
   const StartScreen = () => (
-    <div className="absolute inset-0 bg-slate-950 z-30 flex flex-col overflow-y-auto">
+    <div className="absolute inset-0 bg-[#F8F5EE] z-30 flex flex-col overflow-y-auto">
         <div className="w-full max-w-5xl mx-auto p-6 flex justify-between items-center">
-            <h2 className="text-xl font-black tracking-tighter text-white">IELTS <span className="text-blue-500">4OUR</span></h2>
-            <button onClick={() => router.back()} className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Exit</button>
+            <h2 className="text-xl font-black tracking-tighter text-[#1A1A1A] font-display">IELTS <span className="text-[#D17A5C]">4OUR</span></h2>
+            <button onClick={() => router.back()} className="text-sm font-medium text-[#525252] hover:text-[#1A1A1A] transition-colors">Exit</button>
         </div>
 
         <div className="flex-1 w-full max-w-5xl mx-auto p-6 pb-24 flex flex-col justify-center">
             <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-black text-[#1A1A1A] mb-4 tracking-tight font-display">
                     {TITLE}
                 </h1>
-                <div className="flex items-center justify-center gap-2 text-slate-400 text-lg mb-8">
-                    <Clock className="w-5 h-5 text-blue-400" />
-                    <span>Est. Duration: <strong className="text-white">{DURATION_TEXT}</strong></span>
+                <div className="flex items-center justify-center gap-2 text-[#525252] text-lg mb-8">
+                    <Clock className="w-5 h-5 text-[#4A6B8F]" />
+                    <span>Est. Duration: <strong className="text-[#1A1A1A]">{DURATION_TEXT}</strong></span>
                 </div>
                 
                 {mode === 'full' ? (
-                    <div className="flex items-center justify-center gap-4 text-sm font-medium text-slate-400">
+                    <div className="flex items-center justify-center gap-4 text-sm font-medium text-[#525252]">
                         <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">1</span>
+                            <span className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xs font-bold">1</span>
                             <span>Interview</span>
                         </div>
-                        <div className="w-8 h-[1px] bg-slate-800"></div>
+                        <div className="w-8 h-[1px] bg-[#1A1A1A]/20"></div>
                         <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">2</span>
+                            <span className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xs font-bold">2</span>
                             <span>Long Turn</span>
                         </div>
-                        <div className="w-8 h-[1px] bg-slate-800"></div>
+                        <div className="w-8 h-[1px] bg-[#1A1A1A]/20"></div>
                         <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">3</span>
+                            <span className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xs font-bold">3</span>
                             <span>Discussion</span>
                         </div>
                     </div>
                 ) : (
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-sm font-bold uppercase tracking-widest">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D17A5C]/10 border border-[#D17A5C]/20 text-[#D17A5C] text-sm font-bold uppercase tracking-widest">
                         <Zap className="w-4 h-4" /> Instant Start Mode
                     </div>
                 )}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-12">
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <div className="bg-[#FAF6EC] border border-[#1A1A1A]/10 rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-lg font-bold text-[#1A1A1A] mb-4 flex items-center gap-2 font-display">
                           System Check
                     </h3>
                     <ul className="space-y-4">
                         <li className="flex items-start gap-3">
-                            <div className="mt-0.5"><Mic className="w-5 h-5 text-slate-500" /></div>
+                            <div className="mt-0.5"><Mic className="w-5 h-5 text-[#525252]" /></div>
                             <div>
-                                <p className="text-sm font-bold text-slate-200">Microphone Access</p>
-                                <p className="text-xs text-slate-400">Ensure your browser allows microphone input.</p>
+                                <p className="text-sm font-bold text-[#1A1A1A]">Microphone Access</p>
+                                <p className="text-xs text-[#525252]">Ensure your browser allows microphone input.</p>
                             </div>
                         </li>
                         <li className="flex items-start gap-3">
-                            <div className="mt-0.5"><Wifi className="w-5 h-5 text-slate-500" /></div>
+                            <div className="mt-0.5"><Wifi className="w-5 h-5 text-[#525252]" /></div>
                             <div>
-                                <p className="text-sm font-bold text-slate-200">Stable Internet</p>
-                                <p className="text-xs text-slate-400">Do not refresh the page during the test.</p>
+                                <p className="text-sm font-bold text-[#1A1A1A]">Stable Internet</p>
+                                <p className="text-xs text-[#525252]">Do not refresh the page during the test.</p>
                             </div>
                         </li>
                         <li className="flex items-start gap-3">
-                            <div className="mt-0.5"><BellOff className="w-5 h-5 text-amber-500" /></div>
+                            <div className="mt-0.5"><BellOff className="w-5 h-5 text-[#C9974C]" /></div>
                             <div>
-                                <p className="text-sm font-bold text-slate-200">Do Not Disturb</p>
-                                <p className="text-xs text-slate-400">Calls/Notifications may interrupt audio.</p>
+                                <p className="text-sm font-bold text-[#1A1A1A]">Do Not Disturb</p>
+                                <p className="text-xs text-[#525252]">Calls/Notifications may interrupt audio.</p>
                             </div>
                         </li>
                     </ul>
                 </div>
 
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <div className="bg-[#FAF6EC] border border-[#1A1A1A]/10 rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-lg font-bold text-[#1A1A1A] mb-4 flex items-center gap-2 font-display">
                           Exam Tips
                     </h3>
                     <div className="space-y-4 text-sm">
                         <div className="flex gap-3">
-                            <div className="mt-0.5"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" /></div>
-                            <p className="text-slate-300"><strong className="text-white">Do elaborate.</strong> Give reasons and examples. Connect ideas with 'because', 'however', or 'for example'.</p>
+                            <div className="mt-0.5"><CheckCircle className="w-5 h-5 text-[#8FA68E] shrink-0" /></div>
+                            <p className="text-[#525252]"><strong className="text-[#1A1A1A]">Do elaborate.</strong> Give reasons and examples. Connect ideas with 'because', 'however', or 'for example'.</p>
                         </div>
                         <div className="flex gap-3">
-                             <div className="mt-0.5"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" /></div>
-                             <p className="text-slate-300"><strong className="text-white">Avoid dead air.</strong> Use fillers like "Let me see..." if stuck.</p>
+                             <div className="mt-0.5"><CheckCircle className="w-5 h-5 text-[#8FA68E] shrink-0" /></div>
+                             <p className="text-[#525252]"><strong className="text-[#1A1A1A]">Avoid dead air.</strong> Use fillers like "Let me see..." if stuck.</p>
                         </div>
                         <div className="flex gap-3">
-                             <div className="mt-0.5"><XCircle className="w-5 h-5 text-rose-500 shrink-0" /></div>
-                             <p className="text-slate-300"><strong className="text-rose-400">Don't memorize.</strong> Be natural.</p>
+                             <div className="mt-0.5"><XCircle className="w-5 h-5 text-[#D17A5C] shrink-0" /></div>
+                             <p className="text-[#525252]"><strong className="text-[#D17A5C]">Don't memorize.</strong> Be natural.</p>
                         </div>
                     </div>
                 </div>
@@ -744,16 +740,16 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                 <button 
                     onClick={handleStartClick} 
                     disabled={!userProfile || (userProfile.token_balance || 0) < TOKEN_COST}
-                    className="group relative inline-flex items-center justify-center gap-3 px-10 py-4 bg-white hover:bg-slate-200 text-slate-900 rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-white/5"
+                    className="group relative inline-flex items-center justify-center gap-3 px-10 py-4 bg-[#1A1A1A] hover:bg-black text-white rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                 >
                     <span>Start {mode === 'quick' ? "Quick Test" : "Full Exam"}</span>
                 </button>
                 
                 {(userProfile?.token_balance || 0) < TOKEN_COST && (
-                    <p className="mt-3 text-rose-400 text-sm font-medium">Insufficient tokens. Please top up to start.</p>
+                    <p className="mt-3 text-[#D17A5C] text-sm font-medium">Insufficient tokens. Please top up to start.</p>
                 )}
-                <p className="mt-2 text-slate-500 text-xs">
-                    Current Balance: <span className="text-white font-bold">{userProfile?.token_balance || 0} Tokens</span>
+                <p className="mt-2 text-[#525252] text-xs">
+                    Current Balance: <span className="text-[#1A1A1A] font-bold">{userProfile?.token_balance || 0} Tokens</span>
                 </p>
             </div>
         </div>
@@ -763,34 +759,34 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const isMicLocked = aiSpeaking || isProcessing || isStarting || status === "part2_prep";
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-white overflow-hidden relative">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-950/20 via-slate-950 to-slate-950 pointer-events-none" />
+    <div className="flex flex-col h-screen bg-[#F8F5EE] text-[#1A1A1A] overflow-hidden relative">
 
       {status === "idle" ? <StartScreen /> : (
         <>
-            <div className="flex justify-between items-center p-6 border-b border-white/5 z-10 bg-slate-900/50 backdrop-blur-md">
+            {/* EXAM HEADER — darker for focus during exam */}
+            <div className="flex justify-between items-center p-6 border-b border-[#1A1A1A]/10 z-10 bg-[#FAF6EC]">
                 {mode === 'quick' ? (
-                      <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-blue-400">
+                      <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-[#D17A5C]">
                         <Zap className="w-4 h-4" /> Quick Test Mode
                       </div>
                 ) : (
                     <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
-                        <span className={status === 'part1' ? "text-blue-400" : "text-slate-600"}>Part 1</span>
-                        <span className="text-slate-700">•</span>
-                        <span className={status.includes('part2') ? "text-blue-400" : "text-slate-600"}>Part 2</span>
-                        <span className="text-slate-700">•</span>
-                        <span className={status === 'part3' ? "text-blue-400" : "text-slate-600"}>Part 3</span>
+                        <span className={status === 'part1' ? "text-[#D17A5C]" : "text-[#1A1A1A]/30"}>Part 1</span>
+                        <span className="text-[#1A1A1A]/20">•</span>
+                        <span className={status.includes('part2') ? "text-[#D17A5C]" : "text-[#1A1A1A]/30"}>Part 2</span>
+                        <span className="text-[#1A1A1A]/20">•</span>
+                        <span className={status === 'part3' ? "text-[#D17A5C]" : "text-[#1A1A1A]/30"}>Part 3</span>
                     </div>
                 )}
 
                 {isExamActive && (
-                    <div className="font-mono text-xl font-bold text-slate-200 tracking-wider">
+                    <div className="font-mono text-xl font-bold text-[#1A1A1A] tracking-wider">
                         {formatTime(globalTimer)}
                     </div>
                 )}
 
-                <button onClick={() => router.back()} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                    <LogOut className="w-5 h-5 text-slate-400 hover:text-white" />
+                <button onClick={() => router.back()} className="p-2 hover:bg-[#1A1A1A]/5 rounded-full transition-colors">
+                    <LogOut className="w-5 h-5 text-[#525252] hover:text-[#1A1A1A]" />
                 </button>
             </div>
 
@@ -798,40 +794,38 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                 
                 {status === "checking_token" && (
                     <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-                        <p className="text-slate-300 text-sm font-medium animate-pulse tracking-wider">Connecting to Examiner...</p>
+                        <Loader2 className="w-10 h-10 text-[#D17A5C] animate-spin" />
+                        <p className="text-[#525252] text-sm font-medium animate-pulse tracking-wider">Connecting to Examiner...</p>
                     </div>
                 )}
 
                 {status !== "completed" && status !== "checking_token" && (
                     <div className={`relative transition-all duration-700 ${status.includes("part2") ? "opacity-20 scale-75 blur-sm" : "opacity-100 scale-100"}`}>
                         {aiSpeaking && (
-                            <div className="absolute inset-0 rounded-full border-4 border-blue-500/30 animate-ping" />
+                            <div className="absolute inset-0 rounded-full border-4 border-[#4A6B8F]/30 animate-ping" />
                         )}
-                        <div className={`absolute inset-0 bg-blue-500/10 rounded-full blur-3xl transition-opacity duration-500 ${aiSpeaking ? 'opacity-100' : 'opacity-0'}`} />
+                        <div className={`absolute inset-0 bg-[#4A6B8F]/10 rounded-full blur-3xl transition-opacity duration-500 ${aiSpeaking ? 'opacity-100' : 'opacity-0'}`} />
                         
-                        <div className={`w-48 h-48 md:w-64 md:h-64 rounded-full bg-slate-800 border-4 flex items-center justify-center relative z-10 transition-colors duration-300 ${aiSpeaking ? 'border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.5)]' : 'border-slate-700'}`}>
-                            <User className="w-24 h-24 text-slate-500" />
+                        <div className={`w-48 h-48 md:w-64 md:h-64 rounded-full bg-[#FAF6EC] border-4 flex items-center justify-center relative z-10 transition-colors duration-300 shadow-lg ${aiSpeaking ? 'border-[#4A6B8F] shadow-[0_0_30px_rgba(74,107,143,0.3)]' : 'border-[#1A1A1A]/15'}`}>
+                            <User className="w-24 h-24 text-[#1A1A1A]/20" />
                         </div>
                         
                         <div className="mt-8 text-center h-10 flex flex-col items-center justify-start">
                             {status === "part2_prep" ? (
-                                <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">PREPARATION TIME...</p>
+                                <p className="text-[#C9974C] text-sm font-medium animate-pulse tracking-wider">PREPARATION TIME...</p>
                             ) : aiSpeaking ? (
-                                /* 🔥 V3: Dynamic examiner name */
-                                <p className="text-blue-400 text-sm font-medium animate-pulse tracking-wider">{getExaminerDisplayName()} IS SPEAKING...</p>
+                                <p className="text-[#4A6B8F] text-sm font-medium animate-pulse tracking-wider">{getExaminerDisplayName()} IS SPEAKING...</p>
                             ) : isRecording ? (
                                 <>
-                                    <p className="text-red-500 text-sm font-medium animate-pulse tracking-wider">LISTENING...</p>
-                                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-semibold">Tap square to stop</p>
+                                    <p className="text-[#D17A5C] text-sm font-medium animate-pulse tracking-wider">LISTENING...</p>
+                                    <p className="text-[10px] text-[#525252] mt-1 uppercase tracking-widest font-semibold">Tap square to stop</p>
                                 </>
                             ) : isProcessing ? (
-                                /* 🔥 V3: Dynamic examiner name */
-                                <p className="text-yellow-500 text-sm font-medium animate-pulse tracking-wider">{getExaminerDisplayName()} IS THINKING...</p>
+                                <p className="text-[#C9974C] text-sm font-medium animate-pulse tracking-wider">{getExaminerDisplayName()} IS THINKING...</p>
                             ) : (
                                 <>
-                                    <p className="text-slate-200 text-sm font-bold tracking-wider">YOUR TURN</p>
-                                    <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Tap the mic to speak</p>
+                                    <p className="text-[#1A1A1A] text-sm font-bold tracking-wider">YOUR TURN</p>
+                                    <p className="text-[10px] text-[#525252] mt-1 uppercase tracking-widest font-semibold">Tap the mic to speak</p>
                                 </>
                             )}
                         </div>
@@ -842,7 +836,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="absolute -top-16 w-full text-center"
                              >
-                                <span className="px-4 py-1.5 rounded-full bg-slate-800/50 border border-slate-700 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                <span className="px-4 py-1.5 rounded-full bg-[#FAF6EC] border border-[#1A1A1A]/10 text-xs font-bold text-[#525252] uppercase tracking-widest shadow-sm">
                                     Topic: {cueCardTopic}
                                 </span>
                              </motion.div>
@@ -850,6 +844,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                     </div>
                 )}
 
+                {/* PART 2 CARD — kept high contrast for readability */}
                 <AnimatePresence>
                     {status.includes("part2") && (
                         <motion.div 
@@ -858,16 +853,16 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="absolute inset-0 z-30 flex items-center justify-center p-4"
                         >
-                            <div className="bg-white text-slate-900 p-8 rounded-2xl max-w-lg w-full text-center shadow-2xl border-4 border-blue-600 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-2 bg-blue-500" />
-                                <h3 className="text-xl font-bold mb-6 text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-4">Part 2: Topic Card</h3>
-                                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6 min-h-[140px] flex items-center justify-center shadow-inner">
-                                    <p className="text-xl font-medium leading-relaxed text-slate-800">
+                            <div className="bg-white text-[#1A1A1A] p-8 rounded-2xl max-w-lg w-full text-center shadow-2xl border-4 border-[#4A6B8F] relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-2 bg-[#4A6B8F]" />
+                                <h3 className="text-xl font-bold mb-6 text-[#4A6B8F] uppercase tracking-widest border-b border-[#4A6B8F]/20 pb-4 font-display">Part 2: Topic Card</h3>
+                                <div className="bg-[#F8F5EE] p-6 rounded-xl border border-[#1A1A1A]/10 mb-6 min-h-[140px] flex items-center justify-center">
+                                    <p className="text-xl font-medium leading-relaxed text-[#1A1A1A]">
                                         {cueCardTopic || "Please listen to the Examiner..."}
                                     </p>
                                 </div>
                                 {showPartTimer && (
-                                    <div className={`p-4 rounded-xl flex items-center justify-between px-8 transition-colors ${status === 'part2_speak' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                                    <div className={`p-4 rounded-xl flex items-center justify-between px-8 transition-colors ${status === 'part2_speak' ? 'bg-[#D17A5C]/10 text-[#D17A5C]' : 'bg-[#4A6B8F]/10 text-[#4A6B8F]'}`}>
                                         <span className="text-xs font-bold uppercase tracking-wider">{status === 'part2_prep' ? "Prep Time" : "Speaking Time"}</span>
                                         <span className="text-3xl font-mono font-bold">{formatTime(partTimer)}</span>
                                     </div>
@@ -877,13 +872,14 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                     )}
                 </AnimatePresence>
 
+                {/* COMPLETED SCREEN */}
                 {status === "completed" && (
-                    <div className="absolute inset-0 bg-slate-950 z-40 flex flex-col items-center justify-start pt-10 px-4 overflow-y-auto">
+                    <div className="absolute inset-0 bg-[#F8F5EE] z-40 flex flex-col items-center justify-start pt-10 px-4 overflow-y-auto">
                         <div className="w-full max-w-3xl pb-20">
                             <div className="text-center mb-8">
-                                <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-                                <h2 className="text-3xl font-black text-white mb-2">Simulation Completed</h2>
-                                <p className="text-slate-400">Great job! Here is your performance analysis.</p>
+                                <CheckCircle className="w-16 h-16 text-[#8FA68E] mx-auto mb-4" />
+                                <h2 className="text-3xl font-black text-[#1A1A1A] mb-2 font-display">Simulation Completed</h2>
+                                <p className="text-[#525252]">Great job! Here is your performance analysis.</p>
                             </div>
                             {examResult ? (
                                 <ScoreCard 
@@ -893,36 +889,37 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                                     isLoggedIn={!!userProfile}
                                 />
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-64 bg-white/5 rounded-2xl border border-white/10 animate-pulse">
-                                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-                                    <p className="text-slate-300 font-bold">Examiner is grading your test...</p>
-                                    <p className="text-slate-500 text-sm mt-2">Generating feedback for {mode === 'quick' ? "Part 3 Discussion" : "Part 1, 2, and 3"}</p>
+                                <div className="flex flex-col items-center justify-center h-64 bg-[#FAF6EC] rounded-2xl border border-[#1A1A1A]/10 animate-pulse shadow-sm">
+                                    <Loader2 className="w-10 h-10 text-[#D17A5C] animate-spin mb-4" />
+                                    <p className="text-[#1A1A1A] font-bold">Examiner is grading your test...</p>
+                                    <p className="text-[#525252] text-sm mt-2">Generating feedback for {mode === 'quick' ? "Part 3 Discussion" : "Part 1, 2, and 3"}</p>
                                 </div>
                             )}
                             <div className="mt-8 text-center">
-                                <button onClick={() => router.push('/progress')} className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all border border-white/10">Back to Progress</button>
+                                <button onClick={() => router.push('/progress')} className="px-8 py-3 bg-[#1A1A1A] hover:bg-black text-white font-bold rounded-full transition-all shadow-lg">Back to Progress</button>
                             </div>
                         </div>
                     </div>
                 )}
             </div>
 
+            {/* MIC CONTROLS */}
             {status !== "completed" && (
                 <div className="p-8 pb-12 flex flex-col items-center gap-8 relative z-10">
                     <div className="h-8 flex items-center justify-center w-full max-w-xs">
-                        {isRecording ? <AudioVisualizer /> : isProcessing ? <Loader2 className="w-5 h-5 text-blue-400 animate-spin" /> : null}
+                        {isRecording ? <AudioVisualizer /> : isProcessing ? <Loader2 className="w-5 h-5 text-[#D17A5C] animate-spin" /> : null}
                     </div>
                     {status !== "checking_token" && (
                         <button
                             onClick={toggleRecording}
                             disabled={isMicLocked}
                             className={`w-24 h-24 rounded-full flex items-center justify-center transition-all shadow-2xl relative group ${
-                                isRecording ? "bg-red-500 scale-110 shadow-red-500/50" : isMicLocked ? "bg-slate-800 border border-slate-700 opacity-50 cursor-not-allowed" : "bg-white hover:bg-slate-200 text-slate-900 shadow-blue-500/20"
+                                isRecording ? "bg-[#D17A5C] scale-110 shadow-[#D17A5C]/50" : isMicLocked ? "bg-[#F8F5EE] border-2 border-[#1A1A1A]/10 opacity-50 cursor-not-allowed" : "bg-[#1A1A1A] hover:bg-black text-white shadow-[#1A1A1A]/20"
                             }`}
                         >
-                            {isRecording ? <Square className="w-8 h-8 text-white fill-current" /> : <Mic className="w-10 h-10 group-hover:scale-110 transition-transform" />}
+                            {isRecording ? <Square className="w-8 h-8 text-white fill-current" /> : <Mic className={`w-10 h-10 group-hover:scale-110 transition-transform ${isMicLocked ? 'text-[#525252]' : 'text-white'}`} />}
                             {!isRecording && !isMicLocked && (
-                                <span className="absolute inset-0 rounded-full border border-white/30 animate-ping opacity-20" />
+                                <span className="absolute inset-0 rounded-full border border-[#1A1A1A]/20 animate-ping opacity-20" />
                             )}
                         </button>
                     )}
@@ -931,7 +928,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
         </>
       )}
 
-      {/* V2: Voice Selection Modal (shows first) */}
+      {/* Voice Selection Modal */}
       <AnimatePresence>
           {showVoiceModal && (
               <VoiceSelectionModal
@@ -942,7 +939,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           )}
       </AnimatePresence>
 
-      {/* Tutorial Overlay (shows after voice selection) */}
+      {/* Tutorial Overlay */}
       <AnimatePresence>
           {showTutorial && (
               <TutorialOverlay 

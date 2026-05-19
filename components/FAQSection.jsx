@@ -5,11 +5,10 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageCircle, Mic, ShieldCheck, Smartphone, ArrowRight } from "lucide-react";
 
-// DATA FAQ (SUDAH DIREVISI)
 const FAQ_DATA = [
   {
     category: "AI & Accuracy",
-    icon: <ShieldCheck className="w-5 h-5 text-teal-400" />,
+    icon: <ShieldCheck className="w-5 h-5 text-[#4A6B8F]" />,
     items: [
       {
         q: "Seberapa akurat penilaian IELTS4our?",
@@ -27,7 +26,7 @@ const FAQ_DATA = [
   },
   {
     category: "Features & Practice",
-    icon: <Mic className="w-5 h-5 text-purple-400" />,
+    icon: <Mic className="w-5 h-5 text-[#D17A5C]" />,
     items: [
       {
         q: "Apa bedanya 'Daily Cue Card' dan 'Quick/Full Test'?",
@@ -45,7 +44,7 @@ const FAQ_DATA = [
   },
   {
     category: "Account & Technical",
-    icon: <Smartphone className="w-5 h-5 text-amber-400" />,
+    icon: <Smartphone className="w-5 h-5 text-[#C9974C]" />,
     items: [
       {
         q: "Apakah aplikasi ini Gratis?",
@@ -73,43 +72,40 @@ export default function FAQSection({ isTeaser = false }) {
   return (
     <section className="max-w-4xl mx-auto mt-24 mb-24 px-4 relative z-10">
       
-      {/* HEADER TITLE */}
+      {/* HEADER */}
       <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FAF6EC] border border-[#1A1A1A]/10 text-[#525252] text-xs font-bold uppercase tracking-widest mb-6 shadow-sm">
             <HelpCircle className="w-4 h-4" /> Got Questions?
         </div>
-        <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
-          Frequently Asked <span className="text-teal-400">Questions</span>
+        <h2 className="text-3xl md:text-4xl font-black text-[#1A1A1A] mb-4 font-display tracking-tight">
+          Frequently Asked <span className="text-[#D17A5C]">Questions</span>
         </h2>
-        <p className="text-slate-400 max-w-xl mx-auto">
+        <p className="text-[#525252] max-w-xl mx-auto">
           Semua yang perlu Kamu ketahui tentang cara kerja IELTS4our dan bagaimana kami membantu Kamu mencapai target skor.
         </p>
       </div>
 
-      {/* --- LOGIKA PISAHAN TEASER VS FULL --- */}
       {isTeaser ? (
-        // TAMPILAN TEASER (Halaman Depan)
         <div className="text-center">
             <Link href="/faq">
                 <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-white font-bold transition-all shadow-lg backdrop-blur-sm"
+                    className="inline-flex items-center gap-2 px-8 py-4 bg-[#1A1A1A] hover:bg-black text-white rounded-full font-bold transition-all shadow-lg"
                 >
                     Read Full FAQ <ArrowRight className="w-4 h-4" />
                 </motion.button>
             </Link>
         </div>
       ) : (
-        // TAMPILAN FULL (Halaman FAQ)
         <>
             <div className="space-y-10">
                 {FAQ_DATA.map((cat, catIdx) => (
                     <div key={catIdx}>
                         {/* Category Header */}
-                        <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-2">
+                        <div className="flex items-center gap-3 mb-6 border-b border-[#1A1A1A]/10 pb-2">
                             {cat.icon}
-                            <h3 className="text-lg font-bold text-white uppercase tracking-wider">{cat.category}</h3>
+                            <h3 className="text-lg font-bold text-[#1A1A1A] uppercase tracking-wider font-display">{cat.category}</h3>
                         </div>
 
                         {/* FAQ Items */}
@@ -121,16 +117,16 @@ export default function FAQSection({ isTeaser = false }) {
                                 return (
                                     <div 
                                         key={itemIdx} 
-                                        className={`rounded-2xl border transition-all duration-300 ${isOpen ? "bg-white/10 border-teal-500/30" : "bg-white/5 border-white/5 hover:border-white/10"}`}
+                                        className={`rounded-2xl border transition-all duration-300 ${isOpen ? "bg-[#FAF6EC] border-[#D17A5C]/30 shadow-sm" : "bg-[#FAF6EC] border-[#1A1A1A]/10 hover:border-[#1A1A1A]/20"}`}
                                     >
                                         <button 
                                             onClick={() => toggleFAQ(uniqueId)}
                                             className="w-full flex items-center justify-between p-5 text-left"
                                         >
-                                            <span className={`font-bold text-sm md:text-base ${isOpen ? "text-teal-300" : "text-slate-200"}`}>
+                                            <span className={`font-bold text-sm md:text-base ${isOpen ? "text-[#D17A5C]" : "text-[#1A1A1A]"}`}>
                                                 {item.q}
                                             </span>
-                                            <ChevronDown className={`w-5 h-5 text-slate-500 transition-transform duration-300 ${isOpen ? "rotate-180 text-teal-400" : ""}`} />
+                                            <ChevronDown className={`w-5 h-5 text-[#525252] transition-transform duration-300 shrink-0 ml-4 ${isOpen ? "rotate-180 text-[#D17A5C]" : ""}`} />
                                         </button>
 
                                         <AnimatePresence>
@@ -141,7 +137,7 @@ export default function FAQSection({ isTeaser = false }) {
                                                     exit={{ height: 0, opacity: 0 }}
                                                     className="overflow-hidden"
                                                 >
-                                                    <div className="p-5 pt-0 text-slate-400 text-sm leading-relaxed border-t border-white/5 mt-2">
+                                                    <div className="p-5 pt-0 text-[#525252] text-sm leading-relaxed border-t border-[#1A1A1A]/10 mt-2">
                                                         {item.a}
                                                     </div>
                                                 </motion.div>
@@ -155,12 +151,12 @@ export default function FAQSection({ isTeaser = false }) {
                 ))}
             </div>
 
-            {/* Contact Footer (Hanya muncul di Full Page) */}
-            <div className="text-center mt-16 p-8 bg-slate-900/50 rounded-3xl border border-white/5">
-                <p className="text-slate-400 mb-4 text-sm">Masih punya pertanyaan lain?</p>
+            {/* Contact Footer */}
+            <div className="text-center mt-16 p-8 bg-[#FAF6EC] rounded-3xl border border-[#1A1A1A]/10 shadow-sm">
+                <p className="text-[#525252] mb-4 text-sm">Masih punya pertanyaan lain?</p>
                 <a 
                     href="mailto:luthfibaihaqi851@gmail.com" 
-                    className="inline-flex items-center gap-2 text-white font-bold hover:text-teal-400 transition-colors border-b border-transparent hover:border-teal-400 pb-0.5"
+                    className="inline-flex items-center gap-2 text-[#1A1A1A] font-bold hover:text-[#D17A5C] transition-colors border-b border-transparent hover:border-[#D17A5C] pb-0.5"
                 >
                     <MessageCircle className="w-4 h-4" /> Hubungi Support
                 </a>

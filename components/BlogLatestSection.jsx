@@ -7,21 +7,20 @@ import { motion } from "framer-motion";
 import { PenLine, ArrowRight } from "lucide-react";
 import { getTagColor, formatDate } from "@/lib/blog/helpers";
 
-// Skeleton card waktu loading — biar gak ada layout shift
 function SkeletonCard() {
   return (
-    <div className="bg-[#1A1D26] border border-slate-800 rounded-2xl p-6 animate-pulse">
-      <div className="h-5 w-20 bg-slate-800 rounded mb-3" />
-      <div className="h-6 w-3/4 bg-slate-800 rounded mb-2" />
-      <div className="h-6 w-1/2 bg-slate-800 rounded mb-4" />
-      <div className="h-4 w-full bg-slate-800 rounded mb-2" />
-      <div className="h-4 w-2/3 bg-slate-800 rounded" />
+    <div className="bg-[#FAF6EC] border border-[#1A1A1A]/10 rounded-2xl p-6 animate-pulse shadow-sm">
+      <div className="h-5 w-20 bg-[#1A1A1A]/5 rounded mb-3" />
+      <div className="h-6 w-3/4 bg-[#1A1A1A]/5 rounded mb-2" />
+      <div className="h-6 w-1/2 bg-[#1A1A1A]/5 rounded mb-4" />
+      <div className="h-4 w-full bg-[#1A1A1A]/5 rounded mb-2" />
+      <div className="h-4 w-2/3 bg-[#1A1A1A]/5 rounded" />
     </div>
   );
 }
 
 export default function BlogLatestSection() {
-  const [posts, setPosts] = useState(null); // null = loading, [] = empty, [...] = data
+  const [posts, setPosts] = useState(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -50,28 +49,26 @@ export default function BlogLatestSection() {
     };
   }, []);
 
-  // Auto-hide kalau error atau gak ada artikel
-  // Biar gak ada empty state ugly di homepage
   if (error || (posts !== null && posts.length === 0)) {
     return null;
   }
 
   return (
     <section className="max-w-5xl mx-auto mt-20 mb-16 px-2">
-      {/* Section header — pattern konsisten sama MarketingSection */}
+      {/* Section header */}
       <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-widest mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#4A6B8F]/10 border border-[#4A6B8F]/20 text-[#4A6B8F] text-xs font-bold uppercase tracking-widest mb-4">
           From The Blog
         </div>
-        <h2 className="text-3xl md:text-4xl font-bold text-[#E6E8EE] tracking-tight mb-3 leading-tight">
+        <h2 className="text-3xl md:text-4xl font-black text-[#1A1A1A] tracking-tight mb-3 leading-tight font-display">
           Tips & Insight Terbaru
         </h2>
-        <p className="text-slate-400 text-base md:text-lg max-w-xl mx-auto">
+        <p className="text-[#525252] text-base md:text-lg max-w-xl mx-auto">
           Panduan IELTS, beasiswa, dan studi ke luar negeri.
         </p>
       </div>
 
-      {/* Loading state */}
+      {/* Loading */}
       {posts === null && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <SkeletonCard />
@@ -80,7 +77,7 @@ export default function BlogLatestSection() {
         </div>
       )}
 
-      {/* Article grid */}
+      {/* Articles */}
       {posts !== null && posts.length > 0 && (
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -93,10 +90,10 @@ export default function BlogLatestSection() {
               >
                 <Link
                   href={`/blog/${post.slug}`}
-                  className="group block bg-[#1A1D26] border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition-colors h-full flex flex-col"
+                  className="group block bg-[#FAF6EC] border border-[#1A1A1A]/10 rounded-2xl overflow-hidden hover:border-[#1A1A1A]/20 transition-colors h-full flex flex-col shadow-sm hover:shadow-md"
                 >
                   {post.coverImage && (
-                    <div className="relative aspect-[16/9] bg-slate-900 overflow-hidden">
+                    <div className="relative aspect-[16/9] bg-[#F8F5EE] overflow-hidden">
                       <Image
                         src={post.coverImage}
                         alt={post.title}
@@ -113,9 +110,7 @@ export default function BlogLatestSection() {
                         {post.tags.slice(0, 2).map((tag) => (
                           <span
                             key={tag}
-                            className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md border ${getTagColor(
-                              tag
-                            )}`}
+                            className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md border ${getTagColor(tag)}`}
                           >
                             {tag}
                           </span>
@@ -123,15 +118,15 @@ export default function BlogLatestSection() {
                       </div>
                     )}
 
-                    <h3 className="text-lg font-bold text-[#E6E8EE] mb-2 leading-snug group-hover:text-blue-400 transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-[#1A1A1A] mb-2 leading-snug group-hover:text-[#D17A5C] transition-colors line-clamp-2">
                       {post.title}
                     </h3>
 
-                    <p className="text-sm text-slate-400 mb-4 line-clamp-2 flex-1">
+                    <p className="text-sm text-[#525252] mb-4 line-clamp-2 flex-1">
                       {post.excerpt}
                     </p>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-500 pt-3 border-t border-slate-800/60">
+                    <div className="flex items-center gap-2 text-xs text-[#525252]/70 pt-3 border-t border-[#1A1A1A]/10">
                       <span>{post.author}</span>
                       <span>·</span>
                       <time dateTime={post.publishedDate}>
@@ -144,13 +139,13 @@ export default function BlogLatestSection() {
             ))}
           </div>
 
-          {/* CTA ke /blog */}
+          {/* CTA */}
           <div className="text-center mt-10">
             <Link href="/blog">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-slate-300 hover:text-white transition-all text-sm font-bold"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A1A1A] hover:bg-black text-white rounded-full transition-all text-sm font-bold shadow-lg"
               >
                 <span>Lihat Semua Artikel</span>
                 <ArrowRight className="w-4 h-4" />
