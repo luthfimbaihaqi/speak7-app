@@ -50,6 +50,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about weekends. What do you usually do on weekends?",
         p1_follow2: "Do you prefer to spend your weekends at home or go out?",
         p2_topic: "Describe a memorable trip you took to a place far from your home.",
+        p2_subpoints: ["where you went", "who you went with", "what you did there", "and explain why this trip was memorable"],
         p2_rounding: "Would you recommend that trip to others?",
         p3_context: "Travel & Tourism",
         p3_q1: "How has travel changed in your country compared to the past?",
@@ -65,6 +66,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about your neighbors. Do you know your neighbors well?",
         p1_follow2: "Do you think it is important to have a good relationship with neighbors?",
         p2_topic: "Describe a piece of technology (e.g. phone, computer) that is important to you.",
+        p2_subpoints: ["what the technology is", "how often you use it", "what you use it for", "and explain why it is important to you"],
         p2_rounding: "Do you use it every day?",
         p3_context: "Technology & Society",
         p3_q1: "How has technology changed the way people communicate in your country?",
@@ -80,6 +82,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about birthdays. How do people usually celebrate birthdays in your country?",
         p1_follow2: "What was the best birthday you ever had?",
         p2_topic: "Describe a person who has influenced you significantly.",
+        p2_subpoints: ["who this person is", "how you know this person", "what this person did that influenced you", "and explain why their influence was significant"],
         p2_rounding: "When did you last see this person?",
         p3_context: "Social Relationships",
         p3_q1: "What qualities do you think make a good friend or role model?",
@@ -95,6 +98,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about shopping. Do you enjoy shopping?",
         p1_follow2: "Do you prefer shopping online or in a store?",
         p2_topic: "Describe a job you would like to have in the future.",
+        p2_subpoints: ["what the job is", "how you learned about it", "what skills it requires", "and explain why you would like to have this job"],
         p2_rounding: "Why does this job appeal to you?",
         p3_context: "Work & Employment",
         p3_q1: "How have working conditions changed in your country over the years?",
@@ -110,6 +114,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about reading. Do you enjoy reading books?",
         p1_follow2: "What kind of books do you prefer?",
         p2_topic: "Describe a teacher who helped you in your education.",
+        p2_subpoints: ["who this teacher was", "what subject they taught", "how they helped you", "and explain why you remember this teacher"],
         p2_rounding: "Do you still contact this teacher?",
         p3_context: "Education System",
         p3_q1: "What are the qualities of a good teacher?",
@@ -125,6 +130,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about parks and gardens. Do you often visit parks?",
         p1_follow2: "What do you usually do when you go to a park?",
         p2_topic: "Describe an environmental problem in your country.",
+        p2_subpoints: ["what the problem is", "what causes it", "how it affects people", "and explain what you think should be done about it"],
         p2_rounding: "Is the government doing anything about it?",
         p3_context: "Environment & Pollution",
         p3_q1: "Why do you think plastic pollution has become such a big problem?",
@@ -140,6 +146,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about social media. How often do you use social media?",
         p1_follow2: "Do you think social media is a good way to stay in touch with friends?",
         p2_topic: "Describe a movie or TV show you enjoyed watching.",
+        p2_subpoints: ["what the movie or show was about", "when you watched it", "who you watched it with", "and explain why you enjoyed it"],
         p2_rounding: "Would you watch it again in the future?",
         p3_context: "Media & Entertainment",
         p3_q1: "How does entertainment influence people's lives?",
@@ -155,6 +162,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about sports. Do you play any sports?",
         p1_follow2: "What sport is the most popular in your country?",
         p2_topic: "Describe a healthy habit you try to maintain.",
+        p2_subpoints: ["what the habit is", "when you started it", "how you maintain it", "and explain why you think it is important"],
         p2_rounding: "How long have you had this habit?",
         p3_context: "Health & Lifestyle",
         p3_q1: "Why do you think people are more concerned about health nowadays?",
@@ -170,6 +178,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about patience. Are you a patient person?",
         p1_follow2: "What kind of situations test your patience the most?",
         p2_topic: "Describe a rule or law that you think is good.",
+        p2_subpoints: ["what the rule or law is", "how you first learned about it", "who is affected by this rule", "and explain why you think it is a good rule"],
         p2_rounding: "Does everyone follow this rule?",
         p3_context: "Crime & Society",
         p3_q1: "Why do you think some people break the law?",
@@ -185,6 +194,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about handwriting. Do you prefer writing by hand or typing?",
         p1_follow2: "Do you think handwriting is still important in the digital age?",
         p2_topic: "Describe a piece of art (painting, statue, etc) that you like.",
+        p2_subpoints: ["what the piece of art is", "where you saw it", "what it looks like", "and explain why you like it"],
         p2_rounding: "Where did you see it?",
         p3_context: "Art & Culture",
         p3_q1: "Do you think art classes are important in schools?",
@@ -200,6 +210,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about maps. How often do you use maps or GPS?",
         p1_follow2: "Do you think people have become too dependent on GPS navigation?",
         p2_topic: "Describe a city you would like to visit.",
+        p2_subpoints: ["what city it is", "where it is located", "what you would do there", "and explain why you want to visit this city"],
         p2_rounding: "What is this city famous for?",
         p3_context: "Urban Life",
         p3_q1: "What are the advantages of living in a big city?",
@@ -215,6 +226,7 @@ const TOPIC_SETS = [
         p1_intro2: "Now let's talk about your childhood. What is your happiest childhood memory?",
         p1_follow2: "Do you think children today have a different childhood compared to your generation?",
         p2_topic: "Describe a family celebration you attended.",
+        p2_subpoints: ["what the celebration was", "where it took place", "who was there", "and explain what made it special"],
         p2_rounding: "Did you enjoy it?",
         p3_context: "Family & Society",
         p3_q1: "How have families changed in your country in recent years?",
@@ -367,7 +379,6 @@ async function generateScore(fullTranscript, topicContext) {
 function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false, isQuickMode = false, askedQuestions = [], examinerName = 'Paul') {
   const userContent = isSilent ? "(User remained silent)" : `"${userLastText}"`;
 
-  // 🔥 V9: Dynamic examiner name di basePrompt (no Mr./Ms. title)
   let basePrompt = `
     You are ${examinerName}, an official IELTS Speaking Examiner. 
     TONE: Professional, neutral, and encouraging.
@@ -386,7 +397,6 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
   // PART 1
   if (part === 1) {
     switch (step) {
-      // 🔥 V9: Dynamic examiner name in greeting
       case 0: return `${basePrompt} TASK: Greet warmly, INTRODUCE YOURSELF as "${examinerName}" (no title, just the name), and ask for the candidate's full name.`;
       case 1: return `${basePrompt} SITUATION: User shared name: ${userContent}. TASK: Acknowledge briefly with just "Thank you." then ask: "Where are you from?"`;
       case 2: return `${basePrompt} SITUATION: From ${userContent}. TASK: Acknowledge briefly. Pivot to Work/Study. Ask: "Do you work or are you a student?"`;
@@ -413,7 +423,6 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
         return `${basePrompt} SITUATION: Ready to speak. TASK: Say "Please start speaking."`;
       }
 
-      // 🔥 V7: DYNAMIC ROUNDING QUESTION — Generated based on user's actual speech content
       if (step === 2) {
         return `${basePrompt}
             SITUATION: Candidate just finished a 1-2 minute speech about "${topicSet.p2_topic}".
@@ -586,11 +595,11 @@ export async function POST(request) {
     let nextPart = current_part;
     let isShortAnswer = false; 
     let metaTopic = null;
+    let metaSubpoints = null;
     let isExamFinished = false; 
     let isQuickStart = false;
     let updatedExtractedData = extracted_data || {};
 
-    // 🔥 V6: Only capture full name for record-keeping (no longer used for AI addressing)
     if (current_part === 1 && !isSilent && current_step === 0) {
         updatedExtractedData.fullName = userText;
     }
@@ -619,6 +628,7 @@ export async function POST(request) {
         if (current_part === 1) { 
             nextPart = 2; nextStep = 0; 
             metaTopic = topicSet.p2_topic;
+            metaSubpoints = topicSet.p2_subpoints;
         }
         else if (current_part === 2) { 
             if (current_step === 0) {
@@ -636,11 +646,11 @@ export async function POST(request) {
     } 
     else { // ACTION: ANSWER
         if (current_part === 1) {
-            // 🔥 V6: Part 1 sekarang sampai step 7 (was 8), karena nickname question dihapus
             if (current_step < 7) nextStep = current_step + 1;
             else { 
                 nextPart = 2; nextStep = 0; 
                 metaTopic = topicSet.p2_topic;
+                metaSubpoints = topicSet.p2_subpoints;
             }
         } 
         else if (current_part === 2) {
@@ -657,7 +667,6 @@ export async function POST(request) {
              else if (current_step === 3) { nextPart = 3; nextStep = 0; }
         }
         else if (current_part === 3) {
-            // 🔥 SARAN 2: Quick Test = 5 pertanyaan (step 0-4), Full Test = 3 (step 0-2)
             const maxStep = isQuickMode ? 4 : 2;
             if (current_step < maxStep) nextStep = current_step + 1;
             else isExamFinished = true;
@@ -670,7 +679,6 @@ export async function POST(request) {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        // 🔥 V9: Dynamic examiner name di system message
         { role: "system", content: `You are ${examinerName}. Speak natural English. Follow instructions EXACTLY.` },
         { role: "user", content: instruction }
       ],
@@ -694,7 +702,6 @@ export async function POST(request) {
     if (isExamFinished) {
         updateData.status = 'COMPLETED';
         
-        // 🔥 SARAN 5: Kirim topicContext yang tepat berdasarkan mode
         const topicContext = isQuickMode ? topicSet.p3_context : topicSet.p2_topic;
         finalScore = await generateScore(fullTranscript, topicContext);
         
@@ -722,6 +729,7 @@ export async function POST(request) {
           part: nextPart, 
           step: nextStep, 
           topic: metaTopic, 
+          p2_subpoints: metaSubpoints,
           isFinished: isExamFinished,
           score: finalScore 
       }

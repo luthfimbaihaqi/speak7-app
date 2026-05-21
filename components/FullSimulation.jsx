@@ -17,7 +17,7 @@ const VOICE_DISPLAY_NAMES = {
   taylor: 'TAYLOR'
 };
 
-// MIC CHECK VISUALIZER — light mode adjusted
+// MIC CHECK VISUALIZER
 const MicCheckVisualizer = ({ stream }) => {
     const canvasRef = useRef(null);
     const animationRef = useRef(null);
@@ -47,7 +47,7 @@ const MicCheckVisualizer = ({ stream }) => {
 
             for (let i = 0; i < bufferLength; i++) {
                 barHeight = dataArray[i] / 2;
-                const r = 209; // #D17A5C red channel
+                const r = 209;
                 const g = 122 + Math.floor(barHeight * 0.3);
                 const b = 92;
                 ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
@@ -74,7 +74,7 @@ const MicCheckVisualizer = ({ stream }) => {
     );
 };
 
-// TUTORIAL OVERLAY — light mode
+// TUTORIAL OVERLAY
 const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
     const [isPlayingSound, setIsPlayingSound] = useState(false);
 
@@ -219,6 +219,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
   const [transcript, setTranscript] = useState(""); 
   
   const [cueCardTopic, setCueCardTopic] = useState(""); 
+  const [cueCardSubpoints, setCueCardSubpoints] = useState([]);
   const [examResult, setExamResult] = useState(null); 
   
   const hasSavedRef = useRef(false);
@@ -424,6 +425,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     setMessages([]);
     setTranscript("");
     setCueCardTopic(""); 
+    setCueCardSubpoints([]);
     setExamResult(null); 
     hasSavedRef.current = false; 
     setStatus("checking_token");
@@ -547,6 +549,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
           const { part, step, topic, isFinished, score } = data.meta;
 
           if (topic) setCueCardTopic(topic);
+          if (data.meta?.p2_subpoints) setCueCardSubpoints(data.meta.p2_subpoints);
           
           if (score) {
               setExamResult(score);
@@ -643,7 +646,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     </div>
   );
 
-  // START SCREEN — Light mode editorial
+  // START SCREEN
   const StartScreen = () => (
     <div className="absolute inset-0 bg-[#F8F5EE] z-30 flex flex-col overflow-y-auto">
         <div className="w-full max-w-5xl mx-auto p-6 flex justify-between items-center">
@@ -763,7 +766,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
 
       {status === "idle" ? <StartScreen /> : (
         <>
-            {/* EXAM HEADER — darker for focus during exam */}
+            {/* EXAM HEADER */}
             <div className="flex justify-between items-center p-6 border-b border-[#1A1A1A]/10 z-10 bg-[#FAF6EC]">
                 {mode === 'quick' ? (
                       <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-[#D17A5C]">
@@ -844,7 +847,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                     </div>
                 )}
 
-                {/* PART 2 CARD — kept high contrast for readability */}
+                {/* PART 2 CARD — with sub-points */}
                 <AnimatePresence>
                     {status.includes("part2") && (
                         <motion.div 
@@ -856,10 +859,23 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                             <div className="bg-white text-[#1A1A1A] p-8 rounded-2xl max-w-lg w-full text-center shadow-2xl border-4 border-[#4A6B8F] relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-[#4A6B8F]" />
                                 <h3 className="text-xl font-bold mb-6 text-[#4A6B8F] uppercase tracking-widest border-b border-[#4A6B8F]/20 pb-4 font-display">Part 2: Topic Card</h3>
-                                <div className="bg-[#F8F5EE] p-6 rounded-xl border border-[#1A1A1A]/10 mb-6 min-h-[140px] flex items-center justify-center">
-                                    <p className="text-xl font-medium leading-relaxed text-[#1A1A1A]">
+                                <div className="bg-[#F8F5EE] p-6 rounded-xl border border-[#1A1A1A]/10 mb-6 min-h-[140px]">
+                                    <p className="text-xl font-medium leading-relaxed text-[#1A1A1A] text-center mb-4">
                                         {cueCardTopic || "Please listen to the Examiner..."}
                                     </p>
+                                    {cueCardSubpoints.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-[#1A1A1A]/10 text-left">
+                                            <p className="text-xs font-bold text-[#525252] uppercase tracking-wider mb-3">You should say:</p>
+                                            <ul className="space-y-2">
+                                                {cueCardSubpoints.map((point, i) => (
+                                                    <li key={i} className="flex items-start gap-2 text-sm text-[#1A1A1A]">
+                                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#4A6B8F] shrink-0" />
+                                                        <span>{point}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                                 {showPartTimer && (
                                     <div className={`p-4 rounded-xl flex items-center justify-between px-8 transition-colors ${status === 'part2_speak' ? 'bg-[#D17A5C]/10 text-[#D17A5C]' : 'bg-[#4A6B8F]/10 text-[#4A6B8F]'}`}>
