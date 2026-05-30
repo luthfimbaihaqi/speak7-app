@@ -305,13 +305,24 @@ async function generateTTS(text, voiceChoice = 'paul') {
   }
 }
 
-// --- SCORING HELPER (UPDATED: GPT-4o & FAIL-SAFE) ---
+// --- SCORING HELPER (V10: IMPROVED GRAMMAR CLINIC, MODEL ANSWER, IMPROVEMENT) ---
 async function generateScore(fullTranscript, topicContext) {
     const hasPart2 = fullTranscript.some(t => t.part === 2);
 
+    // Extract candidate's Part 2 speech for model answer grounding
+    const part2UserSpeech = fullTranscript
+        .filter(t => t.part === 2 && t.user && t.user.length > 10)
+        .map(t => t.user)
+        .join(' ');
+
     let modelAnswerInstruction = "";
     if (hasPart2) {
-        modelAnswerInstruction = "4. Provide a 'Model Answer' for the Part 2 section (The Long Turn). Write a natural, Band 9.0 storytelling monologue based on the topic.";
+        modelAnswerInstruction = `4. **MODEL ANSWER** for Part 2 (The Long Turn):
+           Write a Band 9.0 monologue for the topic "${topicContext}".
+           CRITICAL: Base the model answer on the CANDIDATE'S OWN topic and details from their speech. 
+           For example, if the candidate talked about a museum in their hometown, write a Band 9.0 version about THAT museum — do NOT invent a completely different subject like a famous painting they never mentioned.
+           The candidate said: "${part2UserSpeech.substring(0, 500)}"
+           Use their specific details (places, people, experiences they mentioned) but express them with Band 9.0 grammar, vocabulary, and coherence.`;
     } else {
         modelAnswerInstruction = "4. **IMPROVED ANSWERS**: Identify the user's answers to the Part 3 questions. Rewrite them into Band 9.0 standard English (Natural & Sophisticated). Format strictly as:\n'Q1 (Context): [Improved Answer]'\n\n'Q2 (Context): [Improved Answer]'...";
     }
@@ -344,15 +355,42 @@ async function generateScore(fullTranscript, topicContext) {
         
         ${modelAnswerInstruction}
         
-        5. **GRAMMAR CLINIC**: Identify ALL major grammatical errors (up to 15 items). Focus on mistakes that impact clarity or recurring errors.
+        5. **GRAMMAR CLINIC** (maximum 8 items):
+           Identify only GENUINE grammatical errors from the transcript.
+           
+           INCLUDE these error types:
+           - Subject-verb agreement (e.g. "it make" → "it makes")
+           - Tense errors (e.g. "I still a child" → "I was still a child")
+           - Missing or wrong auxiliary verbs (e.g. "I not go" → "I did not go")
+           - Preposition errors (e.g. "depend of" → "depend on")
+           - Word form errors (e.g. "I am very satisfy" → "I am very satisfied")
+           - Article misuse that causes confusion
+           
+           DO NOT INCLUDE:
+           - Stylistic preferences (e.g. suggesting "however" instead of "but")
+           - Minor article omissions common in spoken English
+           - Self-corrections (these show awareness, not weakness)
+           - Informal register (spoken English is naturally less formal than written)
+           - Rephrasing that is "better" but the original is not wrong
+           
+           FORMAT: Each item must be a SHORT, targeted correction.
+           - "original" = the SPECIFIC phrase with the error (maximum 15 words, not a whole paragraph)
+           - "correction" = the corrected phrase only (maximum 15 words)
+           - "reason" = brief explanation (one sentence)
+           DO NOT paste entire paragraphs as "original". Extract only the broken phrase.
+
+        6. **IMPROVEMENT** field:
+           DO NOT write generic advice like "Focus on subject-verb agreement."
+           Instead, quote at least ONE specific mistake from the transcript and show the fix.
+           Example: "You said 'I still a child' several times — remember to use 'was' for past states: 'I was still a child.' Also watch for missing verbs in sentences like 'that kind of difference' which should be 'that is kind of different.'"
 
         RETURN JSON FORMAT ONLY:
         {
             "fluency": number, "lexical": number, "grammar": number, "pronunciation": number,
             "feedback": ["string (Strength with evidence)", "string (Strength with evidence)", "string (Improvement with evidence)"],
-            "improvement": "string",
+            "improvement": "string (with specific quoted examples)",
             "modelAnswer": "string (The Model Answer or The 3 Improved Answers)",
-            "grammarCorrection": [{ "original": "string", "correction": "string", "reason": "string" }]
+            "grammarCorrection": [{ "original": "string (short phrase only)", "correction": "string (short phrase only)", "reason": "string (one sentence)" }]
         }
     `;
 
@@ -375,7 +413,7 @@ async function generateScore(fullTranscript, topicContext) {
     return { ...result, overall };
 }
 
-// 🔥 V9: HELPER INSTRUKSI - DYNAMIC EXAMINER PERSONA PER VOICE
+// 🔥 V10: HELPER INSTRUKSI - IMPROVED PART 2 ROUNDING + PART 3 SIMPLICITY
 function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false, isQuickMode = false, askedQuestions = [], examinerName = 'Paul') {
   const userContent = isSilent ? "(User remained silent)" : `"${userLastText}"`;
 
@@ -436,16 +474,18 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
                - References something SPECIFIC the user mentioned in their speech
                - Stays on the same topic as "${topicSet.p2_topic}"
                - Can be answered briefly (1-2 sentences)
+               - Does NOT ask about something the candidate already explained in detail (if they already described their feelings, do NOT ask "How did it make you feel?")
             
             EXAMPLES of good follow-ups:
             - If user mentioned multiple items: "Which one do you like most?"
             - If user shared personal connection: "How did you discover it?"
-            - If user described experience: "How did it make you feel?"
+            - If user described experience: "Would you do it again?"
             - If user shared opinion: "What makes it special to you?"
             - If user described place: "Have you been there often?"
             - If user described person: "When did you last meet them?"
             
             AVOID:
+            - Questions about feelings/emotions if the candidate already expressed them extensively
             - Generic questions that don't fit user's specific content
             - Compound questions (one question only)
             - Questions starting new topics user hasn't mentioned
@@ -472,6 +512,14 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
         - You are evaluating the candidate's ability to express and justify opinions.
         - ROLE: You are an objective evaluator, not a debater. Do NOT contradict the candidate.
         - EXPLORE: Use the candidate's previous answer as a stepping stone.
+        
+        🚨 QUESTION STYLE (CRITICAL):
+        - Maximum 12 words per question. Real IELTS examiners ask SHORT, CLEAR questions.
+        - Use everyday words. Do NOT use academic phrases like "How does X influence Y's understanding of Z" or "In what ways does A affect the perception of B across C."
+        - Good: "Why do some people not care about art?"
+        - Good: "Is art more important now than before?"
+        - Bad: "How do you think globalization affects the way art is perceived and valued across different cultures?"
+        - Bad: "How do you think learning about the historical aspects of art influences young people's understanding of culture?"
         ${previousQuestionsContext}
       `;
 
@@ -489,7 +537,7 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
               return `${part3Base} 
               SITUATION: The candidate just answered: ${userContent}. 
               TOPIC: ${topicSet.p3_context}
-              TASK: Dig deeper into the candidate's answer. Ask a follow-up that explores the WHY or HOW behind their specific point. Reference something they actually said. Keep the question short and natural.`;
+              TASK: Ask a SHORT follow-up (max 12 words) that digs into WHY or HOW behind one specific point they made. Reference something they said. Keep it simple and conversational.`;
           }
           if (step === 2) {
               return `${part3Base} 
@@ -501,7 +549,7 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
               return `${part3Base} 
               SITUATION: The candidate answered: ${userContent}. 
               TOPIC: ${topicSet.p3_context}
-              TASK: Dig deeper into the candidate's answer. Ask a follow-up that challenges them to consider the OPPOSITE viewpoint or a DIFFERENT group of people's perspective. Reference something they actually said. Keep the question short.`;
+              TASK: Ask a SHORT follow-up (max 12 words) that challenges them to consider a different perspective. Use simple words. Reference something they said.`;
           }
           if (step === 4) {
               return `${part3Base} 
@@ -528,14 +576,14 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
           return `${part3Base} 
           SITUATION: The candidate just answered: ${userContent}. 
           TOPIC: ${topicSet.p3_context}
-          TASK: Dig deeper into the candidate's answer. Ask a follow-up that explores the WHY or HOW behind their specific point. Reference something they actually said. Keep the question short and natural.`;
+          TASK: Ask a SHORT follow-up (max 12 words) that digs into WHY or HOW behind one specific point they made. Reference something they said. Use simple, everyday words.`;
       }
       
       if (step === 2) {
           return `${part3Base} 
           SITUATION: The candidate answered: ${userContent}. 
           TOPIC: ${topicSet.p3_context}
-          TASK: Shift perspective. Ask one final, deep, abstract question about "${topicSet.p3_context}" that considers a different angle or global impact. Keep it brief.`;
+          TASK: Ask one final SHORT question (max 12 words) about "${topicSet.p3_context}" from a different angle. Use simple words, not academic language.`;
       }
   }
   
@@ -570,11 +618,18 @@ export async function POST(request) {
     const voiceChoice = session.voice_choice || 'paul';
     const examinerName = getExaminerName(voiceChoice);
     
-    let userText = "";
+   let userText = "";
     let isSilent = true;
 
+    // DEBUG: skip Whisper if debug_text is provided
+    const debugText = formData.get("debug_text");
+    if (debugText && debugText.length > 1) {
+        userText = debugText;
+        isSilent = false;
+    }
+
     // TRANSCRIPTION
-    if (audioFile && audioFile.size > 0 && action !== 'start' && action !== 'auto_next' && action !== 'start_quick') {
+    else if (audioFile && audioFile.size > 0 && action !== 'start' && action !== 'auto_next' && action !== 'start_quick') { {
         const buffer = Buffer.from(await audioFile.arrayBuffer());
         if (buffer.length > 1000) { 
             try {
