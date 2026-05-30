@@ -629,7 +629,7 @@ export async function POST(request) {
     }
 
     // TRANSCRIPTION
-    else if (audioFile && audioFile.size > 0 && action !== 'start' && action !== 'auto_next' && action !== 'start_quick') { {
+    else if (audioFile && audioFile.size > 0 && action !== 'start' && action !== 'auto_next' && action !== 'start_quick') { 
         const buffer = Buffer.from(await audioFile.arrayBuffer());
         if (buffer.length > 1000) { 
             try {
