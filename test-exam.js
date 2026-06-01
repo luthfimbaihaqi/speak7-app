@@ -259,14 +259,7 @@ const args = process.argv.slice(2);
 const mode = args[0] || "full";
 const voice = args[1] || "paul";
 
-// Use a test user ID — replace with a real one from your Supabase profiles table
-const TEST_USER_ID = "PUT_YOUR_USER_ID_HERE";
-
-if (TEST_USER_ID === "PUT_YOUR_USER_ID_HERE") {
-  console.log("\n[!] Edit test-exam.js and replace TEST_USER_ID with your actual Supabase user ID.");
-  console.log("    You can find it in Supabase → profiles table → copy your id.\n");
-  process.exit(1);
-}
+const TEST_USER_ID = "a19e84f3-1c49-4ca1-b2f3-cd1a2709b5da";
 
 console.log(`Mode: ${mode} | Voice: ${voice}`);
 

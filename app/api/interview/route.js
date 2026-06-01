@@ -39,6 +39,13 @@ function getExaminerName(voiceChoice) {
   return VOICE_MAP[voiceChoice]?.displayName || 'Paul';
 }
 
+// 🔥 V11: Helper to clean p2_topic for natural transition phrasing
+function cleanTopicForTransition(topic) {
+  return topic
+    .replace(/^Describe\s+/i, '')
+    .replace(/\.$/, '');
+}
+
 // --- TOPIC ENGINE: 12 VARIATION PACKS (IELTS STANDARD) ---
 const TOPIC_SETS = [
     {   // SET A: TRAVEL
@@ -305,7 +312,7 @@ async function generateTTS(text, voiceChoice = 'paul') {
   }
 }
 
-// --- SCORING HELPER (V10: IMPROVED GRAMMAR CLINIC, MODEL ANSWER, IMPROVEMENT) ---
+// --- SCORING HELPER (V11: GRAMMAR CLINIC ALLOWS EMPTY ARRAY) ---
 async function generateScore(fullTranscript, topicContext) {
     const hasPart2 = fullTranscript.some(t => t.part === 2);
 
@@ -378,10 +385,12 @@ async function generateScore(fullTranscript, topicContext) {
            - "correction" = the corrected phrase only (maximum 15 words)
            - "reason" = brief explanation (one sentence)
            DO NOT paste entire paragraphs as "original". Extract only the broken phrase.
+           If the candidate's grammar is already good and there are fewer than 2 genuine errors, return an EMPTY array []. Do NOT invent corrections for sentences that are already correct. Do NOT suggest "better" alternatives for correct sentences. If it is not broken, do not fix it.
 
         6. **IMPROVEMENT** field:
            DO NOT write generic advice like "Focus on subject-verb agreement."
            Instead, quote at least ONE specific mistake from the transcript and show the fix.
+           If the candidate made very few errors, acknowledge their strong grammar and suggest ONE area to push toward Band 8+ (e.g. "Your grammar is strong. To reach Band 8+, try using more conditional structures like 'Had I known...' or inversion like 'Not only did I...'").
            Example: "You said 'I still a child' several times — remember to use 'was' for past states: 'I was still a child.' Also watch for missing verbs in sentences like 'that kind of difference' which should be 'that is kind of different.'"
 
         RETURN JSON FORMAT ONLY:
@@ -403,6 +412,19 @@ async function generateScore(fullTranscript, topicContext) {
 
     const result = JSON.parse(completion.choices[0].message.content);
 
+    // 🔥 V11: Filter out hallucinated grammar corrections
+    if (result.grammarCorrection) {
+        const allUserText = fullTranscript.map(t => t.user || '').join(' ').toLowerCase();
+        result.grammarCorrection = result.grammarCorrection.filter(item => {
+            // Remove if original === correction (no actual fix)
+            if (item.original.trim().toLowerCase() === item.correction.trim().toLowerCase()) return false;
+            // Remove if the original phrase doesn't exist in transcript (hallucinated)
+            const searchPhrase = item.original.toLowerCase().substring(0, 20);
+            if (!allUserText.includes(searchPhrase)) return false;
+            return true;
+        });
+    }
+    
     // Calculate Overall
     const avg = (result.fluency + result.lexical + result.grammar + result.pronunciation) / 4;
     const decimal = avg % 1;
@@ -413,7 +435,7 @@ async function generateScore(fullTranscript, topicContext) {
     return { ...result, overall };
 }
 
-// 🔥 V10: HELPER INSTRUKSI - IMPROVED PART 2 ROUNDING + PART 3 SIMPLICITY
+// 🔥 V11: HELPER INSTRUKSI - CLEAN TRANSITION WORDING
 function getInstruction(part, step, contextData, userLastText, topicSet, isSilent = false, isShortAnswer = false, isExamFinished = false, isQuickStart = false, isQuickMode = false, askedQuestions = [], examinerName = 'Paul') {
   const userContent = isSilent ? "(User remained silent)" : `"${userLastText}"`;
 
@@ -495,7 +517,8 @@ function getInstruction(part, step, contextData, userLastText, topicSet, isSilen
       }
 
       if (step === 3) {
-         return `${basePrompt} SITUATION: Answered rounding. TASK: Say "Thank you." TRANSITION: "We have been talking about ${topicSet.p2_topic}, and now I'd like to discuss one or two more general questions related to this."`;
+         const cleanedTopic = cleanTopicForTransition(topicSet.p2_topic);
+         return `${basePrompt} SITUATION: Answered rounding. TASK: Say "Thank you." TRANSITION: "We have been talking about ${cleanedTopic}, and now I'd like to discuss one or two more general questions related to this."`;
       }
   }
   
@@ -618,7 +641,7 @@ export async function POST(request) {
     const voiceChoice = session.voice_choice || 'paul';
     const examinerName = getExaminerName(voiceChoice);
     
-   let userText = "";
+    let userText = "";
     let isSilent = true;
 
     // DEBUG: skip Whisper if debug_text is provided
