@@ -46,6 +46,37 @@ function cleanTopicForTransition(topic) {
     .replace(/\.$/, '');
 }
 
+// 🔥 V12: Helper to detect "repeat the question" requests
+function isRepeatRequest(text) {
+  if (!text || text.length < 2) return false;
+  const lower = text.toLowerCase().trim();
+  const wordCount = lower.split(/\s+/).length;
+  // Only treat as repeat request if short utterance (< 8 words)
+  if (wordCount >= 8) return false;
+  
+  const repeatPatterns = [
+    'repeat',
+    'say that again',
+    'say again',
+    'one more time',
+    'come again',
+    'pardon',
+    'sorry what',
+    'what was the question',
+    'what did you say',
+    'didn\'t catch',
+    'did not catch',
+    'can you say',
+    'could you repeat',
+    'i didn\'t hear',
+    'i did not hear',
+    'what was that',
+    'excuse me'
+  ];
+  
+  return repeatPatterns.some(pattern => lower.includes(pattern));
+}
+
 // --- TOPIC ENGINE: 12 VARIATION PACKS (IELTS STANDARD) ---
 const TOPIC_SETS = [
     {   // SET A: TRAVEL
@@ -667,6 +698,29 @@ export async function POST(request) {
     }
 
     console.log(`[P${current_part}/S${current_step}] Action: ${action} | Topic: ${topicSet.id} | Mode: ${session.mode} | Voice: ${voiceChoice} | Examiner: ${examinerName} | Words: ${userText.split(/\s+/).length}`);
+
+    // 🔥 V12: REPEAT QUESTION DETECTION — early return, no GPT, no step advance
+    if (!isSilent && action === 'answer' && isRepeatRequest(userText)) {
+        const lastAiMessage = (transcript || []).filter(t => t.ai).pop()?.ai;
+        if (lastAiMessage) {
+            console.log(`[REPEAT] Detected repeat request: "${userText}" — replaying last question`);
+            const repeatText = `Of course. ${lastAiMessage}`;
+            const audioBase64 = await generateTTS(repeatText, voiceChoice);
+            return NextResponse.json({
+                text: repeatText,
+                audio: `data:audio/mp3;base64,${audioBase64}`,
+                userTranscript: userText,
+                meta: { 
+                    part: current_part, 
+                    step: current_step, 
+                    topic: null, 
+                    p2_subpoints: null,
+                    isFinished: false,
+                    score: null 
+                }
+            });
+        }
+    }
 
     // --- LOGIC CORE ---
     let nextStep = current_step;
