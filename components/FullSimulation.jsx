@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Mic, Square, User, LogOut, Loader2, CheckCircle,
-  Wifi, Headphones, XCircle, Zap, Clock, Volume2, PlayCircle, BellOff
+  Wifi, Headphones, XCircle, Zap, Clock, Volume2, PlayCircle, BellOff, RefreshCw
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient"; 
@@ -171,6 +171,13 @@ const TutorialOverlay = ({ onClose, onStart, tokenCost, audioStream }) => {
                         <div>
                             <h4 className="text-[#1A1A1A] font-bold text-sm">3. Stop to Send</h4>
                             <p className="text-xs text-[#525252]">Click stop when finished. Do not remain silent.</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-4 items-start">
+                        <div className="mt-1 bg-[#F8F5EE] border border-[#1A1A1A]/10 p-1.5 rounded-lg"><RefreshCw className="w-4 h-4 text-[#C9974C]" /></div>
+                        <div>
+                            <h4 className="text-[#1A1A1A] font-bold text-sm">4. Need to Hear Again?</h4>
+                            <p className="text-xs text-[#525252]">Say <span className="font-semibold text-[#1A1A1A]">"Can you repeat the question?"</span> or <span className="font-semibold text-[#1A1A1A]">"Pardon?"</span> and the examiner will repeat.</p>
                         </div>
                     </div>
                 </div>
@@ -646,6 +653,9 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
     </div>
   );
 
+  // Determine if repeat hint should show (YOUR TURN state, not Part 2 prep/speak)
+  const showRepeatHint = !aiSpeaking && !isRecording && !isProcessing && !isStarting && status !== "part2_prep" && status !== "part2_speak" && status !== "checking_token" && status !== "completed";
+
   // START SCREEN
   const StartScreen = () => (
     <div className="absolute inset-0 bg-[#F8F5EE] z-30 flex flex-col overflow-y-auto">
@@ -735,6 +745,10 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                              <div className="mt-0.5"><XCircle className="w-5 h-5 text-[#D17A5C] shrink-0" /></div>
                              <p className="text-[#525252]"><strong className="text-[#D17A5C]">Don't memorize.</strong> Be natural.</p>
                         </div>
+                        <div className="flex gap-3">
+                             <div className="mt-0.5"><RefreshCw className="w-5 h-5 text-[#C9974C] shrink-0" /></div>
+                             <p className="text-[#525252]"><strong className="text-[#1A1A1A]">Missed the question?</strong> Say "Can you repeat?" and the examiner will repeat it.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -813,7 +827,7 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                             <User className="w-24 h-24 text-[#1A1A1A]/20" />
                         </div>
                         
-                        <div className="mt-8 text-center h-10 flex flex-col items-center justify-start">
+                        <div className="mt-8 text-center flex flex-col items-center justify-start">
                             {status === "part2_prep" ? (
                                 <p className="text-[#C9974C] text-sm font-medium animate-pulse tracking-wider">PREPARATION TIME...</p>
                             ) : aiSpeaking ? (
@@ -829,6 +843,11 @@ export default function FullSimulation({ userProfile, mode = "full" }) {
                                 <>
                                     <p className="text-[#1A1A1A] text-sm font-bold tracking-wider">YOUR TURN</p>
                                     <p className="text-[10px] text-[#525252] mt-1 uppercase tracking-widest font-semibold">Tap the mic to speak</p>
+                                    {showRepeatHint && (
+                                        <p className="text-xs text-[#525252]/70 mt-3 italic">
+                                            Didn't catch the question? Say "Can you repeat?"
+                                        </p>
+                                    )}
                                 </>
                             )}
                         </div>
