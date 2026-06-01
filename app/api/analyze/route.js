@@ -59,7 +59,7 @@ export async function POST(request) {
       });
     }
 
-    // 2. SCORING (GPT-4o)
+    // 2. SCORING (GPT-4o) — V2: All V10-V12 fixes applied
     const prompt = `
         You are an experienced IELTS Examiner. Evaluate the following Part 2 (Long Turn) response holistically.
         
@@ -85,17 +85,52 @@ export async function POST(request) {
            - **Area to Improve**: DO NOT use generic phrases like "Grammar needs work". Instead, **QUOTE THE USER'S EXACT MISTAKE**.
              - Correct Example: "When describing your experience, you said '*it make me feel happy*', which should be '*it made me feel happy*'."
         
-        4. **MODEL ANSWER**: Write a natural, Band 9.0 storytelling monologue for this Part 2 topic. Make it sound human and engaging.
+        4. **MODEL ANSWER** for Part 2:
+           Write a Band 9.0 monologue for the topic "${cueCard}".
+           CRITICAL: Base the model answer on the CANDIDATE'S OWN topic and details from their speech.
+           For example, if the candidate talked about a specific book, write a Band 9.0 version about THAT book — do NOT invent a completely different book they never mentioned.
+           The candidate said: "${transcriptText.substring(0, 500)}"
+           Use their specific details (names, places, experiences they mentioned) but express them with Band 9.0 grammar, vocabulary, and coherence.
         
-        5. **GRAMMAR CLINIC**: Identify ALL major grammatical errors (up to 15 items). Focus on mistakes that impact clarity or recurring errors.
+        5. **GRAMMAR CLINIC** (maximum 8 items):
+           Identify only GENUINE grammatical errors from the transcript.
+           
+           INCLUDE these error types:
+           - Subject-verb agreement (e.g. "it make" → "it makes")
+           - Tense errors (e.g. "I still a child" → "I was still a child")
+           - Missing or wrong auxiliary verbs (e.g. "I not go" → "I did not go")
+           - Preposition errors (e.g. "depend of" → "depend on")
+           - Word form errors (e.g. "I am very satisfy" → "I am very satisfied")
+           - Article misuse that causes confusion
+           
+           DO NOT INCLUDE:
+           - Stylistic preferences (e.g. suggesting "however" instead of "but")
+           - Minor article omissions common in spoken English
+           - Self-corrections (these show awareness, not weakness)
+           - Informal register (spoken English is naturally less formal than written)
+           - Rephrasing that is "better" but the original is not wrong
+           - Vocabulary choices that are valid but uncommon (e.g. "discombobulated" is correct English — do NOT replace it)
+           
+           FORMAT: Each item must be a SHORT, targeted correction.
+           - "original" = the SPECIFIC phrase with the error (maximum 15 words, not a whole paragraph)
+           - "correction" = the corrected phrase only (maximum 15 words)
+           - "reason" = brief explanation (one sentence)
+           DO NOT paste entire paragraphs as "original". Extract only the broken phrase.
+           If the candidate's grammar is already good and there are fewer than 2 genuine errors, return an EMPTY array []. Do NOT invent corrections for sentences that are already correct. Do NOT suggest "better" alternatives for correct sentences. If it is not broken, do not fix it.
+
+        6. **IMPROVEMENT** field:
+           DO NOT write generic advice like "Focus on subject-verb agreement." or "Try to provide more specific examples."
+           Instead, quote at least ONE specific mistake from the transcript and show the fix.
+           If the candidate made very few errors, acknowledge their strong grammar and suggest ONE area to push toward Band 8+ (e.g. "Your grammar is strong. To reach Band 8+, try using more conditional structures like 'Had I known...' or inversion like 'Not only did I...'").
+           Example: "You said 'it tells us about the memories for the main character and explain' — use 'of' instead of 'for' and match the verb: 'tells us about the memories of the main character and explains.'"
 
         RETURN JSON FORMAT ONLY:
         {
             "fluency": number, "lexical": number, "grammar": number, "pronunciation": number,
             "feedback": ["string (Strength with evidence)", "string (Strength with evidence)", "string (Improvement with evidence)"],
-            "improvement": "string",
+            "improvement": "string (with specific quoted examples)",
             "modelAnswer": "string",
-            "grammarCorrection": [{ "original": "string", "correction": "string", "reason": "string" }]
+            "grammarCorrection": [{ "original": "string (short phrase only)", "correction": "string (short phrase only)", "reason": "string (one sentence)" }]
         }
     `;
 
@@ -107,6 +142,19 @@ export async function POST(request) {
     });
 
     const analysisResult = JSON.parse(completion.choices[0].message.content);
+
+    // 🔥 V2: Filter out hallucinated grammar corrections
+    if (analysisResult.grammarCorrection) {
+        const lowerTranscript = transcriptText.toLowerCase();
+        analysisResult.grammarCorrection = analysisResult.grammarCorrection.filter(item => {
+            // Remove if original === correction (no actual fix)
+            if (item.original.trim().toLowerCase() === item.correction.trim().toLowerCase()) return false;
+            // Remove if the original phrase doesn't exist in transcript (hallucinated)
+            const searchPhrase = item.original.toLowerCase().substring(0, 20);
+            if (!lowerTranscript.includes(searchPhrase)) return false;
+            return true;
+        });
+    }
 
     // 3. PEMBULATAN SKOR OVERALL
     const f = analysisResult.fluency || 0;
