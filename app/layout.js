@@ -50,7 +50,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "IELTS4our | Your Speaking Partner to Band 8.0",
     description: "Master IELTS Speaking with real-time AI feedback, mock interviews, and band 8.0 model answers.",
-    images: ["/og-image.png"],
+    images: ["/og-image-v2.png"],
   },
 };
 
