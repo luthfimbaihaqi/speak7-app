@@ -39,7 +39,7 @@ export const metadata = {
     siteName: "IELTS4our",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image-v2.png",
         width: 1200,
         height: 630,
         alt: "IELTS4our - Your Speaking Partner to Band 8.0",
